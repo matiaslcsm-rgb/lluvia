@@ -57,15 +57,21 @@
       L.ui.current = 'pause';
     },
 
-    gameOver: function (g, onRestart) {
-      var m = Math.floor(g.time / 60), s = Math.floor(g.time % 60);
+    // End of the match for you: you won, or you ran out of lives.
+    result: function (m, onRestart) {
+      var me = m.human, g = me.game;
+      var mm = Math.floor(g.time / 60), s = Math.floor(g.time % 60);
+      var won = m.winner === me;
+      var title = won ? '¡Ganaste! Quedaste último en pie' : 'Quedaste ' + me.place + '.º de 8';
       var stats = el('div', 'stats');
-      [['Aguantaste', m + ':' + (s < 10 ? '0' : '') + s], ['Nivel', g.player.level], ['Bajas', g.kills]].forEach(function (r) {
+      [['Aguantaste', mm + ':' + (s < 10 ? '0' : '') + s], ['Nivel', g.player.level], ['Bajas', g.kills],
+        ['Ítems', g.player.itemOrder.reduce(function (n, id) { return n + g.player.items[id]; }, 0)],
+        ['Siguen en pie', L.alivePlayers(m).map(function (pl) { return pl.name; }).join(', ') || 'nadie']].forEach(function (r) {
         stats.appendChild(el('div', null, r[0])); stats.appendChild(el('b', null, String(r[1])));
       });
       var b = el('button', 'btn', 'Jugar de nuevo');
       b.addEventListener('click', onRestart);
-      show([el('h2', null, 'Te pasaron por arriba'), stats, b, el('p', 'hint', 'Enter para volver a empezar')]);
+      show([el('h2', null, title), stats, b, el('p', 'hint', 'Enter para volver a empezar')]);
       L.ui.current = 'over';
     }
   };

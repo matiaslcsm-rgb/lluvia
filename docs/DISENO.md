@@ -22,7 +22,9 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - Matar deja **experiencia** (hay que juntarla caminando encima) y a veces **oro**.
 - Aparece un **jefe** a los 2:30 y después cada 3 minutos. Al matarlo deja un cofre gratis que nunca da comunes.
 - Desde el minuto 5 llegan los **cazadores**, más rápidos que vos: no se puede escapar corriendo para siempre.
-- **Morir en la horda:** perdés una vida y la mitad del oro que llevás, y volvés a los 5 segundos.
+- **Morir en la horda:** perdés una vida y la mitad del oro que llevás, y volvés a los 5 segundos. Al volver tenés
+  2 segundos de invulnerabilidad y se van los enemigos que tenías encima (el jefe no).
+- Mientras elegís una mejora, toda la partida espera (las arenas de los rivales también).
 
 ## Habilidades (al subir de nivel)
 - Al subir de nivel elegís **1 de 3**: una habilidad nueva o subir una que ya tenés (hasta nivel 5).
@@ -74,6 +76,8 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 ## La IA
 - Los 7 rivales eligen habilidades e ítems con reglas simples, se mueven esquivando y apuestan según quién parece
   más fuerte. Tienen que perder a veces y ganar a veces.
+- Se llaman Nube, Trueno, Granizo, Bruma, Rocío, Relámpago y Llovizna. Cada uno tiene su nivel de habilidad.
+- Juegan su arena de verdad, con las mismas reglas que vos: no hay números inventados para ellos.
 
 ## Afuera de la 1.0
 - Jugar online contra otras personas.

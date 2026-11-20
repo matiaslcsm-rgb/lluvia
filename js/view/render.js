@@ -18,7 +18,30 @@
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
 
-  L.render = function (g, ctx, W, H) {
+  // m (optional): the match, for lives of the others and the standings.
+  function hearts(n) { var s = ''; for (var i = 0; i < n; i++) s += '♥'; return s; }
+
+  // Everyone's position: name, lives and level. Highlights you; those out show their place.
+  function standings(ctx, m, W) {
+    var rows = L.standings(m), x = W - 16, y = 84;
+    ctx.fillStyle = 'rgba(14, 15, 20, 0.7)';
+    ctx.fillRect(x - 196, y - 17, 206, rows.length * 18 + 8);
+    ctx.textAlign = 'right';
+    ctx.font = '13px system-ui, sans-serif';
+    rows.forEach(function (pl, i) {
+      var g = pl.game, yy = y + i * 18;
+      if (pl.isHuman) { ctx.fillStyle = 'rgba(143, 180, 255, 0.15)'; ctx.fillRect(x - 190, yy - 13, 194, 17); }
+      ctx.fillStyle = pl.out ? '#5d6070' : pl.isHuman ? '#8fb4ff' : '#c4c6d2';
+      var right = pl.out ? pl.place + '.º' : 'nv ' + g.player.level;
+      ctx.fillText(right, x, yy);
+      ctx.fillStyle = pl.out ? '#5d6070' : '#ff6b81';
+      ctx.fillText(pl.out ? '' : hearts(g.lives), x - 48, yy);
+      ctx.fillStyle = pl.out ? '#5d6070' : g.player.char.color;
+      ctx.fillText((i + 1) + '. ' + pl.name, x - 92, yy);
+    });
+  }
+
+  L.render = function (g, ctx, W, H, m) {
     ctx.fillStyle = '#14161c';
     ctx.fillRect(0, 0, W, H);
     if (!g) return;
@@ -106,10 +129,26 @@
       ctx.globalAlpha = 1;
     });
 
-    // Player.
-    circle(ctx, p.x, p.y, p.r + 3, '#0b0c10');
-    circle(ctx, p.x, p.y, p.r, p.hurt > 0 ? '#ffffff' : p.char.color);
+    // Player (blinking while invulnerable, hidden while down).
+    if (g.respawn <= 0) {
+      if (p.invuln > 0 && Math.floor(g.time * 10) % 2) ctx.globalAlpha = 0.4;
+      circle(ctx, p.x, p.y, p.r + 3, '#0b0c10');
+      circle(ctx, p.x, p.y, p.r, p.hurt > 0 ? '#ffffff' : p.char.color);
+      ctx.globalAlpha = 1;
+    }
     ctx.restore();
+
+    if (g.respawn > 0) {
+      ctx.fillStyle = 'rgba(10, 11, 15, 0.55)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ff6b81';
+      ctx.font = '700 30px system-ui, sans-serif';
+      ctx.fillText('Perdiste una vida', W / 2, H / 2 - 20);
+      ctx.fillStyle = '#e8e8ee';
+      ctx.font = '600 18px system-ui, sans-serif';
+      ctx.fillText('Volvés en ' + Math.ceil(g.respawn) + '…  (también perdiste la mitad del oro)', W / 2, H / 2 + 14);
+    }
 
     // ---- HUD ----
     var need = L.xpToNext(p.level);
@@ -118,6 +157,9 @@
     ctx.fillStyle = '#e8e8ee';
     ctx.textAlign = 'left';
     ctx.fillText('Nivel ' + p.level, 16, 36);
+    ctx.fillStyle = '#ff6b81';
+    ctx.fillText(hearts(g.lives), 100, 36);
+    ctx.fillStyle = '#e8e8ee';
     bar(ctx, 16, 46, 220, 14, p.hp / p.stats.maxHp, '#e05060');
     ctx.font = '12px system-ui, sans-serif';
     ctx.fillStyle = '#e8e8ee'; // bar() leaves its own color behind
@@ -134,6 +176,8 @@
     ctx.fillText('Bajas: ' + g.kills, W - 16, 36);
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Oro: ' + g.gold, W - 16, 58);
+
+    if (m) standings(ctx, m, W);
 
     // Boss health bar.
     if (g.boss && !g.boss.dead) {

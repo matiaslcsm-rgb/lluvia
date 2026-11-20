@@ -9,7 +9,7 @@
   // Live enemies whose body touches the circle. Returns a new array, so it is safe inside nested effects.
   L.nearby = function (g, x, y, r) {
     var q = [], out = [];
-    g.grid.query(x, y, r + L.MAX_ENEMY_RADIUS, q);
+    g.grid.query(x, y, r + g.maxR, q);
     for (var i = 0; i < q.length; i++) {
       var e = q[i], rr = r + e.r, dx = e.x - x, dy = e.y - y;
       if (!e.dead && dx * dx + dy * dy < rr * rr) out.push(e);

@@ -111,8 +111,8 @@ test('con todo al máximo la elección ofrece curarse', function () {
   assert.strictEqual(options[0].type, 'heal');
 });
 
-test('si los enemigos te bajan la vida a cero, la partida termina', function () {
-  var g = newGame({ noSpawn: true }), p = g.player;
+test('si te bajan la vida a cero en tu última vida, la partida termina', function () {
+  var g = newGame({ noSpawn: true, lives: 1 }), p = g.player;
   p.abilities.length = 0;
   Lluvia.spawnEnemy(g, 'bruto', p.x, p.y);
   p.hp = 5;

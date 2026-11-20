@@ -10,8 +10,6 @@
   L.MAX_LEVEL = 5;
   L.ABILITY_SLOTS = 5;
   L.PASSIVE_SLOTS = 4;
-  // Widest enemy (the boss); grid queries pad by this much so big enemies are never missed.
-  L.MAX_ENEMY_RADIUS = 40;
 
   L.findAbility = function (id) { return L.findById(L.data.abilities, id); };
   L.findPassive = function (id) { return L.findById(L.data.passives, id); };
@@ -36,7 +34,7 @@
   // The difficulty clock: one step every minute, the same for everyone. Starts at 1.
   L.difficulty = function (g) { return 1 + Math.floor(g.time / 60); };
 
-  // opts: { seed, characterId, viewW, viewH, noSpawn }
+  // opts: { seed, characterId, viewW, viewH, noSpawn, lives }
   L.createGame = function (opts) {
     opts = opts || {};
     var h = L.data.horde;
@@ -45,7 +43,10 @@
       seed: opts.seed || 1,
       rng: L.makeRng(opts.seed || 1),
       time: 0,
-      over: false,
+      over: false,         // true once every life is gone
+      lives: opts.lives || L.data.horde.lives,
+      deaths: 0,
+      respawn: 0,          // seconds left before coming back after losing a life
       choice: null,        // the 3 options on screen after a level up, or null
       pendingLevels: 0,
       spawning: !opts.noSpawn,
@@ -56,13 +57,14 @@
       view: { w: opts.viewW || 1280, h: opts.viewH || 720 },
       player: {
         x: h.arena / 2, y: h.arena / 2, r: 14, char: ch,
-        hp: 0, level: 1, xp: 0, abilities: [], passives: [], stats: {}, hurt: 0,
+        hp: 0, level: 1, xp: 0, abilities: [], passives: [], stats: {}, hurt: 0, invuln: 0,
         items: {}, itemOrder: [], onHit: [], onKill: []
       },
       gold: 0,
       enemies: [], projectiles: [], gems: [], effects: [], chests: [], toasts: [],
       kills: 0, nextId: 1,
       grid: new L.Grid(64),
+      maxR: 0,             // widest live enemy this tick; grid queries pad by it so big ones are never missed
       _q: []               // reused query buffer for the top-level loops (never re-entered)
     };
     L.addAbility(g, ch.start);
@@ -126,22 +128,57 @@
   // ---- Main loop ----
 
   // input: { x, y } between -1 and 1. Nothing moves while a level-up choice is open or the game is over.
+  // Returns the time it could not play (because a choice opened or the game ended), 0 otherwise.
   L.update = function (g, dt, input) {
     while (dt > 1e-9 && !g.over && !g.choice) {
       var step = Math.min(dt, STEP);
       tick(g, step, input || { x: 0, y: 0 });
       dt -= step;
     }
+    return dt > 1e-9 ? dt : 0;
   };
+
+  // Losing all health costs a life and half your gold. With lives left you come back after a few seconds.
+  function loseLife(g) {
+    var p = g.player, h = L.data.horde;
+    p.hp = 0;
+    g.lives--;
+    g.deaths++;
+    if (g.lives <= 0) { g.over = true; return; }
+    g.gold = Math.floor(g.gold / 2);
+    g.respawn = h.respawnTime;
+    g.projectiles.length = 0;
+  }
+
+  // Back in the arena: full health, a moment of invulnerability and room to breathe.
+  function revive(g) {
+    var p = g.player, h = L.data.horde, r2 = h.respawnClear * h.respawnClear;
+    p.hp = p.stats.maxHp;
+    p.invuln = h.respawnInvuln;
+    g.enemies = g.enemies.filter(function (e) {
+      return e.type.boss || (e.x - p.x) * (e.x - p.x) + (e.y - p.y) * (e.y - p.y) > r2;
+    });
+    L.toast(g, 'Volviste. Te ' + (g.lives === 1 ? 'queda 1 vida' : 'quedan ' + g.lives + ' vidas'), '#ff6b81');
+  }
 
   function tick(g, dt, input) {
     var p = g.player;
     g.time += dt;
+    if (g.respawn > 0) {
+      // While you are down the clock and the horde keep going, but nothing touches you.
+      g.respawn -= dt;
+      if (g.spawning) { spawn(g, dt); spawnBoss(g); }
+      updateTimed(g.effects, dt);
+      updateTimed(g.toasts, dt);
+      if (g.respawn <= 0) { g.respawn = 0; revive(g); }
+      return;
+    }
+    if (p.invuln > 0) p.invuln -= dt;
     movePlayer(g, dt, input);
     if (g.spawning) { spawn(g, dt); spawnBoss(g); }
     buildGrid(g);
     moveEnemies(g, dt);
-    if (p.hp <= 0) { p.hp = 0; g.over = true; return; }
+    if (p.hp <= 0) { loseLife(g); return; }
     updateAbilities(g, dt);
     updateProjectiles(g, dt);
     removeDead(g);
@@ -217,8 +254,14 @@
   };
 
   function buildGrid(g) {
+    var maxR = 0;
     g.grid.clear();
-    for (var i = 0; i < g.enemies.length; i++) g.grid.insert(g.enemies[i]);
+    for (var i = 0; i < g.enemies.length; i++) {
+      var e = g.enemies[i];
+      g.grid.insert(e);
+      if (e.r > maxR) maxR = e.r;
+    }
+    g.maxR = maxR;
   }
 
   function moveEnemies(g, dt) {
@@ -231,7 +274,7 @@
       var vx = dx / d * e.speed, vy = dy / d * e.speed;
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
-      g.grid.query(e.x, e.y, e.r + L.MAX_ENEMY_RADIUS, q);
+      g.grid.query(e.x, e.y, e.r + g.maxR, q);
       var sx = 0, sy = 0;
       for (var j = 0; j < q.length; j++) {
         var o = q[j];
@@ -247,7 +290,7 @@
       e.x = L.clamp(e.x + (vx + sx * e.speed * 1.5) * dt, e.r, g.arena - e.r);
       e.y = L.clamp(e.y + (vy + sy * e.speed * 1.5) * dt, e.r, g.arena - e.r);
       if (e.flash > 0) e.flash -= dt;
-      if (d < e.r + p.r) { p.hp -= e.dps * dt; p.hurt = 0.15; }
+      if (d < e.r + p.r && p.invuln <= 0) { p.hp -= e.dps * dt; p.hurt = 0.15; }
       if (e.burnTtl > 0) {
         e.burnTtl -= dt;
         L.applyHit(g, e, e.burnDps * dt, 0, 0);
@@ -335,7 +378,7 @@
         var bx = p.x + Math.cos(ang) * s.radius, by = p.y + Math.sin(ang) * s.radius;
         a.blades[b] = { x: bx, y: by };
         q.length = 0;
-        g.grid.query(bx, by, s.size + L.MAX_ENEMY_RADIUS, q);
+        g.grid.query(bx, by, s.size + g.maxR, q);
         for (var i = 0; i < q.length; i++) {
           var e = q[i];
           if (e.dead) continue;
@@ -383,7 +426,7 @@
       if (pr.life <= 0 || pr.x < 0 || pr.y < 0 || pr.x > g.arena || pr.y > g.arena) pr.dead = true;
       if (!pr.dead) {
         q.length = 0;
-        g.grid.query(pr.x, pr.y, pr.r + L.MAX_ENEMY_RADIUS, q);
+        g.grid.query(pr.x, pr.y, pr.r + g.maxR, q);
         for (var j = 0; j < q.length; j++) {
           var e = q[j];
           if (e.dead || pr.hit.indexOf(e.id) !== -1) continue;
