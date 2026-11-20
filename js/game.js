@@ -1,15 +1,17 @@
-// Game engine for one arena: player, horde, abilities, projectiles and experience.
+// Game engine for one arena: player, horde, abilities, projectiles, experience and the difficulty clock.
 // Pure logic, no DOM, so tests and simulated games can run it in Node.
+// Hits and item effects live in combat.js; items and chests in items.js.
 (function (L) {
   'use strict';
 
   var TAU = Math.PI * 2;
-  var MAX_ENEMY_RADIUS = 22; // widest enemy; grid queries pad by this much
   var STEP = 1 / 30;         // longest simulation step
 
   L.MAX_LEVEL = 5;
   L.ABILITY_SLOTS = 5;
   L.PASSIVE_SLOTS = 4;
+  // Widest enemy (the boss); grid queries pad by this much so big enemies are never missed.
+  L.MAX_ENEMY_RADIUS = 40;
 
   L.findAbility = function (id) { return L.findById(L.data.abilities, id); };
   L.findPassive = function (id) { return L.findById(L.data.passives, id); };
@@ -31,10 +33,13 @@
     return h.xpBase + h.xpStep * (level - 1);
   };
 
+  // The difficulty clock: one step every minute, the same for everyone. Starts at 1.
+  L.difficulty = function (g) { return 1 + Math.floor(g.time / 60); };
+
   // opts: { seed, characterId, viewW, viewH, noSpawn }
   L.createGame = function (opts) {
     opts = opts || {};
-    var arena = L.data.horde.arena;
+    var h = L.data.horde;
     var ch = L.findById(L.data.characters, opts.characterId) || L.data.characters[0];
     var g = {
       seed: opts.seed || 1,
@@ -45,37 +50,52 @@
       pendingLevels: 0,
       spawning: !opts.noSpawn,
       spawnAcc: 0,
-      arena: arena,
+      nextBoss: h.bossFirst,
+      boss: null,
+      arena: h.arena,
       view: { w: opts.viewW || 1280, h: opts.viewH || 720 },
       player: {
-        x: arena / 2, y: arena / 2, r: 14, char: ch,
-        hp: 0, level: 1, xp: 0, abilities: [], passives: [], stats: {}, hurt: 0
+        x: h.arena / 2, y: h.arena / 2, r: 14, char: ch,
+        hp: 0, level: 1, xp: 0, abilities: [], passives: [], stats: {}, hurt: 0,
+        items: {}, itemOrder: [], onHit: [], onKill: []
       },
-      enemies: [], projectiles: [], gems: [], effects: [],
+      gold: 0,
+      enemies: [], projectiles: [], gems: [], effects: [], chests: [], toasts: [],
       kills: 0, nextId: 1,
       grid: new L.Grid(64),
-      _q: []               // reused query buffer
+      _q: []               // reused query buffer for the top-level loops (never re-entered)
     };
     L.addAbility(g, ch.start);
     recalcStats(g);
     g.player.hp = g.player.stats.maxHp;
+    if (g.spawning) L.fillChests(g);
     return g;
   };
 
-  // ---- Player stats, abilities and passives ----
+  L.toast = function (g, text, color) {
+    g.toasts.push({ text: text, color: color || '#e8e8ee', ttl: 3 });
+    if (g.toasts.length > 4) g.toasts.shift();
+  };
+
+  // ---- Player stats: character + passives + items ----
 
   function recalcStats(g) {
     var p = g.player, b = p.char.stats;
-    var m = { speedMul: 0, maxHpAdd: 0, pickupMul: 0, cooldownMul: 0, damageMul: 0, regenAdd: 0 };
+    var m = { speedMul: 0, maxHpAdd: 0, pickupMul: 0, cooldownMul: 0, damageMul: 0, regenAdd: 0,
+      cooldownHyper: 0, crit: 0, extraProjectiles: 0 };
     p.passives.forEach(function (ps) { m[ps.def.stat] += ps.def.perLevel * ps.level; });
+    L.applyItemMods(g, m);
     var oldMax = p.stats.maxHp;
     p.stats = {
       speed: b.speed * (1 + m.speedMul),
       maxHp: b.maxHp + m.maxHpAdd,
       pickup: b.pickup * (1 + m.pickupMul),
-      cooldownMul: Math.max(0.4, 1 + m.cooldownMul),
+      // Passives subtract linearly (floor 40%); items divide, so each copy helps a bit less.
+      cooldownMul: Math.max(0.4, 1 + m.cooldownMul) / (1 + m.cooldownHyper),
       damageMul: 1 + m.damageMul,
-      regen: b.regen + m.regenAdd
+      regen: b.regen + m.regenAdd,
+      crit: Math.min(1, m.crit),
+      extraProjectiles: m.extraProjectiles
     };
     if (oldMax !== undefined && p.stats.maxHp > oldMax) p.hp += p.stats.maxHp - oldMax;
   }
@@ -118,7 +138,7 @@
     var p = g.player;
     g.time += dt;
     movePlayer(g, dt, input);
-    if (g.spawning) spawn(g, dt);
+    if (g.spawning) { spawn(g, dt); spawnBoss(g); }
     buildGrid(g);
     moveEnemies(g, dt);
     if (p.hp <= 0) { p.hp = 0; g.over = true; return; }
@@ -126,7 +146,9 @@
     updateProjectiles(g, dt);
     removeDead(g);
     updateGems(g, dt);
-    updateEffects(g, dt);
+    L.updateChests(g);
+    updateTimed(g.effects, dt);
+    updateTimed(g.toasts, dt);
     p.hp = Math.min(p.stats.maxHp, p.hp + p.stats.regen * dt);
     if (p.hurt > 0) p.hurt -= dt;
     checkLevel(g);
@@ -142,39 +164,53 @@
 
   // ---- Horde ----
 
+  function ringPoint(g) {
+    var a = g.rng() * TAU;
+    var ring = Math.sqrt(g.view.w * g.view.w + g.view.h * g.view.h) / 2 + 40;
+    return { x: g.player.x + Math.cos(a) * ring, y: g.player.y + Math.sin(a) * ring };
+  }
+
   function spawn(g, dt) {
-    var h = L.data.horde, minute = g.time / 60;
-    g.spawnAcc += (h.spawnBase + h.spawnPerMinute * minute) * dt;
+    var h = L.data.horde, step = L.difficulty(g) - 1, minute = g.time / 60;
+    g.spawnAcc += (h.spawnBase + h.spawnPerLevel * step) * dt;
     while (g.spawnAcc >= 1) {
       g.spawnAcc -= 1;
       if (g.enemies.length >= h.maxAlive) continue;
-      var a = g.rng() * TAU;
-      var ring = Math.sqrt(g.view.w * g.view.w + g.view.h * g.view.h) / 2 + 40;
-      L.spawnEnemy(g, pickType(g, minute), g.player.x + Math.cos(a) * ring, g.player.y + Math.sin(a) * ring);
+      var pt = ringPoint(g);
+      L.spawnEnemy(g, pickType(g, minute), pt.x, pt.y);
     }
+  }
+
+  function spawnBoss(g) {
+    if (g.time < g.nextBoss) return;
+    var h = L.data.horde, pt = ringPoint(g);
+    g.nextBoss += h.bossEvery;
+    g.boss = L.spawnEnemy(g, h.boss, pt.x, pt.y);
+    L.toast(g, '¡Llegó un ' + g.boss.type.name + '!', '#ff5a5a');
   }
 
   function pickType(g, minute) {
     var list = L.data.enemies, total = 0, i;
-    for (i = 0; i < list.length; i++) if (list[i].from <= minute) total += list[i].weight;
+    for (i = 0; i < list.length; i++) if (list[i].weight > 0 && list[i].from <= minute) total += list[i].weight;
     var roll = g.rng() * total;
     for (i = 0; i < list.length; i++) {
-      if (list[i].from > minute) continue;
+      if (!(list[i].weight > 0) || list[i].from > minute) continue;
       roll -= list[i].weight;
       if (roll < 0) return list[i].id;
     }
     return list[0].id;
   }
 
-  // Enemies get tougher with the clock: health and damage scale with the minute they appear.
+  // Enemies get tougher with the clock: health and damage scale with the difficulty step they appear in.
   L.spawnEnemy = function (g, typeId, x, y) {
-    var t = L.findEnemy(typeId), h = L.data.horde, minute = g.time / 60;
-    var hp = t.hp * (1 + h.hpPerMinute * minute);
+    var t = L.findEnemy(typeId), h = L.data.horde, step = L.difficulty(g) - 1;
+    var hp = t.hp * Math.pow(1 + h.hpGrowth, step);
     var e = {
       id: g.nextId++, type: t,
       x: L.clamp(x, t.radius, g.arena - t.radius), y: L.clamp(y, t.radius, g.arena - t.radius),
-      r: t.radius, speed: t.speed, hp: hp, maxHp: hp,
-      dps: t.dps * (1 + h.dpsPerMinute * minute), xp: t.xp, dead: false, flash: 0
+      r: t.radius, speed: t.speed * (1 + Math.min(h.speedMax, h.speedPerLevel * step)), hp: hp, maxHp: hp,
+      dps: t.dps * (1 + h.dpsPerLevel * step), xp: t.xp, dead: false, flash: 0,
+      burnDps: 0, burnTtl: 0
     };
     g.enemies.push(e);
     return e;
@@ -189,12 +225,13 @@
     var p = g.player, q = g._q;
     for (var i = 0; i < g.enemies.length; i++) {
       var e = g.enemies[i];
+      if (e.dead) continue;
       var dx = p.x - e.x, dy = p.y - e.y;
       var d = Math.sqrt(dx * dx + dy * dy) || 1;
       var vx = dx / d * e.speed, vy = dy / d * e.speed;
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
-      g.grid.query(e.x, e.y, e.r + MAX_ENEMY_RADIUS, q);
+      g.grid.query(e.x, e.y, e.r + L.MAX_ENEMY_RADIUS, q);
       var sx = 0, sy = 0;
       for (var j = 0; j < q.length; j++) {
         var o = q[j];
@@ -202,30 +239,20 @@
         var ox = e.x - o.x, oy = e.y - o.y, rr = e.r + o.r, d2 = ox * ox + oy * oy;
         if (d2 < rr * rr && d2 > 1e-4) {
           var od = Math.sqrt(d2), push = (rr - od) / rr;
-          sx += ox / od * push; sy += oy / od * push;
+          // Big enemies shove small ones aside but barely get pushed themselves.
+          var w = o.r / (e.r + o.r) * 2;
+          sx += ox / od * push * w; sy += oy / od * push * w;
         }
       }
       e.x = L.clamp(e.x + (vx + sx * e.speed * 1.5) * dt, e.r, g.arena - e.r);
       e.y = L.clamp(e.y + (vy + sy * e.speed * 1.5) * dt, e.r, g.arena - e.r);
       if (e.flash > 0) e.flash -= dt;
       if (d < e.r + p.r) { p.hp -= e.dps * dt; p.hurt = 0.15; }
-    }
-  }
-
-  L.damageEnemy = function (g, e, amount) {
-    if (e.dead) return;
-    e.hp -= amount * g.player.stats.damageMul;
-    e.flash = 0.1;
-    if (e.hp <= 0) { e.dead = true; g.kills++; }
-  };
-
-  function areaDamage(g, x, y, r, dmg) {
-    var q = g._q;
-    q.length = 0;
-    g.grid.query(x, y, r + MAX_ENEMY_RADIUS, q);
-    for (var i = 0; i < q.length; i++) {
-      var e = q[i], rr = r + e.r, dx = e.x - x, dy = e.y - y;
-      if (!e.dead && dx * dx + dy * dy < rr * rr) L.damageEnemy(g, e, dmg);
+      if (e.burnTtl > 0) {
+        e.burnTtl -= dt;
+        L.applyHit(g, e, e.burnDps * dt, 0, 0);
+        if (e.burnTtl <= 0) e.burnDps = 0;
+      }
     }
   }
 
@@ -263,6 +290,11 @@
 
   function cooldown(g, s) { return Math.max(0.1, s.cooldown * g.player.stats.cooldownMul); }
 
+  function hitArea(g, a, x, y, r, dmg) {
+    var list = L.nearby(g, x, y, r);
+    for (var i = 0; i < list.length; i++) L.hit(g, list[i], dmg, a.def.proc);
+  }
+
   var PIECES = {
     // Shoots at the nearest enemy; extra projectiles fan out.
     projectile: function (g, a, dt) {
@@ -272,11 +304,11 @@
       var t = nearestEnemy(g, s.range);
       if (!t) { a.timer = 0; return; }
       a.timer = cooldown(g, s);
-      var base = Math.atan2(t.y - p.y, t.x - p.x);
-      for (var i = 0; i < s.count; i++) {
-        var ang = base + (i - (s.count - 1) / 2) * 0.18;
+      var base = Math.atan2(t.y - p.y, t.x - p.x), count = s.count + p.stats.extraProjectiles;
+      for (var i = 0; i < count; i++) {
+        var ang = base + (i - (count - 1) / 2) * 0.18;
         g.projectiles.push({
-          x: p.x, y: p.y, vx: Math.cos(ang) * s.speed, vy: Math.sin(ang) * s.speed, r: s.radius,
+          x: p.x, y: p.y, vx: Math.cos(ang) * s.speed, vy: Math.sin(ang) * s.speed, r: s.radius, proc: a.def.proc,
           damage: s.damage, pierce: s.pierce, life: s.range / s.speed + 0.2, hit: [], color: a.def.color, dead: false
         });
       }
@@ -288,7 +320,7 @@
       a.timer -= dt;
       if (a.timer > 0) return;
       a.timer = cooldown(g, s);
-      areaDamage(g, p.x, p.y, s.radius, s.damage);
+      hitArea(g, a, p.x, p.y, s.radius, s.damage);
       g.effects.push({ kind: 'ring', x: p.x, y: p.y, r: s.radius, ttl: 0.3, max: 0.3, color: a.def.color });
     },
 
@@ -303,7 +335,7 @@
         var bx = p.x + Math.cos(ang) * s.radius, by = p.y + Math.sin(ang) * s.radius;
         a.blades[b] = { x: bx, y: by };
         q.length = 0;
-        g.grid.query(bx, by, s.size + MAX_ENEMY_RADIUS, q);
+        g.grid.query(bx, by, s.size + L.MAX_ENEMY_RADIUS, q);
         for (var i = 0; i < q.length; i++) {
           var e = q[i];
           if (e.dead) continue;
@@ -312,7 +344,7 @@
           var last = a.hits.get(e.id);
           if (last !== undefined && g.time - last < s.hitEvery) continue;
           a.hits.set(e.id, g.time);
-          L.damageEnemy(g, e, s.damage);
+          L.hit(g, e, s.damage, a.def.proc);
         }
       }
     },
@@ -323,26 +355,20 @@
       a.timer -= dt;
       if (a.timer > 0) return;
       a.timer += s.tick;
-      areaDamage(g, p.x, p.y, s.radius, s.dps * s.tick);
+      hitArea(g, a, p.x, p.y, s.radius, s.dps * s.tick);
     },
 
     // Bolts on random enemies within range, each hitting a small area.
     strike: function (g, a, dt) {
-      var s = a.stats, p = g.player, q = g._q;
+      var s = a.stats, p = g.player;
       a.timer -= dt;
       if (a.timer > 0) return;
-      q.length = 0;
-      g.grid.query(p.x, p.y, s.range, q);
-      var targets = [];
-      for (var i = 0; i < q.length; i++) {
-        var e = q[i], dx = e.x - p.x, dy = e.y - p.y;
-        if (!e.dead && dx * dx + dy * dy < s.range * s.range) targets.push(e);
-      }
+      var targets = L.nearby(g, p.x, p.y, s.range);
       if (!targets.length) { a.timer = 0; return; }
       a.timer = cooldown(g, s);
       for (var n = 0; n < s.count && targets.length; n++) {
         var t = targets.splice(g.rng.int(targets.length), 1)[0];
-        areaDamage(g, t.x, t.y, s.splash, s.damage);
+        hitArea(g, a, t.x, t.y, s.splash, s.damage);
         g.effects.push({ kind: 'bolt', x: t.x, y: t.y, r: s.splash, ttl: 0.25, max: 0.25, color: a.def.color });
       }
     }
@@ -357,14 +383,14 @@
       if (pr.life <= 0 || pr.x < 0 || pr.y < 0 || pr.x > g.arena || pr.y > g.arena) pr.dead = true;
       if (!pr.dead) {
         q.length = 0;
-        g.grid.query(pr.x, pr.y, pr.r + MAX_ENEMY_RADIUS, q);
+        g.grid.query(pr.x, pr.y, pr.r + L.MAX_ENEMY_RADIUS, q);
         for (var j = 0; j < q.length; j++) {
           var e = q[j];
           if (e.dead || pr.hit.indexOf(e.id) !== -1) continue;
           var rr = pr.r + e.r, dx = e.x - pr.x, dy = e.y - pr.y;
           if (dx * dx + dy * dy >= rr * rr) continue;
-          L.damageEnemy(g, e, pr.damage);
           pr.hit.push(e.id);
+          L.hit(g, e, pr.damage, pr.proc);
           if (pr.pierce <= 0) { pr.dead = true; break; }
           pr.pierce--;
         }
@@ -393,14 +419,14 @@
     g.gems.length = n;
   }
 
-  function updateEffects(g, dt) {
+  function updateTimed(list, dt) {
     var n = 0;
-    for (var i = 0; i < g.effects.length; i++) {
-      var fx = g.effects[i];
-      fx.ttl -= dt;
-      if (fx.ttl > 0) g.effects[n++] = fx;
+    for (var i = 0; i < list.length; i++) {
+      var it = list[i];
+      it.ttl -= dt;
+      if (it.ttl > 0) list[n++] = it;
     }
-    g.effects.length = n;
+    list.length = n;
   }
 
   function checkLevel(g) {

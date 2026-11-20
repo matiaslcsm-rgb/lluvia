@@ -20,7 +20,8 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 ## La horda (tu arena)
 - Los enemigos aparecen desde los bordes y vienen hacia vos. Cuanto más avanza el reloj, más y más fuertes.
 - Matar deja **experiencia** (hay que juntarla caminando encima) y a veces **oro**.
-- Cada tanto aparece un **jefe** que deja un cofre gratis.
+- Aparece un **jefe** a los 2:30 y después cada 3 minutos. Al matarlo deja un cofre gratis que nunca da comunes.
+- Desde el minuto 5 llegan los **cazadores**, más rápidos que vos: no se puede escapar corriendo para siempre.
 - **Morir en la horda:** perdés una vida y la mitad del oro que llevás, y volvés a los 5 segundos.
 
 ## Habilidades (al subir de nivel)
@@ -32,15 +33,23 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - **Fusiones:** ciertas parejas (habilidad al máximo + ítem justo) se convierten en una versión mucho más fuerte.
 
 ## Ítems (con oro)
-- En la arena hay **cofres** que se abren con oro; su precio sube con el reloj.
+- En la arena siempre hay **6 cofres**. Se abren solos al tocarlos si te alcanza el oro, y aparece otro en su lugar.
+  Unas flechas en el borde de la pantalla marcan los más cercanos.
+- El precio sube con el reloj (×1,25 por escalón) un poco más rápido que el oro por baja (×1,1), así que los ítems
+  llegan a un ritmo parejo: más o menos uno por minuto.
+- Qué sale: 79% común, 20% raro, 1% legendario.
 - Los ítems **se apilan sin límite**: tener tres iguales triplica el efecto (o lo suma con rendimientos decrecientes).
 - Rarezas: **común** (blanco), **raro** (verde), **legendario** (rojo).
 - Muchos ítems disparan efectos al pegar ("10% de tirar un rayo"), y esos efectos pueden disparar otros. De ahí sale
-  la sensación de quedar roto.
+  la sensación de quedar roto. Para que no se repita para siempre, la cadena corta a los 3 eslabones.
+- Los golpes débiles y seguidos (aura, cuchillas) disparan efectos menos seguido que los fuertes.
+- Los 12 primeros: Pluma, Afilador, Reloj de arena, Vendas, Cristal y Mecha (comunes); Arpa de chispas, Ascua,
+  Colmillo y Eco (raros); Corona de tormenta y Espejo (legendarios). El detalle está en `data/items.js`.
 
 ## El reloj de dificultad
 - Sube un escalón **cada minuto**, igual para todos.
-- Cada escalón: los enemigos tienen más vida y daño, aparecen más seguido y los cofres cuestan más.
+- Cada escalón: los enemigos tienen más vida (×1,22, se va multiplicando), más daño (+15%) y un poco más de
+  velocidad (+3%, hasta +60%), aparecen más seguido y los cofres cuestan más.
 - Idea: quedarse quieto juntando no sirve; hay que crecer más rápido que el reloj.
 
 ## Duelos

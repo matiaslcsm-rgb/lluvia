@@ -1,5 +1,6 @@
 // Abilities are built from reusable pieces (`kind`): projectile, nova, orbit, aura, strike.
 // `base` is level 1; each entry of `perLevel` is added on top for levels 2 to 5.
+// `proc` scales the chance of item effects on hit (fast, weak hits get a lower one).
 // Passives change one player stat by `perLevel` for each level.
 // Numbers are provisional until the simulated-game bench exists.
 (function (L) {
@@ -7,37 +8,37 @@
 
   L.data.abilities = [
     {
-      id: 'chispa', name: 'Chispa', kind: 'projectile', color: '#ffb347',
+      id: 'chispa', name: 'Chispa', kind: 'projectile', proc: 1, color: '#ffb347',
       desc: 'Dispara al enemigo más cercano.',
       base: { damage: 12, cooldown: 0.8, count: 1, speed: 450, pierce: 0, radius: 5, range: 500 },
       perLevel: [{ damage: 4 }, { count: 1 }, { cooldown: -0.15 }, { damage: 6, pierce: 1 }]
     },
     {
-      id: 'lanza', name: 'Lanza', kind: 'projectile', color: '#cfe8ff',
+      id: 'lanza', name: 'Lanza', kind: 'projectile', proc: 1, color: '#cfe8ff',
       desc: 'Una lanza rápida que atraviesa varios enemigos.',
       base: { damage: 22, cooldown: 1.6, count: 1, speed: 650, pierce: 3, radius: 6, range: 700 },
       perLevel: [{ pierce: 2 }, { damage: 10 }, { count: 1 }, { cooldown: -0.3, damage: 10 }]
     },
     {
-      id: 'temblor', name: 'Temblor', kind: 'nova', color: '#c8a165',
+      id: 'temblor', name: 'Temblor', kind: 'nova', proc: 1, color: '#c8a165',
       desc: 'Cada tanto golpea todo lo que tenés alrededor.',
       base: { damage: 18, cooldown: 2.0, radius: 110 },
       perLevel: [{ radius: 20 }, { damage: 8 }, { cooldown: -0.4 }, { damage: 12, radius: 25 }]
     },
     {
-      id: 'cuchillas', name: 'Cuchillas', kind: 'orbit', color: '#e6e6e6',
+      id: 'cuchillas', name: 'Cuchillas', kind: 'orbit', proc: 0.5, color: '#e6e6e6',
       desc: 'Hojas que giran a tu alrededor y cortan lo que tocan.',
-      base: { damage: 9, count: 2, radius: 70, spin: 3.2, hitEvery: 0.5, size: 9 },
+      base: { damage: 10, count: 3, radius: 65, spin: 3.2, hitEvery: 0.5, size: 10 },
       perLevel: [{ count: 1 }, { damage: 5 }, { count: 1, radius: 10 }, { damage: 8, spin: 1 }]
     },
     {
-      id: 'niebla', name: 'Niebla ácida', kind: 'aura', color: '#7ddc6a',
+      id: 'niebla', name: 'Niebla ácida', kind: 'aura', proc: 0.2, color: '#7ddc6a',
       desc: 'Una nube que daña sin parar a los que se acercan.',
       base: { dps: 10, radius: 80, tick: 0.5 },
       perLevel: [{ radius: 15 }, { dps: 6 }, { radius: 15 }, { dps: 10 }]
     },
     {
-      id: 'rayo', name: 'Rayo', kind: 'strike', color: '#9ad0ff',
+      id: 'rayo', name: 'Rayo', kind: 'strike', proc: 1, color: '#9ad0ff',
       desc: 'Rayos que caen sobre enemigos al azar cerca tuyo.',
       base: { damage: 30, cooldown: 1.5, count: 1, range: 350, splash: 40 },
       perLevel: [{ count: 1 }, { damage: 15 }, { cooldown: -0.3 }, { count: 2 }]

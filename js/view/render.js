@@ -46,6 +46,21 @@
       ctx.globalAlpha = 1;
     });
 
+    // Chests: gold-coloured if you can pay, grey if not. The boss chest is free.
+    var cost = L.chestCost(g);
+    ctx.textAlign = 'center';
+    ctx.font = '600 12px system-ui, sans-serif';
+    g.chests.forEach(function (ch) {
+      if (!visible(ch.x, ch.y, 30)) return;
+      var free = ch.kind === 'boss', can = free || g.gold >= cost;
+      ctx.fillStyle = free ? '#ff5a5a' : can ? '#d9a441' : '#5b5648';
+      ctx.fillRect(ch.x - 16, ch.y - 12, 32, 24);
+      ctx.fillStyle = '#0b0c10';
+      ctx.fillRect(ch.x - 16, ch.y - 2, 32, 3);
+      ctx.fillStyle = can ? '#ffe6a0' : '#9a958a';
+      ctx.fillText(free ? 'GRATIS' : cost + ' oro', ch.x, ch.y - 18);
+    });
+
     // Experience gems.
     ctx.fillStyle = '#5fe0d0';
     g.gems.forEach(function (gem) {
@@ -59,8 +74,9 @@
     // Enemies.
     g.enemies.forEach(function (e) {
       if (!visible(e.x, e.y, e.r)) return;
-      circle(ctx, e.x, e.y, e.r, e.flash > 0 ? '#ffffff' : e.type.color);
-      if (e.hp < e.maxHp && e.r >= 20) bar(ctx, e.x - e.r, e.y - e.r - 8, e.r * 2, 4, e.hp / e.maxHp, '#e05060');
+      circle(ctx, e.x, e.y, e.r, e.flash > 0 ? '#ffffff' : e.burnTtl > 0 ? '#ff8a3d' : e.type.color);
+      if (e.type.boss) { ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 4, 0, TAU); ctx.stroke(); }
+      if (e.hp < e.maxHp && e.r >= 20 && !e.type.boss) bar(ctx, e.x - e.r, e.y - e.r - 8, e.r * 2, 4, e.hp / e.maxHp, '#e05060');
     });
 
     // Projectiles and spinning blades.
@@ -81,6 +97,11 @@
         ctx.strokeStyle = fx.color; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(fx.x + 6, fx.y - 220); ctx.lineTo(fx.x - 8, fx.y - 90); ctx.lineTo(fx.x + 5, fx.y - 40); ctx.lineTo(fx.x, fx.y); ctx.stroke();
         circle(ctx, fx.x, fx.y, fx.r * (1 - k * 0.5), fx.color);
+      } else if (fx.kind === 'chain') {
+        ctx.strokeStyle = fx.color; ctx.lineWidth = 2;
+        ctx.beginPath();
+        fx.pts.forEach(function (pt) { ctx.moveTo(fx.x, fx.y); ctx.lineTo(pt.x, pt.y); });
+        ctx.stroke();
       }
       ctx.globalAlpha = 1;
     });
@@ -104,9 +125,59 @@
     ctx.textAlign = 'center';
     ctx.font = '700 26px system-ui, sans-serif';
     ctx.fillText(clock(g.time), W / 2, 44);
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillStyle = '#ff9a7a';
+    ctx.fillText('Dificultad ' + L.difficulty(g), W / 2, 64);
     ctx.textAlign = 'right';
     ctx.font = '600 16px system-ui, sans-serif';
+    ctx.fillStyle = '#e8e8ee';
     ctx.fillText('Bajas: ' + g.kills, W - 16, 36);
+    ctx.fillStyle = '#ffd27a';
+    ctx.fillText('Oro: ' + g.gold, W - 16, 58);
+
+    // Boss health bar.
+    if (g.boss && !g.boss.dead) {
+      var bw = Math.min(420, W - 40);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd27a';
+      ctx.font = '700 13px system-ui, sans-serif';
+      ctx.fillText(g.boss.type.name, W / 2, 86);
+      bar(ctx, W / 2 - bw / 2, 92, bw, 10, g.boss.hp / g.boss.maxHp, '#d4344f');
+    }
+
+    // Arrows at the screen edge pointing to the three closest chests you can't see.
+    var off = g.chests.filter(function (ch) { return !visible(ch.x, ch.y, -pad); })
+      .sort(function (a, b) { return Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y); })
+      .slice(0, 3);
+    off.forEach(function (ch) {
+      var ang = Math.atan2(ch.y - p.y, ch.x - p.x), cx = W / 2, cy = H / 2;
+      var t = Math.min((W / 2 - 30) / Math.abs(Math.cos(ang) || 1e-6), (H / 2 - 30) / Math.abs(Math.sin(ang) || 1e-6));
+      var ax = cx + Math.cos(ang) * t, ay = cy + Math.sin(ang) * t;
+      ctx.save();
+      ctx.translate(ax, ay); ctx.rotate(ang);
+      ctx.fillStyle = ch.kind === 'boss' ? '#ff5a5a' : g.gold >= cost ? '#d9a441' : '#6b6658';
+      ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -8); ctx.lineTo(-8, 8); ctx.fill();
+      ctx.restore();
+    });
+
+    // Messages (new item, boss), newest at the bottom.
+    ctx.textAlign = 'center';
+    ctx.font = '600 15px system-ui, sans-serif';
+    g.toasts.forEach(function (tt, i) {
+      ctx.globalAlpha = Math.min(1, tt.ttl);
+      ctx.fillStyle = tt.color;
+      ctx.fillText(tt.text, W / 2, H - 40 - (g.toasts.length - 1 - i) * 22);
+    });
+    ctx.globalAlpha = 1;
+
+    // Items, bottom right: name and copies, coloured by rarity.
+    ctx.textAlign = 'right';
+    ctx.font = '13px system-ui, sans-serif';
+    p.itemOrder.forEach(function (id, i) {
+      var def = L.findItem(id);
+      ctx.fillStyle = L.data.rarities[def.rarity].color;
+      ctx.fillText(def.name + (p.items[id] > 1 ? ' ×' + p.items[id] : ''), W - 16, H - 16 - (p.itemOrder.length - 1 - i) * 18);
+    });
 
     // Owned abilities and passives, bottom left.
     ctx.textAlign = 'left';

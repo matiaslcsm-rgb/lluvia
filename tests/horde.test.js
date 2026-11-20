@@ -124,7 +124,8 @@ test('si los enemigos te bajan la vida a cero, la partida termina', function () 
 test('la horda crece con el reloj', function () {
   var g = newGame(), p = g.player;
   p.hp = 1e9; p.stats.maxHp = 1e9; p.abilities.length = 0;
-  Lluvia.update(g, 60, { x: 0, y: 0 });
+  Lluvia.update(g, 60.5, { x: 0, y: 0 });
+  assert.strictEqual(Lluvia.difficulty(g), 2);
   var firstMinute = g.enemies.length;
   var late = Lluvia.spawnEnemy(g, 'rastrero', 0, 0);
   assert.ok(late.maxHp > Lluvia.findEnemy('rastrero').hp, 'los enemigos del minuto 1 no son más duros');
