@@ -13,6 +13,9 @@ comprobar.
   - 3 vidas por jugador.
   - Morir en la horda: perdés una vida y la mitad del oro.
   - Los ítems se apilan sin tope: cada copia suma, algunos con rendimiento decreciente.
+- **2026-11-20 (decisión del usuario):** un duelo cada **2 minutos** en vez de 3, para acortar la partida (con las
+  ultis y las fusiones duraba 40-50 minutos). Con eso, en 4 partidas simuladas dura 30-41 minutos: todavía más que
+  los 20-25 del diseño; el resto se ajusta en la etapa 7.
 
 ## Decisiones abiertas
 - Ninguna por ahora.
@@ -88,3 +91,14 @@ comprobar.
   cada lado, y aviso de lo que cobraste o perdiste. 64 pruebas.
   - Partidas simuladas (3): siguen terminando con ganador, ahora entre los 8 y los 31 minutos. El oro de las
     apuestas cambia quién crece, así que el largo de la partida varía más. Se mide bien con el banco (etapa 7).
+- **2026-11-20: etapa 6.** Contenido:
+  - **Ultis:** una por personaje, con Espacio hacia el mouse (también en los duelos). Lluvia de fuego (meteoros),
+    Terremoto (aturde), Corte (salto que corta), Haz (línea larguísima) y Raíces (atrapa y cura). Arrancan a media
+    carga. La IA las usa cuando la rodean o cuando tiene al rival a tiro en un duelo.
+  - **Fusiones:** habilidad al nivel 5 + su ítem = una opción de fusión que siempre aparece al subir de nivel y
+    reemplaza a la habilidad por una versión mucho más fuerte. Hay 8, una por habilidad.
+  - **Nuevo:** 2 personajes (Ceniza y Musgo), 2 habilidades (Escarcha, que deja lentos, y Meteoro) y 4 ítems
+    (Lupa, Escudo, Trébol y Fénix). Los enemigos ahora pueden quedar aturdidos o lentos.
+  - 80 pruebas.
+  - **Lo que cambió en las partidas simuladas:** casi nadie cae en la horda, así que las partidas pasaron a durar
+    40-50 minutos. Quedó como decisión abierta (arriba).

@@ -42,7 +42,58 @@
       desc: 'Rayos que caen sobre enemigos al azar cerca tuyo.',
       base: { damage: 30, cooldown: 1.5, count: 1, range: 350, splash: 40 },
       perLevel: [{ count: 1 }, { damage: 15 }, { cooldown: -0.3 }, { count: 2 }]
-    }
+    },
+    {
+      id: 'escarcha', name: 'Escarcha', kind: 'nova', proc: 0.8, color: '#9fd8ff',
+      desc: 'Una onda de frío que daña poco pero deja lentos a los enemigos.',
+      base: { damage: 10, cooldown: 2.4, radius: 130, slow: 1.5 },
+      perLevel: [{ radius: 20 }, { damage: 6 }, { slow: 0.5, cooldown: -0.4 }, { damage: 10, radius: 20 }]
+    },
+    {
+      id: 'meteoro', name: 'Meteoro', kind: 'strike', proc: 1, color: '#ff6a3d',
+      desc: 'Cada tanto cae un meteoro enorme sobre un enemigo cercano.',
+      base: { damage: 70, cooldown: 3.2, count: 1, range: 420, splash: 85 },
+      perLevel: [{ damage: 30 }, { splash: 20 }, { cooldown: -0.7 }, { count: 1, damage: 30 }]
+    },
+
+    // Fusions: never offered as new abilities. They replace their base ability (see L.data.fusions) and are
+    // already at their top level, so they have no perLevel steps.
+    { id: 'enjambre', name: 'Enjambre de chispas', kind: 'projectile', proc: 1, color: '#ffd166', fused: true,
+      desc: 'Cinco chispas por disparo que atraviesan enemigos.',
+      base: { damage: 28, cooldown: 0.45, count: 5, speed: 520, pierce: 2, radius: 6, range: 560 }, perLevel: [] },
+    { id: 'lanza_real', name: 'Lanza real', kind: 'projectile', proc: 1, color: '#e0f0ff', fused: true,
+      desc: 'Tres lanzas que atraviesan todo.',
+      base: { damage: 90, cooldown: 1.0, count: 3, speed: 800, pierce: 99, radius: 8, range: 900 }, perLevel: [] },
+    { id: 'cataclismo', name: 'Cataclismo', kind: 'nova', proc: 1, color: '#e0b070', fused: true,
+      desc: 'Un temblor enorme y seguido.',
+      base: { damage: 75, cooldown: 1.4, radius: 250 }, perLevel: [] },
+    { id: 'torbellino', name: 'Torbellino', kind: 'orbit', proc: 0.6, color: '#ffffff', fused: true,
+      desc: 'Siete hojas grandes girando rapidísimo.',
+      base: { damage: 32, count: 7, radius: 105, spin: 5, hitEvery: 0.3, size: 14 }, perLevel: [] },
+    { id: 'pantano', name: 'Pantano', kind: 'aura', proc: 0.3, color: '#5fcf50', fused: true,
+      desc: 'Una niebla ácida enorme que derrite todo.',
+      base: { dps: 65, radius: 190, tick: 0.4 }, perLevel: [] },
+    { id: 'tormenta', name: 'Tormenta', kind: 'strike', proc: 1, color: '#bfe3ff', fused: true,
+      desc: 'Seis rayos por descarga, casi sin pausa.',
+      base: { damage: 95, cooldown: 0.8, count: 6, range: 460, splash: 70 }, perLevel: [] },
+    { id: 'glaciar', name: 'Glaciar', kind: 'nova', proc: 0.8, color: '#d8f0ff', fused: true,
+      desc: 'Una onda helada enorme que deja a todos casi quietos.',
+      base: { damage: 40, cooldown: 1.8, radius: 220, slow: 3 }, perLevel: [] },
+    { id: 'apocalipsis', name: 'Apocalipsis', kind: 'strike', proc: 1, color: '#ff3d2e', fused: true,
+      desc: 'Tres meteoros gigantes a la vez.',
+      base: { damage: 220, cooldown: 2, count: 3, range: 500, splash: 130 }, perLevel: [] }
+  ];
+
+  // Ability at level 5 + at least one copy of the item = the fusion shows up as a level-up option.
+  L.data.fusions = [
+    { ability: 'chispa', item: 'eco', into: 'enjambre' },
+    { ability: 'lanza', item: 'afilador', into: 'lanza_real' },
+    { ability: 'temblor', item: 'vendas', into: 'cataclismo' },
+    { ability: 'cuchillas', item: 'pluma', into: 'torbellino' },
+    { ability: 'niebla', item: 'colmillo', into: 'pantano' },
+    { ability: 'rayo', item: 'arpa', into: 'tormenta' },
+    { ability: 'escarcha', item: 'escudo', into: 'glaciar' },
+    { ability: 'meteoro', item: 'mecha', into: 'apocalipsis' }
   ];
 
   L.data.passives = [
@@ -57,6 +108,7 @@
   // How each stat reads in an upgrade's description ("+4 de daño").
   L.data.statLabels = {
     damage: 'de daño', cooldown: 's de recarga', count: 'de cantidad', pierce: 'enemigos atravesados',
-    radius: 'de radio', dps: 'de daño por segundo', spin: 'de velocidad de giro', splash: 'de área'
+    radius: 'de radio', dps: 'de daño por segundo', spin: 'de velocidad de giro', splash: 'de área',
+    slow: 's de lentitud'
   };
 })(this.Lluvia = this.Lluvia || {});

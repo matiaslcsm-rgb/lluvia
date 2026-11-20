@@ -52,6 +52,7 @@
   // Plays a bot's arena for dt seconds, answering its level-up choices as they come.
   function playBot(pl, dt) {
     var g = pl.game, input = L.botInput(g, pl.bot), rest = dt, guard = 0;
+    L.botUlti(g, pl.bot);
     while (rest > 1e-9 && !g.over && guard++ < 50) {
       if (g.choice) L.botChoose(g, pl.bot);
       rest = L.update(g, rest, input);

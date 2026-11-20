@@ -19,6 +19,31 @@
   }
 
   // m (optional): the match, for lives of the others and the standings.
+  // Dash trail or beam: a thick line that fades.
+  function drawLine(ctx, fx, k) {
+    ctx.strokeStyle = fx.color; ctx.lineCap = 'round';
+    ctx.lineWidth = fx.w * 2 * (0.4 + 0.6 * k);
+    ctx.beginPath(); ctx.moveTo(fx.x, fx.y); ctx.lineTo(fx.x2, fx.y2); ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+
+  // Bottom centre: your ulti and whether it is ready.
+  function ultiBadge(ctx, p, W, H, y) {
+    if (!p.ulti) return;
+    var def = p.ulti.def, ready = p.ulti.cd <= 0;
+    var text = 'ESPACIO · ' + def.name + (ready ? ' · ¡lista!' : ' · en ' + Math.ceil(p.ulti.cd) + ' s');
+    ctx.font = '700 14px system-ui, sans-serif';
+    var w = ctx.measureText(text).width + 28;
+    ctx.fillStyle = ready ? 'rgba(40, 32, 14, 0.9)' : 'rgba(14, 15, 20, 0.8)';
+    ctx.fillRect(W / 2 - w / 2, y - 18, w, 26);
+    ctx.strokeStyle = ready ? def.color : '#343846'; ctx.lineWidth = 2;
+    ctx.strokeRect(W / 2 - w / 2, y - 18, w, 26);
+    ctx.fillStyle = ready ? '#fff2c8' : '#8a8d9a';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, W / 2, y);
+  }
+  L.ultiBadge = ultiBadge;
+
   function hearts(n) { var s = ''; for (var i = 0; i < n; i++) s += '♥'; return s; }
 
   // Everyone's position: name, lives and level. Highlights you; those out show their place.
@@ -98,9 +123,11 @@
   }
 
   // The duel arena, when you are one of the two fighters. Fits the whole arena on screen.
-  L.renderDuel = function (d, ctx, W, H) {
+  // me: your index among the two fighters (to show your ulti), or -1.
+  L.renderDuel = function (d, ctx, W, H, me) {
     var size = d.size, top = 96, scale = Math.min(W / (size + 40), (H - top - 20) / (size + 40));
     var ox = (W - size * scale) / 2, oy = top + (H - top - size * scale) / 2;
+    L.duelView = { ox: ox, oy: oy, scale: scale }; // main.js turns the mouse into arena coordinates with it
     ctx.fillStyle = '#100d14';
     ctx.fillRect(0, 0, W, H);
     ctx.save();
@@ -127,7 +154,7 @@
       });
       v.projectiles.forEach(function (pr) { circle(ctx, pr.x, pr.y, pr.r, pr.color); });
       f.abilities.forEach(function (a) {
-        if (a.def.kind === 'orbit') a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.stats.size, a.def.color); });
+        if (a.def.kind === 'orbit') a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.bladeSize || a.stats.size, a.def.color); });
       });
     });
     d.effects.forEach(function (fx) {
@@ -135,6 +162,7 @@
       ctx.globalAlpha = k;
       ctx.strokeStyle = fx.color; ctx.lineWidth = 4;
       if (fx.kind === 'chain') { ctx.beginPath(); fx.pts.forEach(function (pt) { ctx.moveTo(fx.x, fx.y); ctx.lineTo(pt.x, pt.y); }); ctx.stroke(); }
+      else if (fx.kind === 'line') drawLine(ctx, fx, k);
       else if (fx.kind === 'bolt') circle(ctx, fx.x, fx.y, fx.r * (1 - k * 0.5), fx.color);
       else { ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (1.1 - k * 0.3), 0, TAU); ctx.stroke(); }
       ctx.globalAlpha = 1;
@@ -168,6 +196,7 @@
     ctx.fillStyle = F[1].type.color;
     ctx.fillText(F[1].type.name, W - 20, 72);
     bar(ctx, W - 20 - bw, 78, bw, 10, F[1].hp / F[1].maxHp, '#e05060');
+    if (me >= 0) ultiBadge(ctx, F[me], W, H, H - 16);
   };
 
   L.render = function (g, ctx, W, H, m) {
@@ -235,7 +264,7 @@
     g.projectiles.forEach(function (pr) { circle(ctx, pr.x, pr.y, pr.r, pr.color); });
     p.abilities.forEach(function (a) {
       if (a.def.kind !== 'orbit') return;
-      a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.stats.size, a.def.color); });
+      a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.bladeSize || a.stats.size, a.def.color); });
     });
 
     // Short-lived effects.
@@ -254,6 +283,8 @@
         ctx.beginPath();
         fx.pts.forEach(function (pt) { ctx.moveTo(fx.x, fx.y); ctx.lineTo(pt.x, pt.y); });
         ctx.stroke();
+      } else if (fx.kind === 'line') {
+        drawLine(ctx, fx, k);
       }
       ctx.globalAlpha = 1;
     });
@@ -333,13 +364,15 @@
       ctx.restore();
     });
 
+    ultiBadge(ctx, p, W, H, H - 16);
+
     // Messages (new item, boss), newest at the bottom.
     ctx.textAlign = 'center';
     ctx.font = '600 15px system-ui, sans-serif';
     g.toasts.forEach(function (tt, i) {
       ctx.globalAlpha = Math.min(1, tt.ttl);
       ctx.fillStyle = tt.color;
-      ctx.fillText(tt.text, W / 2, H - 40 - (g.toasts.length - 1 - i) * 22);
+      ctx.fillText(tt.text, W / 2, H - 44 - (g.toasts.length - 1 - i) * 22);
     });
     ctx.globalAlpha = 1;
 

@@ -29,6 +29,7 @@
   // Final damage (bonuses already in). Item effects call this directly with depth + 1.
   L.applyHit = function (g, e, dmg, proc, depth) {
     if (e.dead) return;
+    if (e.stats && e.stats.armor) dmg *= 1 - e.stats.armor; // a duel fighter with Escudo takes less
     e.hp -= dmg;
     e.flash = 0.1;
     var killed = e.hp <= 0;

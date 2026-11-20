@@ -4,7 +4,7 @@
   'use strict';
 
   L.data.duels = {
-    every: 180,          // seconds of horde between duels
+    every: 120,          // seconds of horde between duels (user decision 2026-11-20: 2 minutes)
     maxTime: 60,         // a duel lasts at most this long; then the one with more % health wins
     arena: 1000,         // side of the duel arena
     hpMul: 3,            // duel health = max health × this × the enemy-health growth of the clock,

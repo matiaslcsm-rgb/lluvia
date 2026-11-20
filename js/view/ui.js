@@ -39,7 +39,7 @@
         cards.appendChild(card(String(i + 1), c, function () { onPick(c.id); }));
       });
       show([el('h1', null, 'LLUVIA'), el('p', null, 'Elegí con quién arrancar'), cards,
-        el('p', 'hint', 'Te movés con WASD o las flechas. Los ataques salen solos. Q y E para apostar en los duelos. P o Esc para pausar.')]);
+        el('p', 'hint', 'Te movés con WASD o las flechas. Los ataques salen solos. Espacio tira tu ulti hacia el mouse. Q y E para apostar en los duelos. P o Esc para pausar.')]);
       L.ui.current = 'select';
     },
 

@@ -24,6 +24,10 @@
       desc: '+1 de vida por segundo.' },
     { id: 'cristal', name: 'Cristal', rarity: 'comun', kind: 'stat', stat: 'crit', perStack: 0.1,
       desc: '+10% de chance de golpe crítico (doble daño).' },
+    { id: 'lupa', name: 'Lupa', rarity: 'comun', kind: 'stat', stat: 'areaMul', perStack: 0.12,
+      desc: '+12% de área en tus habilidades (ondas, auras, órbitas y rayos).' },
+    { id: 'escudo', name: 'Escudo', rarity: 'comun', kind: 'stat', stat: 'armorHyper', perStack: 0.1,
+      desc: 'Recibís menos daño (cada copia rinde un poco menos que la anterior).' },
     { id: 'mecha', name: 'Mecha', rarity: 'comun', kind: 'onKill', effect: 'explode',
       base: { mult: 1.5, radius: 60 }, perStack: { mult: 0.75, radius: 10 },
       desc: 'Los enemigos que matás explotan: 150% del golpe a los de al lado (+75% por copia).' },
@@ -40,6 +44,8 @@
       desc: 'Cada golpe te cura 1 de vida.' },
     { id: 'eco', name: 'Eco', rarity: 'raro', kind: 'stat', stat: 'extraProjectiles', perStack: 1,
       desc: '+1 proyectil en tus habilidades que disparan.' },
+    { id: 'trebol', name: 'Trébol', rarity: 'raro', kind: 'stat', stat: 'extraChoices', perStack: 1,
+      desc: 'Al subir de nivel elegís entre una opción más.' },
 
     // Legendary
     { id: 'corona', name: 'Corona de tormenta', rarity: 'legendario', kind: 'onHit', effect: 'bigStrike', chance: 0.1,
@@ -47,7 +53,9 @@
       desc: '10% de chance al pegar: cae un rayo enorme que hace el triple del golpe.' },
     { id: 'espejo', name: 'Espejo', rarity: 'legendario', kind: 'onHit', effect: 'repeat', chance: 0.2, chancePerStack: 0.2,
       base: {}, perStack: {},
-      desc: '20% de chance de que cada golpe se repita (+20% por copia).' }
+      desc: '20% de chance de que cada golpe se repita (+20% por copia).' },
+    { id: 'fenix', name: 'Fénix', rarity: 'legendario', kind: 'special',
+      desc: 'La próxima vez que caigas en la horda, volvés ahí mismo con media vida en vez de perder una vida. Se gasta.' }
   ];
 
   // Chests: `cost` grows with each difficulty step. Weights pick the rarity of what comes out.

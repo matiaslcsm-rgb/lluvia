@@ -68,6 +68,8 @@
       _q: []               // reused query buffer for the top-level loops (never re-entered)
     };
     L.addAbility(g, ch.start);
+    var ulti = L.findUlti(ch.ulti);
+    g.player.ulti = { def: ulti, cd: ulti.cooldown / 2 }; // the first one is ready halfway through its cooldown
     recalcStats(g);
     g.player.hp = g.player.stats.maxHp;
     if (g.spawning) L.fillChests(g);
@@ -84,7 +86,7 @@
   function recalcStats(g) {
     var p = g.player, b = p.char.stats;
     var m = { speedMul: 0, maxHpAdd: 0, pickupMul: 0, cooldownMul: 0, damageMul: 0, regenAdd: 0,
-      cooldownHyper: 0, crit: 0, extraProjectiles: 0 };
+      cooldownHyper: 0, crit: 0, extraProjectiles: 0, areaMul: 0, armorHyper: 0, extraChoices: 0 };
     p.passives.forEach(function (ps) { m[ps.def.stat] += ps.def.perLevel * ps.level; });
     L.applyItemMods(g, m);
     var oldMax = p.stats.maxHp;
@@ -97,7 +99,10 @@
       damageMul: 1 + m.damageMul,
       regen: b.regen + m.regenAdd,
       crit: Math.min(1, m.crit),
-      extraProjectiles: m.extraProjectiles
+      extraProjectiles: m.extraProjectiles,
+      area: 1 + m.areaMul,
+      armor: 1 - 1 / (1 + m.armorHyper),   // share of damage you don't take; each copy helps a bit less
+      extraChoices: m.extraChoices
     };
     if (oldMax !== undefined && p.stats.maxHp > oldMax) p.hp += p.stats.maxHp - oldMax;
   }
@@ -141,6 +146,15 @@
   // Losing all health costs a life and half your gold. With lives left you come back after a few seconds.
   function loseLife(g) {
     var p = g.player, h = L.data.horde;
+    if (p.items.fenix > 0) {
+      // The Phoenix burns instead of you: back on your feet right there, with half your health.
+      p.items.fenix--;
+      if (!p.items.fenix) { delete p.items.fenix; p.itemOrder.splice(p.itemOrder.indexOf('fenix'), 1); recalcStats(g); }
+      p.hp = p.stats.maxHp / 2;
+      p.invuln = h.respawnInvuln;
+      L.toast(g, 'El Fénix te salvó: no perdiste la vida', '#ff5a5a');
+      return;
+    }
     p.hp = 0;
     g.lives--;
     g.deaths++;
@@ -174,6 +188,7 @@
       return;
     }
     if (p.invuln > 0) p.invuln -= dt;
+    L.tickUlti(p, dt);
     movePlayer(g, dt, input);
     if (g.spawning) { spawn(g, dt); spawnBoss(g); }
     buildGrid(g);
@@ -247,7 +262,7 @@
       x: L.clamp(x, t.radius, g.arena - t.radius), y: L.clamp(y, t.radius, g.arena - t.radius),
       r: t.radius, speed: t.speed * (1 + Math.min(h.speedMax, h.speedPerLevel * step)), hp: hp, maxHp: hp,
       dps: t.dps * (1 + h.dpsPerLevel * step), xp: t.xp, dead: false, flash: 0,
-      burnDps: 0, burnTtl: 0
+      burnDps: 0, burnTtl: 0, stun: 0, slow: 0
     };
     g.enemies.push(e);
     return e;
@@ -271,7 +286,11 @@
       if (e.dead) continue;
       var dx = p.x - e.x, dy = p.y - e.y;
       var d = Math.sqrt(dx * dx + dy * dy) || 1;
-      var vx = dx / d * e.speed, vy = dy / d * e.speed;
+      // Stunned enemies stand still; slowed ones move at half speed.
+      var sp = e.stun > 0 ? 0 : e.slow > 0 ? e.speed * 0.5 : e.speed;
+      if (e.stun > 0) e.stun -= dt;
+      if (e.slow > 0) e.slow -= dt;
+      var vx = dx / d * sp, vy = dy / d * sp;
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
       g.grid.query(e.x, e.y, e.r + g.maxR, q);
@@ -287,10 +306,10 @@
           sx += ox / od * push * w; sy += oy / od * push * w;
         }
       }
-      e.x = L.clamp(e.x + (vx + sx * e.speed * 1.5) * dt, e.r, g.arena - e.r);
-      e.y = L.clamp(e.y + (vy + sy * e.speed * 1.5) * dt, e.r, g.arena - e.r);
+      e.x = L.clamp(e.x + (vx + sx * sp * 1.5) * dt, e.r, g.arena - e.r);
+      e.y = L.clamp(e.y + (vy + sy * sp * 1.5) * dt, e.r, g.arena - e.r);
       if (e.flash > 0) e.flash -= dt;
-      if (d < e.r + p.r && p.invuln <= 0) { p.hp -= e.dps * dt; p.hurt = 0.15; }
+      if (d < e.r + p.r && p.invuln <= 0) { p.hp -= e.dps * dt * (1 - p.stats.armor); p.hurt = 0.15; }
       if (e.burnTtl > 0) {
         e.burnTtl -= dt;
         L.applyHit(g, e, e.burnDps * dt, 0, 0);
@@ -333,9 +352,13 @@
 
   function cooldown(g, s) { return Math.max(0.1, s.cooldown * g.player.stats.cooldownMul); }
 
-  function hitArea(g, a, x, y, r, dmg) {
+  function hitArea(g, a, x, y, r, dmg, slow) {
     var list = L.nearby(g, x, y, r);
-    for (var i = 0; i < list.length; i++) L.hit(g, list[i], dmg, a.def.proc);
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      L.hit(g, e, dmg, a.def.proc);
+      if (slow && !e.dead) e.slow = Math.max(e.slow || 0, slow);
+    }
   }
 
   var PIECES = {
@@ -363,26 +386,29 @@
       a.timer -= dt;
       if (a.timer > 0) return;
       a.timer = cooldown(g, s);
-      hitArea(g, a, p.x, p.y, s.radius, s.damage);
-      g.effects.push({ kind: 'ring', x: p.x, y: p.y, r: s.radius, ttl: 0.3, max: 0.3, color: a.def.color });
+      var r = s.radius * p.stats.area;
+      hitArea(g, a, p.x, p.y, r, s.damage, s.slow);
+      g.effects.push({ kind: 'ring', x: p.x, y: p.y, r: r, ttl: 0.3, max: 0.3, color: a.def.color });
     },
 
     // Blades spinning around you; each enemy can be hit once every `hitEvery` seconds.
     orbit: function (g, a, dt) {
-      var s = a.stats, p = g.player, q = g._q;
+      var s = a.stats, p = g.player, q = g._q, area = p.stats.area;
+      var size = s.size * area, radius = s.radius * area;
       a.angle = (a.angle + s.spin * dt) % TAU;
       a.blades.length = s.count;
+      a.bladeSize = size;
       if (a.hits.size > 3000) a.hits.clear();
       for (var b = 0; b < s.count; b++) {
         var ang = a.angle + b * TAU / s.count;
-        var bx = p.x + Math.cos(ang) * s.radius, by = p.y + Math.sin(ang) * s.radius;
+        var bx = p.x + Math.cos(ang) * radius, by = p.y + Math.sin(ang) * radius;
         a.blades[b] = { x: bx, y: by };
         q.length = 0;
-        g.grid.query(bx, by, s.size + g.maxR, q);
+        g.grid.query(bx, by, size + g.maxR, q);
         for (var i = 0; i < q.length; i++) {
           var e = q[i];
           if (e.dead) continue;
-          var rr = s.size + e.r, dx = e.x - bx, dy = e.y - by;
+          var rr = size + e.r, dx = e.x - bx, dy = e.y - by;
           if (dx * dx + dy * dy >= rr * rr) continue;
           var last = a.hits.get(e.id);
           if (last !== undefined && g.time - last < s.hitEvery) continue;
@@ -398,7 +424,7 @@
       a.timer -= dt;
       if (a.timer > 0) return;
       a.timer += s.tick;
-      hitArea(g, a, p.x, p.y, s.radius, s.dps * s.tick);
+      hitArea(g, a, p.x, p.y, s.radius * p.stats.area, s.dps * s.tick);
     },
 
     // Bolts on random enemies within range, each hitting a small area.
@@ -411,8 +437,9 @@
       a.timer = cooldown(g, s);
       for (var n = 0; n < s.count && targets.length; n++) {
         var t = targets.splice(g.rng.int(targets.length), 1)[0];
-        hitArea(g, a, t.x, t.y, s.splash, s.damage);
-        g.effects.push({ kind: 'bolt', x: t.x, y: t.y, r: s.splash, ttl: 0.25, max: 0.25, color: a.def.color });
+        var splash = s.splash * p.stats.area;
+        hitArea(g, a, t.x, t.y, splash, s.damage);
+        g.effects.push({ kind: 'bolt', x: t.x, y: t.y, r: splash, ttl: 0.25, max: 0.25, color: a.def.color });
       }
     }
   };

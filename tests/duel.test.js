@@ -105,7 +105,7 @@ test('regla de rebote: los proyectiles rebotan en vez de irse', function () {
   assert.ok(pr.vx < 0);
 });
 
-test('a los 3 minutos se anuncia el duelo de los que pelearon menos, y empieza al cerrar las apuestas', function () {
+test('a los 2 minutos se anuncia el duelo de los que pelearon menos, y empieza al cerrar las apuestas', function () {
   var m = duelMatch(50);
   m.players.forEach(function (pl) { pl.game.player.hp = pl.game.player.stats.maxHp = 1e9; });
   m.players.forEach(function (pl, i) { pl.duels = i < 6 ? 1 : 0; }); // only the last two have never fought
@@ -167,8 +167,9 @@ test('cuando quedan dos se frenan las hordas y pelean duelos seguidos hasta que 
 
 test('una partida simulada entera termina con un ganador', function () {
   var m = Lluvia.createMatch({ seed: 2, humanBot: true });
-  while (!m.over && m.time < 45 * 60) Lluvia.updateMatch(m, 1 / 30, {});
-  assert.ok(m.over, 'a los 45 minutos seguía');
+  // The design aims at 20-25 minutes; with a duel every 2 minutes it runs about 30-40 (stage 7 tunes it).
+  while (!m.over && m.time < 60 * 60) Lluvia.updateMatch(m, 1 / 30, {});
+  assert.ok(m.over, 'a los 60 minutos seguía');
   assert.ok(m.winner);
   var places = m.players.map(function (pl) { return pl.place; }).sort(function (a, b) { return a - b; });
   assert.strictEqual(places[0], 1);

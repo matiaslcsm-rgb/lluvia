@@ -28,7 +28,7 @@
     f.r = p.r * (rule.sizeMul || 1);
     f.hp = pool; f.maxHp = pool;
     f.id = id; f.dead = false; f.flash = 0; f.hurt = 0; f.invuln = 0;
-    f.burnDps = 0; f.burnTtl = 0; f.xp = 0; f.speed = 0; f.dps = 0;
+    f.burnDps = 0; f.burnTtl = 0; f.xp = 0; f.speed = 0; f.dps = 0; f.stun = 0; f.slow = 0;
     f.type = { name: pl.name, gold: 0, goldChance: 0, boss: false, color: p.char.color };
     f.owner = pl;
     // Ranged kits keep their distance; melee kits (orbit, aura, nova) close in. Used by the duel bot.
@@ -75,23 +75,34 @@
   };
 
   function move(d, f, input, dt) {
+    if (f.stun > 0) { f.stun -= dt; return; }
     var x = input.x || 0, y = input.y || 0, len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
-    f.x = L.clamp(f.x + x * f.stats.speed * dt, f.r, d.size - f.r);
-    f.y = L.clamp(f.y + y * f.stats.speed * dt, f.r, d.size - f.r);
+    var speed = f.stats.speed * (f.slow > 0 ? 0.5 : 1);
+    if (f.slow > 0) f.slow -= dt;
+    f.x = L.clamp(f.x + x * speed * dt, f.r, d.size - f.r);
+    f.y = L.clamp(f.y + y * speed * dt, f.r, d.size - f.r);
   }
+
+  // The view's grid holds just the other fighter, where it stands now.
+  function refreshView(v, foe) {
+    v.grid.clear();
+    v.grid.insert(foe);
+    v.maxR = foe.r;
+  }
+
+  // Your ulti in a duel: aimed in duel-arena coordinates.
+  L.castDuelUlti = function (d, i, x, y) {
+    if (d.over) return false;
+    refreshView(d.views[i], d.fighters[1 - i]);
+    return L.castUlti(d.views[i], x, y);
+  };
 
   function tick(d, dt, inputs) {
     d.time += dt;
     var F = d.fighters, V = d.views, i;
     for (i = 0; i < 2; i++) move(d, F[i], inputs[i], dt);
-    for (i = 0; i < 2; i++) {
-      var v = V[i], foe = F[1 - i];
-      v.time = d.time;
-      v.grid.clear();
-      v.grid.insert(foe);
-      v.maxR = foe.r;
-    }
+    for (i = 0; i < 2; i++) { V[i].time = d.time; refreshView(V[i], F[1 - i]); }
     var before = [F[0].hp, F[1].hp];
     for (i = 0; i < 2; i++) {
       var shots = V[i].projectiles.length;
@@ -102,6 +113,8 @@
       var f = F[i];
       if (f.burnTtl > 0) { f.burnTtl -= dt; L.applyHit(V[1 - i], f, f.burnDps * dt, 0, 0); if (f.burnTtl <= 0) f.burnDps = 0; }
       if (f.flash > 0) f.flash -= dt;
+      if (f.invuln > 0) f.invuln -= dt;
+      L.tickUlti(f, dt);
     }
     if (d.rule.lifesteal) {
       for (i = 0; i < 2; i++) {
@@ -143,7 +156,8 @@
     while (scaled > 1e-9 && !d.over) {
       var step = Math.min(scaled, 1 / 30);
       var inputs = d.players.map(function (pl, i) {
-        return pl.bot || !humanInput ? L.botDuelInput(d, i) : humanInput;
+        if (pl.bot || !humanInput) { L.botDuelUlti(d, i); return L.botDuelInput(d, i); }
+        return humanInput;
       });
       tick(d, step, inputs);
       scaled -= step;

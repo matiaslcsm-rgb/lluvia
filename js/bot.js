@@ -54,13 +54,34 @@
     return { x: fx, y: fy };
   };
 
+  // Ulti in the horde: when a crowd (or the boss) is close, aimed at the middle of it.
+  L.botUlti = function (g, bot) {
+    var p = g.player;
+    if (!L.ultiReady(p) || g.respawn > 0) return false;
+    var near = L.nearby(g, p.x, p.y, 280);
+    var boss = near.filter(function (e) { return e.type.boss; })[0];
+    if (!boss && near.length < 14) return false;
+    var x = 0, y = 0;
+    if (boss) { x = boss.x; y = boss.y; } else { near.forEach(function (e) { x += e.x; y += e.y; }); x /= near.length; y /= near.length; }
+    return L.castUlti(g, x, y);
+  };
+
+  // Ulti in a duel: as soon as the other one is in reach.
+  L.botDuelUlti = function (d, i) {
+    var me = d.fighters[i], foe = d.fighters[1 - i];
+    if (!L.ultiReady(me)) return false;
+    var dist = Math.sqrt((foe.x - me.x) * (foe.x - me.x) + (foe.y - me.y) * (foe.y - me.y));
+    var reach = { meteors: 550, quake: 300, dash: 360, beam: 850, roots: 320 }[me.ulti.def.kind];
+    return dist < reach && L.castDuelUlti(d, i, foe.x, foe.y);
+  };
+
   // Prefers upgrading what it has and filling ability slots early; a low-skill bot often picks at random.
   L.botChoose = function (g, bot) {
     var opts = g.choice, p = g.player;
     if (bot.rng() > bot.skill) return L.choose(g, bot.rng.int(opts.length));
     var best = 0, bestScore = -Infinity;
     opts.forEach(function (o, i) {
-      var s = { upAbility: 3, newAbility: p.abilities.length < 3 ? 2.5 : 1, upPassive: 1.5, newPassive: 1.2, heal: 1 }[o.type];
+      var s = { fusion: 10, upAbility: 3, newAbility: p.abilities.length < 3 ? 2.5 : 1, upPassive: 1.5, newPassive: 1.2, heal: 1 }[o.type];
       s += bot.rng() * 0.5;
       if (s > bestScore) { bestScore = s; best = i; }
     });

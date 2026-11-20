@@ -29,6 +29,20 @@
     if (paused) L.ui.pause(togglePause); else L.ui.hide();
   }
 
+  // Space: your ulti toward the mouse, in your arena or in the duel.
+  function ulti() {
+    var mouse = L.input.mouse;
+    if (match.duel && match.human.inDuel) {
+      var v = L.duelView, i = match.duel.players.indexOf(match.human);
+      if (v) L.castDuelUlti(match.duel, i, (mouse.x - v.ox) / v.scale, (mouse.y - v.oy) / v.scale);
+      return;
+    }
+    var g = game();
+    if (g.choice || match.final) return;
+    // The camera keeps you in the middle of the screen.
+    L.castUlti(g, g.player.x - canvas.width / 2 + mouse.x, g.player.y - canvas.height / 2 + mouse.y);
+  }
+
   // Q / E: bet a slice of your limit on the first or second fighter.
   function bet(side) {
     var mine = match.betting.byPlayer[match.human.index];
@@ -39,12 +53,13 @@
   function menu() { match = null; L.ui.characterSelect(start); }
 
   addEventListener('keydown', function (e) {
-    var n = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code];
-    if (L.ui.current === 'select' && n !== undefined) start(L.data.characters[n].id);
+    var n = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3, Numpad5: 4 }[e.code];
+    if (L.ui.current === 'select' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
+    else if (e.code === 'Space' && match && !paused && !match.over) { e.preventDefault(); ulti(); }
   });
 
   function frame(t) {
@@ -56,7 +71,7 @@
       if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick);
       if (match.over && L.ui.current !== 'over') L.ui.result(match, menu);
     }
-    if (match && match.duel && match.human.inDuel) L.renderDuel(match.duel, ctx, canvas.width, canvas.height);
+    if (match && match.duel && match.human.inDuel) L.renderDuel(match.duel, ctx, canvas.width, canvas.height, match.duel.players.indexOf(match.human));
     else L.render(game(), ctx, canvas.width, canvas.height, match);
     requestAnimationFrame(frame);
   }

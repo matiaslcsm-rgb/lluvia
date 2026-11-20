@@ -8,14 +8,21 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 
 ## La partida
 - Dura **20-25 minutos**.
-- Se repite un ciclo: **3 minutos de horda → apuestas (15 s) → duelo (hasta 60 s)**. Mientras dos pelean, los demás
+- Se repite un ciclo: **2 minutos de horda → apuestas (15 s) → duelo (hasta 60 s)**. Mientras dos pelean, los demás
   siguen en su horda.
 - Cada jugador arranca con **3 vidas**. Sin vidas, quedás afuera (y podés seguir apostando como espectador).
 - Cuando quedan dos, se terminan las hordas: duelos seguidos hasta que uno se queda sin vidas.
 
 ## Controles
 - **Moverse:** WASD o flechas. Es lo único que hacés todo el tiempo; los ataques salen solos.
-- **Ulti:** Espacio, apunta hacia el mouse. Tiene recarga larga (alrededor de 60 s).
+- **Ulti:** Espacio, apunta hacia el mouse. Tiene recarga larga (30 a 55 s) y arranca a media carga. Sirve también
+  en los duelos. Cada personaje tiene la suya:
+  - Brasa: **Lluvia de fuego**, 6 meteoros alrededor de donde apuntás.
+  - Roca: **Terremoto**, golpea todo lo cercano y lo aturde 2,5 s.
+  - Filo: **Corte**, un salto que corta lo que cruza (sin recibir daño mientras salta).
+  - Ceniza: **Haz**, una línea de energía larguísima.
+  - Musgo: **Raíces**, atrapa a los cercanos 3 s y te cura un 30%.
+- **Apostar:** Q y E (ver Apuestas).
 
 ## La horda (tu arena)
 - Los enemigos aparecen desde los bordes y vienen hacia vos. Cuanto más avanza el reloj, más y más fuertes.
@@ -32,7 +39,13 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - **5 ranuras** de habilidades automáticas + **1 ulti**, y **4 ranuras de pasivas** (más velocidad, más vida, más
   daño...). Se arranca eligiendo 1 de 3 personajes, que da la primera
   habilidad y las estadísticas base.
-- **Fusiones:** ciertas parejas (habilidad al máximo + ítem justo) se convierten en una versión mucho más fuerte.
+- Hay 5 personajes (Brasa, Roca, Filo, Ceniza y Musgo) y 8 habilidades: Chispa, Lanza, Temblor, Cuchillas,
+  Niebla ácida, Rayo, Escarcha (deja lentos) y Meteoro.
+- **Fusiones:** habilidad al nivel 5 + su ítem = aparece la fusión al subir de nivel (siempre entre las opciones), y
+  reemplaza a la habilidad por una versión mucho más fuerte:
+  Chispa + Eco = Enjambre de chispas · Lanza + Afilador = Lanza real · Temblor + Vendas = Cataclismo ·
+  Cuchillas + Pluma = Torbellino · Niebla ácida + Colmillo = Pantano · Rayo + Arpa de chispas = Tormenta ·
+  Escarcha + Escudo = Glaciar · Meteoro + Mecha = Apocalipsis.
 
 ## Ítems (con oro)
 - En la arena siempre hay **6 cofres**. Se abren solos al tocarlos si te alcanza el oro, y aparece otro en su lugar.
@@ -45,8 +58,9 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - Muchos ítems disparan efectos al pegar ("10% de tirar un rayo"), y esos efectos pueden disparar otros. De ahí sale
   la sensación de quedar roto. Para que no se repita para siempre, la cadena corta a los 3 eslabones.
 - Los golpes débiles y seguidos (aura, cuchillas) disparan efectos menos seguido que los fuertes.
-- Los 12 primeros: Pluma, Afilador, Reloj de arena, Vendas, Cristal y Mecha (comunes); Arpa de chispas, Ascua,
-  Colmillo y Eco (raros); Corona de tormenta y Espejo (legendarios). El detalle está en `data/items.js`.
+- Hay 16: Pluma, Afilador, Reloj de arena, Vendas, Cristal, Lupa, Escudo y Mecha (comunes); Arpa de chispas, Ascua,
+  Colmillo, Eco y Trébol (raros); Corona de tormenta, Espejo y Fénix (legendarios). El detalle está en
+  `data/items.js`. El Fénix es especial: la próxima vez que caigas en la horda te salva la vida, y se gasta.
 
 ## El reloj de dificultad
 - Sube un escalón **cada minuto**, igual para todos.
