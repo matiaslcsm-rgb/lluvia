@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lluvia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="overlay" class="hidden"></div>
+
+  <!-- Order matters: helpers, then data, then engine, then the browser-only view (js/view/). -->
+  <!-- tests/run.js loads every script here except js/view/. -->
+  <script src="js/util.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="data/characters.js"></script>
+  <script src="data/abilities.js"></script>
+  <script src="data/enemies.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/choices.js"></script>
+  <script src="js/view/input.js"></script>
+  <script src="js/view/render.js"></script>
+  <script src="js/view/ui.js"></script>
+  <script src="js/view/main.js"></script>
+</body>
+</html>
