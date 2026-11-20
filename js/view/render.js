@@ -41,6 +41,96 @@
     });
   }
 
+  // In your arena: who is dueling right now, or when the next duel comes.
+  function duelStatus(ctx, m) {
+    ctx.textAlign = 'left';
+    ctx.font = '600 13px system-ui, sans-serif';
+    if (m.duel) {
+      var d = m.duel, F = d.fighters;
+      ctx.fillStyle = '#ffd27a';
+      ctx.fillText('Duelo: ' + d.players[0].name + ' vs ' + d.players[1].name + ' — ' + d.rule.name, 16, 84);
+      bar(ctx, 16, 90, 105, 6, F[0].hp / F[0].maxHp, F[0].type.color);
+      bar(ctx, 131, 90, 105, 6, F[1].hp / F[1].maxHp, F[1].type.color);
+    } else if (!m.over) {
+      ctx.fillStyle = '#aab';
+      var left = Math.max(0, m.nextDuel - m.time);
+      ctx.fillText((m.final ? 'Duelo final en ' : 'Próximo duelo en ') + clock(left), 16, 84);
+    }
+  }
+
+  // The duel arena, when you are one of the two fighters. Fits the whole arena on screen.
+  L.renderDuel = function (d, ctx, W, H) {
+    var size = d.size, top = 96, scale = Math.min(W / (size + 40), (H - top - 20) / (size + 40));
+    var ox = (W - size * scale) / 2, oy = top + (H - top - size * scale) / 2;
+    ctx.fillStyle = '#100d14';
+    ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#1b1622';
+    ctx.fillRect(0, 0, size, size);
+    if (d.rule.shrink) {
+      ctx.fillStyle = 'rgba(255, 90, 40, 0.28)';
+      ctx.beginPath();
+      ctx.rect(0, 0, size, size);
+      ctx.arc(size / 2, size / 2, d.lava, 0, TAU, true);
+      ctx.fill();
+      ctx.strokeStyle = '#ff7a3d'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(size / 2, size / 2, d.lava, 0, TAU); ctx.stroke();
+    }
+    ctx.strokeStyle = '#8a5a9e'; ctx.lineWidth = 6;
+    ctx.strokeRect(0, 0, size, size);
+
+    d.fighters.forEach(function (f, i) {
+      var v = d.views[i];
+      f.abilities.forEach(function (a) {
+        if (a.def.kind === 'aura') { ctx.globalAlpha = 0.16; circle(ctx, f.x, f.y, a.stats.radius, a.def.color); ctx.globalAlpha = 1; }
+      });
+      v.projectiles.forEach(function (pr) { circle(ctx, pr.x, pr.y, pr.r, pr.color); });
+      f.abilities.forEach(function (a) {
+        if (a.def.kind === 'orbit') a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.stats.size, a.def.color); });
+      });
+    });
+    d.effects.forEach(function (fx) {
+      var k = Math.max(0, fx.ttl / fx.max);
+      ctx.globalAlpha = k;
+      ctx.strokeStyle = fx.color; ctx.lineWidth = 4;
+      if (fx.kind === 'chain') { ctx.beginPath(); fx.pts.forEach(function (pt) { ctx.moveTo(fx.x, fx.y); ctx.lineTo(pt.x, pt.y); }); ctx.stroke(); }
+      else if (fx.kind === 'bolt') circle(ctx, fx.x, fx.y, fx.r * (1 - k * 0.5), fx.color);
+      else { ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (1.1 - k * 0.3), 0, TAU); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    });
+    ctx.textAlign = 'center';
+    ctx.font = '600 22px system-ui, sans-serif';
+    d.fighters.forEach(function (f) {
+      circle(ctx, f.x, f.y, f.r + 4, '#0b0c10');
+      circle(ctx, f.x, f.y, f.r, f.flash > 0 ? '#ffffff' : f.burnTtl > 0 ? '#ff8a3d' : f.type.color);
+      ctx.fillStyle = '#e8e8ee';
+      ctx.fillText(f.type.name, f.x, f.y - f.r - 22);
+      bar(ctx, f.x - 40, f.y - f.r - 16, 80, 8, f.hp / f.maxHp, '#e05060');
+    });
+    ctx.restore();
+
+    // Header: names and health, the rule, time left.
+    var F = d.fighters, bw = Math.min(260, W / 2 - 40);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd27a';
+    ctx.font = '800 22px system-ui, sans-serif';
+    ctx.fillText('DUELO — ' + d.rule.name, W / 2, 30);
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillStyle = '#c4c6d2';
+    ctx.fillText(d.rule.desc + '   ·   quedan ' + Math.max(0, Math.ceil(L.data.duels.maxTime - d.time)) + ' s', W / 2, 50);
+    ctx.font = '600 15px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = F[0].type.color;
+    ctx.fillText(F[0].type.name, 20, 72);
+    bar(ctx, 20, 78, bw, 10, F[0].hp / F[0].maxHp, '#e05060');
+    ctx.textAlign = 'right';
+    ctx.fillStyle = F[1].type.color;
+    ctx.fillText(F[1].type.name, W - 20, 72);
+    bar(ctx, W - 20 - bw, 78, bw, 10, F[1].hp / F[1].maxHp, '#e05060');
+  };
+
   L.render = function (g, ctx, W, H, m) {
     ctx.fillStyle = '#14161c';
     ctx.fillRect(0, 0, W, H);
@@ -177,7 +267,7 @@
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Oro: ' + g.gold, W - 16, 58);
 
-    if (m) standings(ctx, m, W);
+    if (m) { standings(ctx, m, W); duelStatus(ctx, m); }
 
     // Boss health bar.
     if (g.boss && !g.boss.dead) {

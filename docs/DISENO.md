@@ -57,14 +57,22 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 ## Duelos
 - Se elige a dos jugadores (se prioriza a los que pelearon menos).
 - Pelean en una arena aparte con todo lo que tienen. Hasta 60 s; si nadie murió, gana el que tiene más % de vida.
-- **El perdedor pierde 1 vida. El ganador se lleva un premio de oro.**
-- **Peleas locas:** cada duelo sale con una regla al azar. Ejemplos:
-  - Todos gigantes (más vida, más lentos).
-  - Piso de lava que se achica.
-  - Solo cuerpo a cuerpo.
-  - Los proyectiles rebotan en las paredes.
-  - Aparecen enemigos de la horda que atacan a los dos.
-  - Velocidad doble.
+- **El perdedor pierde 1 vida. El ganador se lleva un premio de oro** (30, que crece con el reloj como el oro por
+  baja).
+- El duelo tiene su propia vida (vida máxima × 3, y crece con el reloj igual que la de los enemigos), así que dura
+  parecido al principio y al final, y no toca tu vida de la horda. Mientras peleás, tu arena espera; al volver
+  tenés 2 segundos de invulnerabilidad.
+- Ves el duelo en pantalla completa si peleás vos; si no, arriba a la izquierda se ve quién pelea y cómo va.
+- **Peleas locas:** cada duelo sale con una regla al azar. Hoy hay 6:
+  - **Gigantes:** los dos enormes, con más vida y más lentos.
+  - **Piso de lava:** la lava se va cerrando y afuera del círculo te quemás.
+  - **A toda velocidad:** todo pasa al doble de rápido.
+  - **De cristal:** los dos con la mitad de vida.
+  - **Vampiros:** cada golpe te cura un cuarto del daño que hacés.
+  - **Rebote:** los proyectiles rebotan en las paredes.
+  - Ideas para más adelante: solo cuerpo a cuerpo, y enemigos de la horda que atacan a los dos.
+- **Recta final:** cuando quedan dos, se terminan las hordas y pelean un duelo cada 5 segundos hasta que uno se
+  queda sin vidas.
 
 ## Apuestas
 - Antes de cada duelo, los que no pelean tienen **15 segundos** para apostar.

@@ -20,12 +20,21 @@ const clock = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padSt
 for (let seed = 1; seed <= matches; seed++) {
   const m = L.createMatch({ seed, humanBot: true });
   const outAt = {};
+  const duels = [];
+  let last = null;
   while (!m.over && m.time < maxTime) {
     L.updateMatch(m, 1 / 30, {});
     m.players.forEach((pl) => { if (pl.out && !(pl.name in outAt)) outAt[pl.name] = m.time; });
+    if (m.lastDuel && m.lastDuel !== last) { last = m.lastDuel; duels.push(last); }
   }
   const end = m.winner ? 'ganó ' + m.winner.name + ' a los ' + clock(m.time) : 'sin ganador a los ' + clock(m.time);
   console.log(`Partida ${seed}: ${end}`);
+  if (duels.length) {
+    const avg = duels.reduce((a, d) => a + d.time, 0) / duels.length;
+    const timeouts = duels.filter((d) => d.timeout).length;
+    console.log(`  ${duels.length} duelos, duran ${avg.toFixed(1)} s de promedio, ${timeouts} por tiempo. ` +
+      duels.map((d) => `${d.winner.name}>${d.loser.name} ${d.time.toFixed(0)}s ${d.rule.id}`).join(', '));
+  }
   for (const pl of L.standings(m)) {
     const g = pl.game;
     const items = g.player.itemOrder.reduce((n, id) => n + g.player.items[id], 0);

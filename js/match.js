@@ -1,6 +1,7 @@
 // A match: 8 players, each in their own arena (a full game from game.js). One is you, the other 7 are bots.
 // Every arena runs on the same clock. When you open a level-up choice the whole match waits.
-// The last one with lives left wins.
+// Every few minutes two players leave their arenas for a duel (duel.js); the loser loses a life.
+// When only two are left the hordes stop and they duel until one runs out of lives. The last one in wins.
 (function (L) {
   'use strict';
 
@@ -12,7 +13,13 @@
     opts = opts || {};
     var seed = opts.seed || 1, rng = L.makeRng(seed ^ 0x5bd1e995);
     var chars = L.data.characters;
-    var m = { time: 0, over: false, winner: null, players: [], human: null, rng: rng };
+    var m = {
+      time: 0, over: false, winner: null, players: [], human: null, rng: rng,
+      duel: null,                       // the duel being fought, if any
+      lastDuel: null,                   // the last finished duel (for the screen)
+      nextDuel: L.data.duels.every,
+      final: false                      // only two left: no more hordes, duels back to back
+    };
     for (var i = 0; i < 8; i++) {
       var isHuman = i === 0;
       var charId = isHuman && opts.characterId ? opts.characterId : rng.pick(chars).id;
@@ -28,6 +35,8 @@
         bot: (!isHuman || opts.humanBot) ? L.makeBot((seed * 31 + i) >>> 0, isHuman ? 0.7 : 0.35 + 0.6 * ((i - 1) / 6)) : null,
         out: false,
         place: 0,
+        duels: 0,
+        inDuel: false,
         // Rivals' arenas advance in 1/30 s steps on alternate frames, so only half of them work each frame.
         acc: i % 2 ? AI_STEP / 2 : 0
       };
@@ -50,11 +59,49 @@
 
   function tell(m, text, color) { L.toast(m.human.game, text, color); }
 
+  // Picks the two players who have fought the fewest duels (ties at random). Nobody who is down or out.
+  function pickPair(m) {
+    var pool = L.alivePlayers(m).filter(function (pl) { return pl.game.respawn <= 0; });
+    if (pool.length < 2) return null;
+    pool.forEach(function (pl) { pl._roll = m.rng(); });
+    pool.sort(function (a, b) { return (a.duels - b.duels) || (a._roll - b._roll); });
+    return [pool[0], pool[1]];
+  }
+
+  function startDuel(m) {
+    var pair = pickPair(m);
+    if (!pair) { m.nextDuel = m.time + 1; return; }
+    m.duel = L.createDuel(m, pair[0], pair[1]);
+    pair.forEach(function (pl) { pl.inDuel = true; pl.duels++; });
+    tell(m, '¡Duelo! ' + pair[0].name + ' contra ' + pair[1].name + ' — ' + m.duel.rule.name, '#ffd27a');
+  }
+
+  // The loser loses a life, the winner takes the prize, and both go back to their arenas on the match clock.
+  function endDuel(m) {
+    var d = m.duel, w = d.winner, l = d.loser, step = Math.floor(m.time / 60);
+    var prize = Math.round(L.data.duels.prize * Math.pow(1 + L.data.horde.goldGrowth, step));
+    w.game.gold += prize;
+    l.game.lives--;
+    if (l.game.lives <= 0) l.game.over = true;
+    d.players.forEach(function (pl) {
+      pl.inDuel = false;
+      pl.game.time = m.time;
+      pl.game.player.invuln = L.data.duels.returnInvuln;
+      pl.game.projectiles.length = 0;
+    });
+    d.prize = prize;
+    m.lastDuel = d;
+    m.duel = null;
+    m.nextDuel = m.time + (m.final ? L.data.duels.finalBreak : L.data.duels.every);
+    tell(m, w.name + ' le ganó el duelo a ' + l.name + (d.timeout ? ' por tiempo' : '') + ' (+' + prize + ' oro)', '#ffd27a');
+  }
+
   // input: your movement. Returns nothing; read m.over / m.winner / players[i].place.
   L.updateMatch = function (m, dt, input) {
     if (m.over) return;
     var human = m.human, played = dt;
-    if (!human.out) {
+    var humanInHorde = !human.out && !human.inDuel && !m.final;
+    if (humanInHorde) {
       if (human.bot) playBot(human, dt);
       else {
         if (human.game.choice) return; // the whole match waits for your choice
@@ -63,18 +110,29 @@
     }
     m.time += played;
     var livesBefore = m.players.map(function (pl) { return pl.game.lives; });
-    m.players.forEach(function (pl) {
-      if (pl.out || pl.isHuman) return;
-      pl.acc += played;
-      if (pl.acc >= AI_STEP - 1e-9) { playBot(pl, pl.acc); pl.acc = 0; }
-    });
+    if (!m.final) {
+      m.players.forEach(function (pl) {
+        if (pl.out || pl.isHuman || pl.inDuel) return;
+        pl.acc += played;
+        if (pl.acc >= AI_STEP - 1e-9) { playBot(pl, pl.acc); pl.acc = 0; }
+      });
+    }
+
+    var duelLoser = null;
+    if (m.duel) {
+      L.updateDuel(m.duel, played, human.inDuel && !human.bot ? input : null);
+      if (m.duel.over) { duelLoser = m.duel.loser; endDuel(m); }
+    } else if (m.time >= m.nextDuel && L.alivePlayers(m).length >= 2) {
+      startDuel(m);
+    }
 
     // Lives lost and eliminations. Everyone knocked out in the same frame shares the worst free place.
     var alive = L.alivePlayers(m).length, newlyOut = [];
     m.players.forEach(function (pl, i) {
       if (pl.out) return;
       if (pl.game.over) newlyOut.push(pl);
-      else if (!pl.isHuman && pl.game.lives < livesBefore[i]) tell(m, pl.name + ' perdió una vida', '#c4c6d2');
+      // A duel loser already got its own message.
+      else if (!pl.isHuman && pl.game.lives < livesBefore[i] && pl !== duelLoser) tell(m, pl.name + ' perdió una vida', '#c4c6d2');
     });
     newlyOut.forEach(function (pl) {
       pl.out = true;
@@ -86,8 +144,14 @@
       m.over = true;
       m.winner = left[0] || null;
       if (m.winner) m.winner.place = 1;
+      if (m.duel) { m.duel.players.forEach(function (pl) { pl.inDuel = false; }); m.duel = null; }
     } else if (human.out && !human.bot) {
       m.over = true; // you are out: the match ends for you
+    } else if (left.length === 2 && !m.final) {
+      // Recta final: hordes stop and the two left duel back to back.
+      m.final = true;
+      if (!m.duel) m.nextDuel = Math.min(m.nextDuel, m.time + L.data.duels.finalBreak);
+      tell(m, '¡Quedan dos! ' + left[0].name + ' y ' + left[1].name + ' se baten a duelo hasta el final', '#ffd27a');
     }
   };
 

@@ -418,11 +418,23 @@
   };
   L.PIECES = PIECES;
 
+  // Runs the player's abilities and their projectiles against g.enemies. The duel uses it with a "view" in
+  // which the only enemy is the other fighter.
+  L.runAbilities = function (g, dt) {
+    updateAbilities(g, dt);
+    updateProjectiles(g, dt);
+  };
+
   function updateProjectiles(g, dt) {
     var q = g._q, n = 0;
     for (var i = 0; i < g.projectiles.length; i++) {
       var pr = g.projectiles[i];
       pr.x += pr.vx * dt; pr.y += pr.vy * dt; pr.life -= dt;
+      if (g.bounce) {
+        // Duel rule: projectiles bounce off the walls instead of leaving.
+        if (pr.x < 0 || pr.x > g.arena) { pr.vx = -pr.vx; pr.x = L.clamp(pr.x, 0, g.arena); pr.hit.length = 0; }
+        if (pr.y < 0 || pr.y > g.arena) { pr.vy = -pr.vy; pr.y = L.clamp(pr.y, 0, g.arena); pr.hit.length = 0; }
+      }
       if (pr.life <= 0 || pr.x < 0 || pr.y < 0 || pr.x > g.arena || pr.y > g.arena) pr.dead = true;
       if (!pr.dead) {
         q.length = 0;

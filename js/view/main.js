@@ -48,7 +48,8 @@
       if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick);
       if (match.over && L.ui.current !== 'over') L.ui.result(match, menu);
     }
-    L.render(game(), ctx, canvas.width, canvas.height, match);
+    if (match && match.duel && match.human.inDuel) L.renderDuel(match.duel, ctx, canvas.width, canvas.height);
+    else L.render(game(), ctx, canvas.width, canvas.height, match);
     requestAnimationFrame(frame);
   }
 

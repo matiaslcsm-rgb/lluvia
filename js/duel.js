@@ -1,0 +1,152 @@
+// A duel: two players fight with their whole kit in a small arena, under one crazy rule.
+//
+// Each fighter is a light copy of its player (same abilities, stats and items) with its own position and a
+// separate duel health pool, so the duel never touches your health in the horde. The abilities engine runs
+// once per side on a "view" where the only enemy is the other fighter.
+(function (L) {
+  'use strict';
+
+  var LAVA_DPS = 0.08; // share of duel health per second you lose standing in the lava
+  var LAVA_MIN = 110;  // the lava stops closing at this radius
+
+  function difficultyStep(m) { return Math.floor(m.time / 60); }
+
+  // Duel health grows with the clock exactly like enemy health, so duels last about the same all match long.
+  L.duelPool = function (m, player, rule) {
+    var h = L.data.horde, d = L.data.duels;
+    return player.stats.maxHp * d.hpMul * Math.pow(1 + h.hpGrowth, difficultyStep(m)) * (rule.poolMul || 1);
+  };
+
+  function makeFighter(m, pl, rule, x, y, id) {
+    var p = pl.game.player;
+    var f = Object.create(p);           // reads abilities, items, char... from the real player
+    var pool = L.duelPool(m, p, rule);
+    f.stats = Object.create(p.stats);   // same stats, but the health cap is the duel pool
+    f.stats.maxHp = pool;
+    f.stats.speed = p.stats.speed * (rule.speedMul || 1);
+    f.x = x; f.y = y;
+    f.r = p.r * (rule.sizeMul || 1);
+    f.hp = pool; f.maxHp = pool;
+    f.id = id; f.dead = false; f.flash = 0; f.hurt = 0; f.invuln = 0;
+    f.burnDps = 0; f.burnTtl = 0; f.xp = 0; f.speed = 0; f.dps = 0;
+    f.type = { name: pl.name, gold: 0, goldChance: 0, boss: false, color: p.char.color };
+    f.owner = pl;
+    // Ranged kits keep their distance; melee kits (orbit, aura, nova) close in. Used by the duel bot.
+    f.prefRange = p.abilities.some(function (a) { return a.def.kind === 'projectile' || a.def.kind === 'strike'; }) ? 260 : 60;
+    return f;
+  }
+
+  // What the abilities engine sees for one side.
+  function makeView(d, me, foe) {
+    return {
+      player: me, enemies: [foe], projectiles: [], effects: d.effects, toasts: [], chests: [],
+      grid: new L.Grid(64), maxR: foe.r, rng: d.rng, time: 0, gold: 0, kills: 0, boss: null,
+      arena: d.size, bounce: !!d.rule.bounce, _q: []
+    };
+  }
+
+  // a, b: match players. rule: one of L.data.duelRules (random if omitted).
+  L.createDuel = function (m, a, b, rule) {
+    var size = L.data.duels.arena;
+    rule = rule || m.rng.pick(L.data.duelRules);
+    var d = { time: 0, over: false, winner: null, loser: null, timeout: false, size: size, rule: rule, effects: [], rng: m.rng };
+    d.players = [a, b];
+    d.fighters = [makeFighter(m, a, rule, size * 0.2, size / 2, -1), makeFighter(m, b, rule, size * 0.8, size / 2, -2)];
+    d.views = [makeView(d, d.fighters[0], d.fighters[1]), makeView(d, d.fighters[1], d.fighters[0])];
+    d.lava = size * 0.75;
+    d.bots = [a.bot ? L.makeBot(m.rng.int(1e9), a.bot.skill) : null, b.bot ? L.makeBot(m.rng.int(1e9), b.bot.skill) : null];
+    a.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); });
+    b.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); });
+    return d;
+  };
+
+  // Bot movement in a duel: hold its preferred distance, circle around the foe, stay out of the lava.
+  L.botDuelInput = function (d, i) {
+    var me = d.fighters[i], foe = d.fighters[1 - i], bot = d.bots[i];
+    var dx = foe.x - me.x, dy = foe.y - me.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / dist, uy = dy / dist;
+    var radial = L.clamp((dist - me.prefRange) / 120, -1, 1);
+    var side = Math.sin(d.time * 0.9 + (bot ? bot.wobble : i * 3)) > 0 ? 1 : -1;
+    var x = ux * radial - uy * side * 0.7, y = uy * radial + ux * side * 0.7;
+    var c = d.size / 2, cx = c - me.x, cy = c - me.y, cd = Math.sqrt(cx * cx + cy * cy) || 1;
+    if (d.rule.shrink && cd > d.lava - 60) { x += cx / cd * 2; y += cy / cd * 2; }
+    if (bot && bot.noise) { var a = bot.rng() * Math.PI * 2; x += Math.cos(a) * bot.noise * 0.5; y += Math.sin(a) * bot.noise * 0.5; }
+    return { x: x, y: y };
+  };
+
+  function move(d, f, input, dt) {
+    var x = input.x || 0, y = input.y || 0, len = Math.sqrt(x * x + y * y);
+    if (len > 1) { x /= len; y /= len; }
+    f.x = L.clamp(f.x + x * f.stats.speed * dt, f.r, d.size - f.r);
+    f.y = L.clamp(f.y + y * f.stats.speed * dt, f.r, d.size - f.r);
+  }
+
+  function tick(d, dt, inputs) {
+    d.time += dt;
+    var F = d.fighters, V = d.views, i;
+    for (i = 0; i < 2; i++) move(d, F[i], inputs[i], dt);
+    for (i = 0; i < 2; i++) {
+      var v = V[i], foe = F[1 - i];
+      v.time = d.time;
+      v.grid.clear();
+      v.grid.insert(foe);
+      v.maxR = foe.r;
+    }
+    var before = [F[0].hp, F[1].hp];
+    for (i = 0; i < 2; i++) {
+      var shots = V[i].projectiles.length;
+      L.runAbilities(V[i], dt);
+      if (d.rule.bounce) for (var s = shots; s < V[i].projectiles.length; s++) if (!V[i].projectiles[s].long) { V[i].projectiles[s].life *= 3; V[i].projectiles[s].long = true; }
+    }
+    for (i = 0; i < 2; i++) {
+      var f = F[i];
+      if (f.burnTtl > 0) { f.burnTtl -= dt; L.applyHit(V[1 - i], f, f.burnDps * dt, 0, 0); if (f.burnTtl <= 0) f.burnDps = 0; }
+      if (f.flash > 0) f.flash -= dt;
+    }
+    if (d.rule.lifesteal) {
+      for (i = 0; i < 2; i++) {
+        var dealt = Math.max(0, before[1 - i] - F[1 - i].hp);
+        if (!F[i].dead) F[i].hp = Math.min(F[i].maxHp, F[i].hp + dealt * d.rule.lifesteal);
+      }
+    }
+    if (d.rule.shrink) {
+      d.lava = Math.max(LAVA_MIN, d.size * 0.75 - (d.size * 0.75 - LAVA_MIN) * d.time / (L.data.duels.maxTime * 0.75));
+      var c = d.size / 2;
+      for (i = 0; i < 2; i++) {
+        var fl = F[i], ld = Math.sqrt((fl.x - c) * (fl.x - c) + (fl.y - c) * (fl.y - c));
+        if (ld > d.lava && !fl.dead) L.applyHit(V[1 - i], fl, fl.maxHp * LAVA_DPS * dt, 0, 0);
+      }
+    }
+    for (i = d.effects.length - 1; i >= 0; i--) { d.effects[i].ttl -= dt; if (d.effects[i].ttl <= 0) d.effects.splice(i, 1); }
+    for (i = 0; i < 2; i++) if (F[i].hp <= 0) F[i].dead = true;
+
+    if (F[0].dead || F[1].dead) {
+      // Both falling in the same instant: the one with less overkill wins.
+      var w = F[0].dead && F[1].dead ? (F[0].hp >= F[1].hp ? 0 : 1) : (F[0].dead ? 1 : 0);
+      finish(d, w, false);
+    } else if (d.time >= L.data.duels.maxTime) {
+      var fa = F[0].hp / F[0].maxHp, fb = F[1].hp / F[1].maxHp;
+      finish(d, fa === fb ? d.rng.int(2) : (fa > fb ? 0 : 1), true);
+    }
+  }
+
+  function finish(d, w, timeout) {
+    d.over = true;
+    d.timeout = timeout;
+    d.winner = d.players[w];
+    d.loser = d.players[1 - w];
+  }
+
+  // humanInput: your movement if you are one of the two (null otherwise). Bots move themselves.
+  L.updateDuel = function (d, dt, humanInput) {
+    var scaled = dt * (d.rule.timeScale || 1);
+    while (scaled > 1e-9 && !d.over) {
+      var step = Math.min(scaled, 1 / 30);
+      var inputs = d.players.map(function (pl, i) {
+        return pl.bot || !humanInput ? L.botDuelInput(d, i) : humanInput;
+      });
+      tick(d, step, inputs);
+      scaled -= step;
+    }
+  };
+})(this.Lluvia = this.Lluvia || {});
