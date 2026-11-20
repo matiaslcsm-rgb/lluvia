@@ -16,6 +16,7 @@
     var m = {
       time: 0, over: false, winner: null, players: [], human: null, rng: rng,
       duel: null,                       // the duel being fought, if any
+      betting: null,                    // the bets open before the next duel, if any
       lastDuel: null,                   // the last finished duel (for the screen)
       nextDuel: L.data.duels.every,
       final: false                      // only two left: no more hordes, duels back to back
@@ -68,12 +69,25 @@
     return [pool[0], pool[1]];
   }
 
-  function startDuel(m) {
+  // The duel is announced with its rule, and the others get a few seconds to bet (none in the final).
+  function openBets(m) {
     var pair = pickPair(m);
     if (!pair) { m.nextDuel = m.time + 1; return; }
-    m.duel = L.createDuel(m, pair[0], pair[1]);
+    var rule = m.rng.pick(L.data.duelRules);
+    m.betting = L.openBetting(m, pair, rule, m.final ? 0 : L.data.bets.window);
+    var canBet = !m.final && pair.indexOf(m.human) === -1 && !m.human.out;
+    tell(m, '¡Se viene un duelo! ' + pair[0].name + ' contra ' + pair[1].name + ' — ' + rule.name +
+      (canBet ? '. Apostá con Q o E' : ''), '#ffd27a');
+    if (m.final) startDuel(m);
+  }
+
+  function startDuel(m) {
+    var b = m.betting, pair = b.pair;
+    m.betting = null;
+    if (pair[0].out || pair[1].out) { L.refundBets(m, b); m.nextDuel = m.time + 1; return; }
+    m.duel = L.createDuel(m, pair[0], pair[1], b.rule);
+    m.duel.betting = b;
     pair.forEach(function (pl) { pl.inDuel = true; pl.duels++; });
-    tell(m, '¡Duelo! ' + pair[0].name + ' contra ' + pair[1].name + ' — ' + m.duel.rule.name, '#ffd27a');
   }
 
   // The loser loses a life, the winner takes the prize, and both go back to their arenas on the match clock.
@@ -90,6 +104,10 @@
       pl.game.projectiles.length = 0;
     });
     d.prize = prize;
+    d.payout = L.settleBets(m, d.betting, d.players.indexOf(w));
+    var me = String(m.human.index);
+    if (me in d.payout.paid) tell(m, 'Tu apuesta salió: cobraste ' + d.payout.paid[me] + ' oro', '#6fdc6a');
+    else if (me in d.payout.lost) tell(m, 'Perdiste tu apuesta' + (d.payout.lost[me] ? ' (' + d.payout.lost[me] + ' oro)' : ''), '#ff9a7a');
     m.lastDuel = d;
     m.duel = null;
     m.nextDuel = m.time + (m.final ? L.data.duels.finalBreak : L.data.duels.every);
@@ -122,8 +140,11 @@
     if (m.duel) {
       L.updateDuel(m.duel, played, human.inDuel && !human.bot ? input : null);
       if (m.duel.over) { duelLoser = m.duel.loser; endDuel(m); }
+    } else if (m.betting) {
+      L.botBets(m);
+      if (m.time >= m.betting.endsAt) startDuel(m);
     } else if (m.time >= m.nextDuel && L.alivePlayers(m).length >= 2) {
-      startDuel(m);
+      openBets(m);
     }
 
     // Lives lost and eliminations. Everyone knocked out in the same frame shares the worst free place.
@@ -145,6 +166,7 @@
       m.winner = left[0] || null;
       if (m.winner) m.winner.place = 1;
       if (m.duel) { m.duel.players.forEach(function (pl) { pl.inDuel = false; }); m.duel = null; }
+      if (m.betting) { L.refundBets(m, m.betting); m.betting = null; }
     } else if (human.out && !human.bot) {
       m.over = true; // you are out: the match ends for you
     } else if (left.length === 2 && !m.final) {

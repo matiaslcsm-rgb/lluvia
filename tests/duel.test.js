@@ -105,13 +105,20 @@ test('regla de rebote: los proyectiles rebotan en vez de irse', function () {
   assert.ok(pr.vx < 0);
 });
 
-test('el duelo empieza a los 3 minutos con los que pelearon menos, y sus hordas esperan', function () {
+test('a los 3 minutos se anuncia el duelo de los que pelearon menos, y empieza al cerrar las apuestas', function () {
   var m = duelMatch(50);
   m.players.forEach(function (pl) { pl.game.player.hp = pl.game.player.stats.maxHp = 1e9; });
   m.players.forEach(function (pl, i) { pl.duels = i < 6 ? 1 : 0; }); // only the last two have never fought
   while (m.time < Lluvia.data.duels.every - 0.1) Lluvia.updateMatch(m, 1 / 30, {});
-  assert.strictEqual(m.duel, null);
+  assert.strictEqual(m.betting, null);
   Lluvia.updateMatch(m, 0.2, {});
+  assert.ok(m.betting, 'no se abrieron las apuestas');
+  assert.strictEqual(m.duel, null);
+  var closes = m.betting.endsAt;
+  assert.ok(Math.abs(closes - m.betting.opensAt - Lluvia.data.bets.window) < 1e-9);
+  while (m.time < closes - 0.1) Lluvia.updateMatch(m, 1 / 30, {});
+  assert.strictEqual(m.duel, null, 'empezó antes de cerrar las apuestas');
+  Lluvia.updateMatch(m, 0.3, {});
   assert.ok(m.duel, 'no empezó el duelo');
   assert.deepStrictEqual(m.duel.players.map(function (pl) { return pl.index; }).sort(), [6, 7]);
   var paused = m.players[6].game.time, running = m.players[1].game.time;

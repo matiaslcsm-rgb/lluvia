@@ -29,6 +29,13 @@
     if (paused) L.ui.pause(togglePause); else L.ui.hide();
   }
 
+  // Q / E: bet a slice of your limit on the first or second fighter.
+  function bet(side) {
+    var mine = match.betting.byPlayer[match.human.index];
+    if (!mine) return;
+    L.placeBet(match, match.human, side, Math.max(1, Math.floor(mine.cap * L.data.bets.pressShare)));
+  }
+
   function menu() { match = null; L.ui.characterSelect(start); }
 
   addEventListener('keydown', function (e) {
@@ -37,6 +44,7 @@
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
+    else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
   });
 
   function frame(t) {

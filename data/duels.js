@@ -26,3 +26,14 @@
     { id: 'rebote', name: 'Rebote', desc: 'Los proyectiles rebotan en las paredes.', bounce: true }
   ];
 })(this.Lluvia = this.Lluvia || {});
+
+// Bets: before each duel the players who are not fighting have a few seconds to bet on one of the two.
+(function (L) {
+  'use strict';
+  L.data.bets = {
+    window: 15,          // seconds to bet before the duel starts (none in the final, nobody is left to bet)
+    maxShare: 0.5,       // you can bet up to this share of the gold you had when betting opened
+    pressShare: 0.2,     // each key press bets this share of that limit (so 10% of your gold)
+    free: 15             // free bet everyone gets on their first bet; grows with the clock like gold
+  };
+})(this.Lluvia = this.Lluvia || {});

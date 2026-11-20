@@ -51,11 +51,50 @@
       ctx.fillText('Duelo: ' + d.players[0].name + ' vs ' + d.players[1].name + ' — ' + d.rule.name, 16, 84);
       bar(ctx, 16, 90, 105, 6, F[0].hp / F[0].maxHp, F[0].type.color);
       bar(ctx, 131, 90, 105, 6, F[1].hp / F[1].maxHp, F[1].type.color);
+      var mine = d.betting && d.betting.byPlayer[m.human.index];
+      if (mine && mine.side !== -1) {
+        ctx.fillStyle = '#c4c6d2';
+        ctx.fillText('Tu apuesta: ' + mine.real + ' oro' + (mine.free ? ' + ' + mine.free + ' gratis' : '') + ' a ' + d.players[mine.side].name, 16, 112);
+      }
+    } else if (m.betting) {
+      ctx.fillStyle = '#ffd27a';
+      ctx.fillText('Duelo en ' + Math.ceil(m.betting.endsAt - m.time) + ' s: ' + m.betting.pair[0].name + ' vs ' + m.betting.pair[1].name + ' — ' + m.betting.rule.name, 16, 84);
     } else if (!m.over) {
       ctx.fillStyle = '#aab';
       var left = Math.max(0, m.nextDuel - m.time);
       ctx.fillText((m.final ? 'Duelo final en ' : 'Próximo duelo en ') + clock(left), 16, 84);
     }
+  }
+
+  // Betting panel at the bottom while bets are open and you are not fighting.
+  function betPanel(ctx, m, W, H) {
+    var b = m.betting, mine = b && b.byPlayer[m.human.index];
+    if (!mine) return;
+    var odds = L.betOdds(b), w = Math.min(560, W - 32), x = (W - w) / 2, y = H - 150, h = 96;
+    ctx.fillStyle = 'rgba(14, 15, 20, 0.88)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd27a';
+    ctx.font = '700 15px system-ui, sans-serif';
+    ctx.fillText('APUESTAS — cierran en ' + Math.ceil(b.endsAt - m.time) + ' s  ·  ' + b.rule.name, W / 2, y + 22);
+    [0, 1].forEach(function (side) {
+      var pl = b.pair[side], cx = x + w * (side ? 0.75 : 0.25), chosen = mine.side === side, locked = mine.side !== -1 && !chosen;
+      ctx.fillStyle = locked ? '#5d6070' : pl.game.player.char.color;
+      ctx.font = '700 16px system-ui, sans-serif';
+      ctx.fillText((side ? 'E' : 'Q') + ': ' + pl.name + (chosen ? '  ✓' : ''), cx, y + 48);
+      ctx.fillStyle = locked ? '#5d6070' : '#c4c6d2';
+      ctx.font = '13px system-ui, sans-serif';
+      var mult = odds.mult[side] ? '×' + L.formatNumber(odds.mult[side]) : 'nadie todavía';
+      ctx.fillText('nivel ' + pl.game.player.level + ' · pozo ' + odds.totals[side] + ' · paga ' + mult, cx, y + 68);
+    });
+    ctx.fillStyle = '#e8e8ee';
+    ctx.font = '13px system-ui, sans-serif';
+    var line = mine.side === -1
+      ? 'Cada toque apuesta ' + Math.max(1, Math.floor(mine.cap * L.data.bets.pressShare)) + ' oro (hasta ' + mine.cap + '). La primera suma ' + b.free + ' gratis.'
+      : 'Apostaste ' + mine.real + ' oro + ' + mine.free + ' gratis a ' + b.pair[mine.side].name + (mine.real < mine.cap ? '. Tocá de nuevo para subir.' : '. Llegaste al límite.');
+    ctx.fillText(line, W / 2, y + 88);
   }
 
   // The duel arena, when you are one of the two fighters. Fits the whole arena on screen.
@@ -267,7 +306,7 @@
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Oro: ' + g.gold, W - 16, 58);
 
-    if (m) { standings(ctx, m, W); duelStatus(ctx, m); }
+    if (m) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
 
     // Boss health bar.
     if (g.boss && !g.boss.dead) {

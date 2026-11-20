@@ -75,11 +75,19 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
   queda sin vidas.
 
 ## Apuestas
-- Antes de cada duelo, los que no pelean tienen **15 segundos** para apostar.
-- Se puede apostar hasta el **50% del oro** que tenés.
-- Pozo común: lo apostado al perdedor se reparte entre los que apostaron al ganador, en proporción a lo que puso
-  cada uno.
-- Todos tienen además una **apuesta gratis** chica en cada duelo, para que siempre valga la pena mirar.
+- Antes de cada duelo se anuncian los dos que van a pelear y la regla loca, y los que no pelean tienen
+  **15 segundos** para apostar. Mientras tanto, todos siguen en su horda.
+- **Q** apuesta al primero y **E** al segundo. Cada toque pone el 10% de tu oro. Hay un panel abajo que muestra el
+  pozo de cada lado y cuánto paga.
+- Se puede apostar hasta el **50% del oro** que tenías cuando se abrieron las apuestas. No se puede cambiar de lado.
+- Pozo común: todo lo apostado se reparte entre los que acertaron, en proporción a lo que puso cada uno. Los que le
+  erraron pierden lo que pusieron.
+- Con tu primera apuesta se suma una **apuesta gratis** (15 de oro, crece con el reloj). La pone la casa: cuenta
+  para repartir, pero no te cuesta nada.
+- Si uno de los dos queda afuera antes del duelo, se devuelve todo.
+- En la recta final no hay apuestas: no queda nadie que no pelee.
+- La IA apuesta una vez, en un momento distinto cada uno, al que se ve más fuerte (nivel, habilidades e ítems).
+  Cuanto más claro lo ve, más pone; los rivales menos hábiles se equivocan más seguido.
 
 ## La IA
 - Los 7 rivales eligen habilidades e ítems con reglas simples, se mueven esquivando y apuestan según quién parece

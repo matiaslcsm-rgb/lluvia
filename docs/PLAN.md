@@ -82,3 +82,9 @@ comprobar.
     entre 15 y 40 segundos de promedio, y casi ninguno llega a los 60.
   - Sigue el muro del minuto 5 (la mitad cae ahí, en la horda) y la partida sale algo más corta que los 20-25
     minutos del diseño. Se ajusta en la etapa 7.
+- **2026-11-20: etapa 5.** Apuestas: 15 segundos antes de cada duelo, con Q y E, hasta el 50% del oro, pozo común
+  repartido entre los que acertaron y una apuesta gratis que pone la casa. Si uno de los dos queda afuera antes
+  del duelo, se devuelve todo. La IA apuesta al que se ve más fuerte. Panel en pantalla con el pozo y cuánto paga
+  cada lado, y aviso de lo que cobraste o perdiste. 64 pruebas.
+  - Partidas simuladas (3): siguen terminando con ganador, ahora entre los 8 y los 31 minutos. El oro de las
+    apuestas cambia quién crece, así que el largo de la partida varía más. Se mide bien con el banco (etapa 7).
