@@ -75,6 +75,31 @@
       perLevel: [{ length: 30 }, { damage: 6 }, { count: 1 }, { damage: 8, length: 30 }]
     },
 
+    {
+      id: 'granizo', name: 'Granizo', kind: 'strike', proc: 0.6, color: '#dfe9f5',
+      desc: 'Una lluvia de piedritas: muchos golpes chicos sobre enemigos al azar.',
+      base: { damage: 11, cooldown: 1.0, count: 4, range: 380, splash: 28 },
+      perLevel: [{ count: 2 }, { damage: 5 }, { cooldown: -0.2 }, { count: 3, damage: 5 }]
+    },
+    {
+      id: 'remolino', name: 'Remolino', kind: 'orbit', proc: 0.8, color: '#7fb0d8',
+      desc: 'Dos bolas de agua pesadas que giran lejos de vos y pegan fuerte.',
+      base: { damage: 24, count: 2, radius: 120, spin: 1.8, hitEvery: 0.6, size: 18 },
+      perLevel: [{ damage: 10 }, { count: 1 }, { radius: 20, size: 4 }, { damage: 14, spin: 0.6 }]
+    },
+    {
+      id: 'latido', name: 'Latido', kind: 'nova', proc: 0.6, color: '#d8705a',
+      desc: 'Un pulso corto y muy seguido pegado a vos. Ideal para plantarse.',
+      base: { damage: 8, cooldown: 0.7, radius: 85 },
+      perLevel: [{ damage: 4 }, { radius: 15 }, { cooldown: -0.15 }, { damage: 6, radius: 15 }]
+    },
+    {
+      id: 'paraguazo', name: 'Paraguazo', kind: 'projectile', proc: 1, color: '#a070d0', boomerang: true,
+      desc: 'Tirás tu paraguas como un bumerán: va lejos, vuelve y atraviesa todo.',
+      base: { damage: 20, cooldown: 2.2, count: 1, speed: 460, pierce: 99, radius: 16, range: 480 },
+      perLevel: [{ damage: 8 }, { cooldown: -0.4 }, { count: 1 }, { damage: 12, radius: 4 }]
+    },
+
     // Fusions: never offered as new abilities. They replace their base ability (see L.data.fusions) and are
     // already at their top level, so they have no perLevel steps.
     { id: 'enjambre', name: 'Enjambre de chispas', kind: 'projectile', proc: 1, color: '#ffd166', fused: true,
@@ -109,7 +134,19 @@
       base: { damage: 30, cooldown: 2, life: 14, fireEvery: 0.25, range: 380, speed: 600, max: 5 }, perLevel: [] },
     { id: 'faro_mayor', name: 'Faro mayor', kind: 'sweep', proc: 0.6, color: '#fff2b0', fused: true,
       desc: 'Tres haces enormes girando a toda velocidad.',
-      base: { damage: 34, length: 300, width: 22, spin: 3.4, hitEvery: 0.3, count: 3 }, perLevel: [] }
+      base: { damage: 34, length: 300, width: 22, spin: 3.4, hitEvery: 0.3, count: 3 }, perLevel: [] },
+    { id: 'diluvio', name: 'Diluvio', kind: 'strike', proc: 0.6, color: '#f0f6ff', fused: true,
+      desc: 'Granizo sin pausa: catorce golpes por descarga.',
+      base: { damage: 34, cooldown: 0.6, count: 14, range: 480, splash: 40 }, perLevel: [] },
+    { id: 'maelstrom', name: 'Maelstrom', kind: 'orbit', proc: 0.8, color: '#4f90d0', fused: true,
+      desc: 'Cinco bolas de agua enormes en un remolino gigante.',
+      base: { damage: 80, count: 5, radius: 170, spin: 2.6, hitEvery: 0.4, size: 28 }, perLevel: [] },
+    { id: 'tambor', name: 'Tambor del barro', kind: 'nova', proc: 0.6, color: '#ff8a6a', fused: true,
+      desc: 'Un latido enorme cuatro veces por segundo.',
+      base: { damage: 30, cooldown: 0.25, radius: 170 }, perLevel: [] },
+    { id: 'paraguas_real', name: 'Paraguas real', kind: 'projectile', proc: 1, color: '#c9a0ff', boomerang: true, fused: true,
+      desc: 'Tres paraguas gigantes que van y vuelven.',
+      base: { damage: 75, cooldown: 1.1, count: 3, speed: 520, pierce: 99, radius: 26, range: 560 }, perLevel: [] }
   ];
 
   // Ability at level 5 + at least one copy of the item = the fusion shows up as a level-up option.
@@ -124,7 +161,11 @@
     { ability: 'meteoro', item: 'mecha', into: 'apocalipsis' },
     { ability: 'ola', item: 'ascua', into: 'tsunami' },
     { ability: 'torreta', item: 'cristal', into: 'fortaleza' },
-    { ability: 'faro', item: 'lupa', into: 'faro_mayor' }
+    { ability: 'faro', item: 'lupa', into: 'faro_mayor' },
+    { ability: 'granizo', item: 'racha', into: 'diluvio' },
+    { ability: 'remolino', item: 'arena', into: 'maelstrom' },
+    { ability: 'latido', item: 'ancla', into: 'tambor' },
+    { ability: 'paraguazo', item: 'charco', into: 'paraguas_real' }
   ];
 
   L.data.passives = [

@@ -50,7 +50,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 14. **Personajes 6 a 8**, con ulti propia cada uno, y 4-6 ítems más que abran builds nuevas (por ejemplo, ítems
     que premien quedarse quieto o moverse sin parar). *(hecho)*
 15. **Partida diaria:** misma semilla para todos ese día y un récord para batir.
-16. **Pulido:** menú de opciones (volumen, tamaño de letra), joystick, pantallas chicas.
+16. **Pulido:** menú de opciones (volumen, tamaño de letra), joystick, pantallas chicas. *(hecho)*
 17. **Online contra personas** (grande: necesita un servidor).
 
 ## Hecho
@@ -275,3 +275,16 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - **Banco:** con los malditos al 2% y la Gota negra al +60%, los Juicios bajaron de 12 a 9 s (el vidrio apilado)
     y los ganadores volvieron a 137 ítems. Al 1% y +40%: Juicios de 10,6 s, 124 ítems, la curva igual (pico 5,2,
     **25:14 de mediana**, banco de 40).
+- **2026-11-21: habilidades nuevas, final con sol y opciones.**
+  - **4 habilidades nuevas** (ya son 15, más 15 fusiones), pensadas para las builds nuevas:
+    - Granizo (muchos golpes chicos al azar); su fusión, Diluvio, sale con Racha.
+    - Remolino (dos bolas de agua pesadas que giran lejos); su fusión, Maelstrom, sale con Reloj de arena.
+    - Latido (pulso corto y muy seguido, para plantarse); su fusión, Tambor del barro, sale con Ancla.
+    - Paraguazo (tu paraguas como bumerán); su fusión, Paraguas real, sale con Charco de oro.
+    - Prueba nueva: toda habilidad que se ofrece tiene su fusión, con un ítem que existe.
+  - **Final con sol:** cuando ganás se abren las nubes (un sol que sube y brilla) y un epílogo propio de cada
+    Paraguas cuenta qué hace con su día de sol.
+  - **Opciones en la pausa:** temblor de pantalla sí/no y letra grande en los menús. Se guardan en el navegador.
+  - **Banco de 60 partidas:** la curva aguanta (mediana 25:28; 4,5 vidas perdidas contra la horda en los minutos
+    5-10). Duelos de 10,9 s, ganadores con 144 ítems y 5 fusiones. Puestos promedio entre 4,0 y 4,9: ningún
+    personaje se despega.

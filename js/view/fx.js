@@ -4,6 +4,15 @@
   'use strict';
   var TAU = Math.PI * 2, parts = [], texts = [], shake = 0;
 
+  // Player options (screen shake, big text), kept in the browser.
+  L.options = { shake: true, big: false };
+  try { var saved = JSON.parse(localStorage.getItem('lluvia.options') || 'null'); if (saved) for (var k in saved) L.options[k] = saved[k]; } catch (e) { /* defaults */ }
+  L.saveOptions = function () {
+    try { localStorage.setItem('lluvia.options', JSON.stringify(L.options)); } catch (e) { /* not saved */ }
+    document.body.classList.toggle('bigtext', !!L.options.big);
+  };
+  document.body.classList.toggle('bigtext', !!L.options.big);
+
   function burst(x, y, color, n, speed, life) {
     for (var i = 0; i < n && parts.length < 700; i++) {
       var a = Math.random() * TAU, v = speed * (0.3 + Math.random() * 0.7);
@@ -16,7 +25,7 @@
   }
 
   L.fx = {
-    shake: function (amount) { shake = Math.max(shake, amount); },
+    shake: function (amount) { if (L.options.shake) shake = Math.max(shake, amount); },
 
     // Turns what happened since last frame into effects and sounds. events: a game's or duel's list (emptied).
     consume: function (events) {

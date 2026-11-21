@@ -46,7 +46,7 @@
   L.ui = {
     current: null,
 
-    hide: function () { overlay.classList.add('hidden'); overlay.innerHTML = ''; L.ui.current = null; },
+    hide: function () { overlay.classList.add('hidden'); overlay.classList.remove('sunny'); overlay.innerHTML = ''; L.ui.current = null; },
 
     // A short message in the corner (sound on/off and the like).
     flash: function (text) {
@@ -205,7 +205,10 @@
       vol.appendChild(button('−', function () { L.sound.setVolume(L.sound.volume() - 0.1); label.textContent = 'Volumen ' + Math.round(L.sound.volume() * 100) + '%'; }, 'btn small'));
       vol.appendChild(label);
       vol.appendChild(button('+', function () { L.sound.setVolume(L.sound.volume() + 0.1); label.textContent = 'Volumen ' + Math.round(L.sound.volume() * 100) + '%'; }, 'btn small'));
-      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
+      var opts = el('div', 'row');
+      opts.appendChild(button('Temblor de pantalla: ' + (L.options.shake ? 'sí' : 'no'), function () { L.options.shake = !L.options.shake; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
+      opts.appendChild(button('Letra grande: ' + (L.options.big ? 'sí' : 'no'), function () { L.options.big = !L.options.big; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
+      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
       L.ui.current = 'pause';
     },
 
@@ -223,7 +226,9 @@
         ['Siguen en pie', L.alivePlayers(m).map(function (pl) { return pl.name; }).join(', ') || 'nadie']].forEach(function (r) {
         stats.appendChild(el('div', null, r[0])); stats.appendChild(el('b', null, String(r[1])));
       });
-      var nodes = [el('h2', null, title), el('p', 'tagline', pick(won ? L.data.lore.winLines : L.data.lore.loseLines)), stats];
+      var nodes = [el('h2', null, title), el('p', 'tagline', pick(won ? L.data.lore.winLines : L.data.lore.loseLines))];
+      if (won) { nodes.unshift(el('div', 'sun')); nodes.push(el('p', 'sunday', L.data.lore.sunDays[g.player.char.id] || '')); }
+      nodes.push(stats);
       if (reward) {
         nodes.push(el('p', 'coins', '+' + reward.coins + ' Monedas del Sol (tenés ' + L.profile.coins + ')'));
         (reward.opened || []).forEach(function (u) { nodes.push(el('p', 'achnew', '¡Desbloqueaste ' + (u.kind === 'char' ? 'a ' + L.findById(L.data.characters, u.id).name : (u.kind === 'pact' ? 'el Pacto ' : 'el modo ') + u.name) + '!')); });
@@ -232,6 +237,7 @@
       }
       nodes.push(button('Jugar de nuevo', onRestart), el('p', 'hint', 'Enter para volver a empezar · gastá tus monedas en el Cuaderno'));
       show(nodes);
+      overlay.classList.toggle('sunny', won);
       L.ui.current = 'over';
     }
   };

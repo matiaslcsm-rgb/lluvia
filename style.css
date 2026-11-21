@@ -68,3 +68,16 @@ canvas { touch-action: none; }
 .card.locked { opacity: 0.55; }
 .card.locked .name { color: #9a9db0; }
 .btn.storm { background: #4a2f7a; border-color: #c9b8ff; color: #fff; }
+
+/* Winning: the clouds open. */
+#overlay.sunny { background: radial-gradient(circle at 50% 18%, rgba(255, 214, 120, 0.55), rgba(255, 170, 80, 0.18) 35%, rgba(12, 13, 18, 0.92) 75%); }
+#overlay .sun { width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #fff6cf 0%, #ffd27a 55%, #ffb347 100%);
+  box-shadow: 0 0 60px 20px rgba(255, 210, 122, 0.55); animation: sunrise 2.4s ease-out both, sunpulse 3s ease-in-out 2.4s infinite; }
+#overlay .sunday { max-width: 560px; font-style: italic; color: #ffe9b8; }
+@keyframes sunrise { from { transform: translateY(60px) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sunpulse { 50% { box-shadow: 0 0 80px 30px rgba(255, 210, 122, 0.7); } }
+
+/* Option: big text in the menus. */
+body.bigtext #overlay { font-size: 120%; }
+body.bigtext .card .desc, body.bigtext .shoprow .desc, body.bigtext .ach .desc, body.bigtext .hint { font-size: 16px; }
+body.bigtext .card .name { font-size: 21px; }

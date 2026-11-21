@@ -179,3 +179,11 @@ test('los Pactos cambian la partida: Enjambre, Cristal y Juicio caótico', funct
   var d = Lluvia.createDuel(m, m.players[1], m.players[2]);
   assert.ok(d.rule.name.indexOf(' + ') > 0);
 });
+
+test('cada habilidad que se ofrece tiene su fusión, con un ítem que existe', function () {
+  Lluvia.data.abilities.filter(function (a) { return !a.fused; }).forEach(function (a) {
+    var f = Lluvia.data.fusions.filter(function (x) { return x.ability === a.id; })[0];
+    assert.ok(f, a.id + ' no tiene fusión');
+    assert.ok(Lluvia.findItem(f.item) && Lluvia.findAbility(f.into).fused, a.id);
+  });
+});
