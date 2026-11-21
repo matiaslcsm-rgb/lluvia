@@ -270,6 +270,18 @@
       ctx.fillText(free ? 'GRATIS' : cost + ' oro', ch.x, ch.y - 20);
     });
 
+    // Shrines: a stone altar with a glowing top; the active challenge shows its countdown.
+    (g.shrines || []).forEach(function (s) {
+      if (!visible(s.x, s.y, 40)) return;
+      ctx.fillStyle = '#3a3550'; ctx.fillRect(s.x - 18, s.y - 6, 36, 20);
+      ctx.fillStyle = '#524a70'; ctx.fillRect(s.x - 14, s.y - 22, 28, 18);
+      var glow = s.kind === 'trueno' ? '#c9b8ff' : '#6fdcd0';
+      ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 4); circle(ctx, s.x, s.y - 26, 12, glow); ctx.globalAlpha = 1;
+      circle(ctx, s.x, s.y - 26, 6, glow);
+      ctx.fillStyle = glow;
+      ctx.fillText(s.active ? Math.ceil(s.timer) + ' s' : s.kind === 'trueno' ? 'DESAFÍO' : 'POZO', s.x, s.y - 44);
+    });
+
     // Experience gems.
     g.gems.forEach(function (gem) { if (visible(gem.x, gem.y, 8)) L.drawGem(ctx, gem, t); });
 

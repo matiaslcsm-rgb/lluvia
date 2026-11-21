@@ -90,3 +90,25 @@ test('Cuaderno: al terminar una partida se cobran monedas y logros una sola vez'
   var again = Lluvia.settleMatch(prof, m);
   assert.strictEqual(again.unlocked.length, 0, 'cobró los logros dos veces');
 });
+
+test('Santuario del Trueno: aguantar el desafío deja un cofre; el Pozo dobla o saca oro', function () {
+  var g = s2Game();
+  g.events = [];             // shrines only exist where someone watches
+  g.player.hp = g.player.stats.maxHp = 1e9;
+  g.time = Lluvia.data.shrines.first;
+  Lluvia.update(g, 1 / 60, {});
+  var s = g.shrines[0];
+  assert.strictEqual(s.kind, 'trueno');
+  g.player.x = s.x; g.player.y = s.y;
+  Lluvia.update(g, 1 / 60, {});
+  assert.ok(s.active, 'no empezó el desafío');
+  var items = g.player.itemOrder.length;
+  Lluvia.update(g, Lluvia.data.shrines.challenge.seconds + 0.5, {});
+  // The chest lands on the shrine, where you stand, so it opens right away.
+  var opened = g.player.itemOrder.length > items || g.chests.some(function (c) { return c.kind === 'boss'; });
+  assert.ok(opened, 'no dejó el cofre');
+  g.gold = 100;
+  g.shrines.push({ kind: 'pozo', x: g.player.x, y: g.player.y, r: 22, life: 30, active: false });
+  Lluvia.update(g, 1 / 60, {});
+  assert.ok(g.gold === 125 || g.gold === 75, 'oro: ' + g.gold);
+});

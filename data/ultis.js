@@ -15,7 +15,7 @@
       stats: { damage: 110, distance: 380, width: 60 } },
     { id: 'haz', name: 'Haz', kind: 'beam', color: '#b9a3ff', cooldown: 40,
       desc: 'Una línea de energía larguísima hacia donde apuntás.',
-      stats: { damage: 100, length: 900, width: 70 } },
+      stats: { damage: 85, length: 900, width: 70 } },
     { id: 'raices', name: 'Raíces', kind: 'roots', color: '#7ddc6a', cooldown: 55,
       desc: 'Atrapa a todos los que tenés cerca 3 segundos y te cura un 30% de la vida.',
       stats: { damage: 30, radius: 350, stun: 3, heal: 0.3 } },

@@ -211,6 +211,7 @@
     removeDead(g);
     updateGems(g, dt);
     L.updateChests(g);
+    L.updateShrines(g, dt);
     updateTimed(g.effects, dt);
     updateTimed(g.toasts, dt);
     p.hp = Math.min(p.stats.maxHp, p.hp + p.stats.regen * dt);

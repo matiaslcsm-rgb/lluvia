@@ -34,9 +34,9 @@
     arena: 2400,          // side of the square arena (your barrio), in pixels
     spawnBase: 1.2,       // enemies per second at difficulty 1
     spawnPerLevel: 0.9,   // extra enemies per second for each difficulty step
-    hpGrowth: 0.28,       // enemy health ×1.28 per step (compounding, so items that snowball still get caught)
-    lateStart: 10,        // from this step on (minute 10), enemy health also grows by lateGrowth per step, so
-    lateGrowth: 0.4,      // whoever got too strong still gets caught and matches end around 20-25 minutes
+    hpGrowth: 0.22,       // enemy health ×1.22 per step (compounding, so items that snowball still get caught)
+    lateStart: 8,         // from this step on (minute 8), enemy health also grows by lateGrowth per step, so
+    lateGrowth: 0.5,      // whoever got too strong still gets caught and matches end around 20-25 minutes
     speedPerLevel: 0.03,  // +3% enemy speed per step...
     speedMax: 0.6,        // ...up to +60%
     dpsPerLevel: 0.3,     // +30% enemy damage per step (also mud and explosions)

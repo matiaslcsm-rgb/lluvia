@@ -206,3 +206,19 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
     después); queda para una próxima pasada con el banco.
   - **Personajes:** con 22 partidas, cuánto gana cada uno salta de una corrida a otra (Marea pasó de 10% a 24%).
     Para medirlos bien hacen falta unas 100 partidas (media hora de banco).
+- **2026-11-21: controles y santuarios.**
+  - **Joystick:** palanca para moverte, A para la ulti (hacia donde caminás; en el Juicio, al rival), LB/RB para
+    apostar, Start para pausar, y la cruceta con A para todos los menús.
+  - **Pantalla táctil:** un dedo arrastrado es la palanca (se dibuja en pantalla), otro toque tira la ulti hacia
+    ese punto, y tocar un lado del panel de apuestas apuesta a ese Paraguas. Los menús se achican y se desplazan en
+    pantallas chicas.
+  - **Santuarios** en tu barrio (riesgos que elegís): el Santuario del Trueno te da un cofre de jefe si aguantás
+    20 segundos de élites sin perder una vida; el Pozo de los deseos te dobla o te saca un cuarto del oro. Aparecen
+    cada 2:30 desde el minuto 3 y desaparecen al minuto si no los tocás. Solo los tenés vos (la IA no los usa), así
+    que no cambian el balance de los rivales.
+- **2026-11-21: curva de dificultad nueva (banco de 33 partidas).** La vida de los enemigos crece ×1,22 por minuto
+  (era ×1,28) y el apretón tardío arranca en el minuto 8 con ×1,5 por minuto (era el 10 con ×1,4). Resultado: el
+  pico de vidas perdidas entre los minutos 5 y 10 bajó de 7,8 a 5,4 por partida, y la horda vuelve a sacar vidas
+  entre el 10 y el 25 (antes casi ninguna). La partida dura **25 minutos de mediana**, el 80% entre 19 y 34.
+  Ajuste chico de personajes según esa corrida: Haz de Ceniza 85 de daño (salía primera), Ola de Marea 14, Torreta
+  de Óxido 10 (salía última). Con 33 partidas cada personaje sigue con mucho ruido; falta una corrida de 100.
