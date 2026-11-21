@@ -28,7 +28,7 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - Los enemigos aparecen desde los bordes y vienen hacia vos. Cuanto más avanza el reloj, más y más fuertes.
 - Matar deja **experiencia** (hay que juntarla caminando encima) y a veces **oro**.
 - Aparece un **jefe** a los 2:30 y después cada 3 minutos. Al matarlo deja un cofre gratis que nunca da comunes.
-- Desde el minuto 5 llegan los **cazadores**, más rápidos que vos: no se puede escapar corriendo para siempre.
+- Desde el minuto 7 llegan los **cazadores**, rápidos: no se puede escapar corriendo para siempre.
 - **Morir en la horda:** perdés una vida y la mitad del oro que llevás, y volvés a los 5 segundos. Al volver tenés
   2 segundos de invulnerabilidad y se van los enemigos que tenías encima (el jefe no).
 - Mientras elegís una mejora, toda la partida espera (las arenas de los rivales también).
@@ -64,8 +64,10 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 
 ## El reloj de dificultad
 - Sube un escalón **cada minuto**, igual para todos.
-- Cada escalón: los enemigos tienen más vida (×1,22, se va multiplicando), más daño (+15%) y un poco más de
+- Cada escalón: los enemigos tienen más vida (×1,28, se va multiplicando), más daño (+30%) y un poco más de
   velocidad (+3%, hasta +60%), aparecen más seguido y los cofres cuestan más.
+- Desde el minuto 10 la vida de los enemigos crece todavía más rápido (otro ×1,4 por minuto): al que se volvió
+  imparable la horda lo termina alcanzando, y la partida dura unos 23 minutos (medido con el banco).
 - Idea: quedarse quieto juntando no sirve; hay que crecer más rápido que el reloj.
 
 ## Duelos

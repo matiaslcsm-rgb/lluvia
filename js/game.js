@@ -253,10 +253,16 @@
     return list[0].id;
   }
 
+  // How much tougher enemies are at a difficulty step: compounding growth, plus a late squeeze.
+  L.enemyHpScale = function (step) {
+    var h = L.data.horde;
+    return Math.pow(1 + h.hpGrowth, step) * Math.pow(1 + h.lateGrowth, Math.max(0, step - h.lateStart));
+  };
+
   // Enemies get tougher with the clock: health and damage scale with the difficulty step they appear in.
   L.spawnEnemy = function (g, typeId, x, y) {
     var t = L.findEnemy(typeId), h = L.data.horde, step = L.difficulty(g) - 1;
-    var hp = t.hp * Math.pow(1 + h.hpGrowth, step);
+    var hp = t.hp * L.enemyHpScale(step);
     var e = {
       id: g.nextId++, type: t,
       x: L.clamp(x, t.radius, g.arena - t.radius), y: L.clamp(y, t.radius, g.arena - t.radius),

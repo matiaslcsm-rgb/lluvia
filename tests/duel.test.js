@@ -165,6 +165,15 @@ test('cuando quedan dos se frenan las hordas y pelean duelos seguidos hasta que 
   assert.strictEqual(m.players[1].game.kills, kills[1]);
 });
 
+test('la recta final termina aunque uno de los dos estuviera caído esperando volver', function () {
+  var m = duelMatch(53);
+  m.players.forEach(function (pl, i) { if (i > 1) pl.game.over = true; });
+  m.players[1].game.respawn = 4; // down in the horde when the final starts
+  for (var i = 0; i < 30 * 60 * 10 && !m.over; i++) Lluvia.updateMatch(m, 1 / 30, {});
+  assert.ok(m.over, 'la final quedó trabada');
+  assert.ok(m.winner);
+});
+
 test('una partida simulada entera termina con un ganador', function () {
   var m = Lluvia.createMatch({ seed: 2, humanBot: true });
   // The design aims at 20-25 minutes; with a duel every 2 minutes it runs about 30-40 (stage 7 tunes it).

@@ -7,7 +7,7 @@
   L.data.enemies = [
     { id: 'rastrero', name: 'Rastrero', hp: 10, speed: 70, dps: 10, radius: 12, xp: 1, gold: 1, goldChance: 0.3, color: '#b04a5a', from: 0, weight: 6 },
     { id: 'veloz', name: 'Veloz', hp: 6, speed: 135, dps: 6, radius: 9, xp: 1, gold: 1, goldChance: 0.3, color: '#d98a3a', from: 1, weight: 3 },
-    { id: 'cazador', name: 'Cazador', hp: 25, speed: 165, dps: 12, radius: 11, xp: 2, gold: 2, goldChance: 0.4, color: '#3fb6a8', from: 5, weight: 1 },
+    { id: 'cazador', name: 'Cazador', hp: 25, speed: 165, dps: 12, radius: 11, xp: 2, gold: 2, goldChance: 0.4, color: '#3fb6a8', from: 7, weight: 1 },
     { id: 'bruto', name: 'Bruto', hp: 70, speed: 45, dps: 18, radius: 22, xp: 5, gold: 3, goldChance: 1, color: '#7a4ab0', from: 2.5, weight: 1 },
     { id: 'coloso', name: 'Coloso', hp: 700, speed: 62, dps: 30, radius: 40, xp: 40, gold: 30, goldChance: 1, color: '#d4344f', from: 0, weight: 0, boss: true }
   ];
@@ -16,10 +16,12 @@
     arena: 2400,          // side of the square arena, in pixels
     spawnBase: 1.2,       // enemies per second at difficulty 1
     spawnPerLevel: 0.9,   // extra enemies per second for each difficulty step
-    hpGrowth: 0.22,       // enemy health ×1.22 per step (compounding, so items that snowball still get caught)
+    hpGrowth: 0.28,       // enemy health ×1.28 per step (compounding, so items that snowball still get caught)
+    lateStart: 10,        // from this step on (minute 10), enemy health also grows by lateGrowth per step, so
+    lateGrowth: 0.4,      // whoever got too strong still gets caught and matches end around 20-25 minutes
     speedPerLevel: 0.03,  // +3% enemy speed per step...
     speedMax: 0.6,        // ...up to +60%
-    dpsPerLevel: 0.15,    // +15% enemy damage per step
+    dpsPerLevel: 0.3,     // +30% enemy damage per step
     goldGrowth: 0.1,      // gold per kill ×1.1 per step (less than chests: more kills make up the rest)
     maxAlive: 450,
     xpBase: 5,            // experience for level 2

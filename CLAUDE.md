@@ -9,6 +9,8 @@ donde los demás apuestan. Gana el último que queda.
 - Leé `docs/DISENO.md`: cómo se juega.
 - Leé `docs/PLAN.md`: las etapas, qué está hecho y las decisiones abiertas.
 - Para jugar: abrí `index.html` en el navegador. Para las pruebas: `node tests/run.js`.
+- Para medir el balance: `node tools/bench.js [partidas] [--set ruta=valor]` (partidas enteras con bots, en
+  paralelo). Todo cambio de números se decide con el banco.
 
 ## Reglas de la casa
 - **Mecánicas sí, contenido no.** Se toman ideas de esos juegos, pero nombres, personajes, dibujos y textos son

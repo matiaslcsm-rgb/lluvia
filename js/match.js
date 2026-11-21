@@ -61,9 +61,11 @@
 
   function tell(m, text, color) { L.toast(m.human.game, text, color); }
 
-  // Picks the two players who have fought the fewest duels (ties at random). Nobody who is down or out.
+  // Picks the two players who have fought the fewest duels (ties at random). Nobody who is out, nor anybody
+  // waiting to come back to the horde, except in the final: there is no horde to come back to, so being down
+  // doesn't matter (and waiting for it would freeze the match).
   function pickPair(m) {
-    var pool = L.alivePlayers(m).filter(function (pl) { return pl.game.respawn <= 0; });
+    var pool = L.alivePlayers(m).filter(function (pl) { return m.final || pl.game.respawn <= 0; });
     if (pool.length < 2) return null;
     pool.forEach(function (pl) { pl._roll = m.rng(); });
     pool.sort(function (a, b) { return (a.duels - b.duels) || (a._roll - b._roll); });

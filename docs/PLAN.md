@@ -102,3 +102,28 @@ comprobar.
   - 80 pruebas.
   - **Lo que cambió en las partidas simuladas:** casi nadie cae en la horda, así que las partidas pasaron a durar
     40-50 minutos. Quedó como decisión abierta (arriba).
+- **2026-11-20: etapa 7.** El banco: `node tools/bench.js [partidas] [--set ruta=valor ...]` juega partidas
+  enteras con 8 bots en paralelo (usa todos los núcleos) y resume el largo de la partida, cuántas vidas se pierden
+  por minuto en la horda y en duelos, cómo le va a cada personaje, los duelos y los ganadores. Con `--set` se
+  prueba un número sin tocar los archivos (por ejemplo `--set duels.every=100`).
+  - **Cómo estaba (22 partidas):** la partida duraba 41 minutos de mediana. La horda sacaba unas 5 vidas por
+    partida en los primeros 10 minutos y después casi ninguna: los que pasaban el minuto 10 ya no caían, y
+    decidían solo los duelos.
+  - **Arreglo de un error:** si alguien estaba caído esperando volver justo cuando quedaban dos, la partida se
+    trababa para siempre (en la recta final no hay horda, y el tiempo de espera corre en la horda). Ahora en la
+    final se puede pelear aunque estés caído. Tiene su prueba.
+  - **Lo que se cambió, midiendo cada paso:**
+    - La vida de los enemigos crece ×1,28 por minuto (era ×1,22), y desde el minuto 10 además ×1,4 por minuto: a
+      los que se vuelven imparables la horda los termina alcanzando.
+    - El daño de los enemigos crece +30% por minuto (era +15%).
+    - El Cazador llega en el minuto 7 (era el 5): era buena parte del muro del minuto 5.
+    - Personajes: Brasa (105) y Filo (100) con más vida y Lluvia de fuego pega más; Haz pega menos (era el
+      más fuerte); Musgo se cura un poco más rápido.
+  - **Cómo quedó (33 partidas):** la partida dura **23 minutos de mediana**, y el 80% entre 21 y 26: lo del
+    diseño. La horda saca vidas a lo largo de toda la partida (antes, solo entre los minutos 5 y 10). Los duelos
+    duran 21 segundos de promedio y solo el 5% llega a los 60.
+  - **Personajes (otras 33 partidas, con los números finales):** cada uno gana entre el 9% y el 16% de las veces
+    que lo juegan (lo justo es 12,5%) y el puesto promedio va de 4,0 a 5,0. Con 33 partidas, diferencias de unos
+    pocos puntos son ruido; para afinar más hacen falta corridas más largas (100 partidas tardan media hora).
+  - Sigue habiendo más vidas perdidas entre los minutos 5 y 10 que en el resto (unas 5 por partida), pero ya no es
+    un muro: es cuando la horda se pone seria por primera vez.

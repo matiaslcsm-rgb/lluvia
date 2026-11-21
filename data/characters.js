@@ -6,7 +6,7 @@
     {
       id: 'brasa', name: 'Brasa', color: '#ff7a3d',
       desc: 'Equilibrada. Arranca con Chispa. Ulti: Lluvia de fuego, meteoros donde apuntás.',
-      stats: { maxHp: 100, speed: 210, regen: 0, pickup: 70 },
+      stats: { maxHp: 105, speed: 210, regen: 0, pickup: 70 },
       start: 'chispa', ulti: 'meteoros'
     },
     {
@@ -18,7 +18,7 @@
     {
       id: 'filo', name: 'Filo', color: '#9fe3ff',
       desc: 'Rápida y frágil. Arranca con Cuchillas. Ulti: Corte, un salto que corta lo que cruza.',
-      stats: { maxHp: 85, speed: 240, regen: 0, pickup: 80 },
+      stats: { maxHp: 100, speed: 240, regen: 0, pickup: 80 },
       start: 'cuchillas', ulti: 'corte'
     },
     {
@@ -30,7 +30,7 @@
     {
       id: 'musgo', name: 'Musgo', color: '#7ddc6a',
       desc: 'Aguanta y se cura. Arranca con Niebla ácida. Ulti: Raíces, que atrapan y te curan.',
-      stats: { maxHp: 130, speed: 190, regen: 1, pickup: 70 },
+      stats: { maxHp: 130, speed: 190, regen: 1.5, pickup: 70 },
       start: 'niebla', ulti: 'raices'
     }
   ];
