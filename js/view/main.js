@@ -26,7 +26,7 @@
     L.fx.clear();
     daily = !!isDaily;
     var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
-    match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile });
+    match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta') });
     reward = null;
     paused = false;
     L.ui.hide();
@@ -67,7 +67,7 @@
 
   addEventListener('keydown', function (e) {
     var n = /^(Digit|Numpad)[1-8]$/.test(e.code) ? Number(e.code.slice(-1)) - 1 : undefined;
-    if (L.ui.current === 'select' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id);
+    if (L.ui.current === 'select' && n !== undefined && L.data.characters[n] && L.isUnlocked(L.profile, L.data.characters[n].id)) start(L.data.characters[n].id);
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();

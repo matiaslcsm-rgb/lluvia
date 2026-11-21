@@ -20,7 +20,8 @@
       betting: null,                    // the bets open before the next duel, if any
       lastDuel: null,                   // the last finished duel (for the screen)
       nextDuel: L.data.duels.every,
-      final: false                      // only two left: no more hordes, duels back to back
+      final: false,                     // only two left: no more hordes, duels back to back
+      storm: !!opts.storm               // Tormenta eterna (hard mode)
     };
     for (var i = 0; i < 8; i++) {
       var isHuman = i === 0;
@@ -31,10 +32,10 @@
         isHuman: isHuman,
         game: L.createGame({
           seed: (seed + i * 7919) >>> 0, characterId: charId, listen: isHuman && !opts.humanBot,
-          viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720
+          viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720, storm: m.storm
         }),
         // Rivals get a spread of skills so some fall early and some go far.
-        bot: (!isHuman || opts.humanBot) ? L.makeBot((seed * 31 + i) >>> 0, isHuman ? 0.7 : 0.35 + 0.6 * ((i - 1) / 6)) : null,
+        bot: (!isHuman || opts.humanBot) ? L.makeBot((seed * 31 + i) >>> 0, isHuman ? 0.7 : Math.min(1, 0.35 + 0.6 * ((i - 1) / 6) + (m.storm ? L.data.meta.storm.botSkill : 0))) : null,
         out: false,
         place: 0,
         duels: 0,

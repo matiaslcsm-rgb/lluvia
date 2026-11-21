@@ -166,6 +166,12 @@
     ctx.strokeStyle = '#8a5a9e'; ctx.lineWidth = 6;
     ctx.strokeRect(0, 0, size, size);
 
+    d.creeps.forEach(function (c) {
+      if (c.dead) return;
+      var f = d.fighters[0], g2 = d.fighters[1];
+      var near = (f.x - c.x) * (f.x - c.x) + (f.y - c.y) * (f.y - c.y) <= (g2.x - c.x) * (g2.x - c.x) + (g2.y - c.y) * (g2.y - c.y) ? f : g2;
+      L.drawCreature(ctx, c, near.x, near.y, t);
+    });
     d.fighters.forEach(function (f, i) {
       var v = d.views[i];
       f.abilities.forEach(function (a) {

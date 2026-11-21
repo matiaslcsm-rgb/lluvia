@@ -112,3 +112,26 @@ test('Santuario del Trueno: aguantar el desafío deja un cofre; el Pozo dobla o 
   Lluvia.update(g, 1 / 60, {});
   assert.ok(g.gold === 125 || g.gold === 75, 'oro: ' + g.gold);
 });
+
+test('los desbloqueos se abren con su logro o con monedas, y la Tormenta eterna paga doble', function () {
+  var P = Lluvia.newProfile();
+  assert.ok(Lluvia.isUnlocked(P, 'brasa') && !Lluvia.isUnlocked(P, 'marea') && !Lluvia.isUnlocked(P, 'tormenta'));
+  P.achievements.fusion = true;
+  assert.ok(Lluvia.isUnlocked(P, 'marea'));
+  P.coins = 80;
+  assert.ok(Lluvia.buyUnlock(P, 'oxido') && Lluvia.isUnlocked(P, 'oxido') && P.coins === 0);
+  assert.ok(!Lluvia.buyUnlock(P, 'tormenta'), 'la Tormenta eterna solo se abre ganando');
+  var m = Lluvia.createMatch({ seed: 4, storm: true, humanBot: true });
+  var e = Lluvia.spawnEnemy(m.human.game, 'rastrero', 100, 100);
+  assert.ok(Math.abs(e.maxHp - Lluvia.findEnemy('rastrero').hp * Lluvia.data.meta.storm.hpMul) < 1e-9);
+});
+
+test('en el Juicio con Anegados entran criaturas, se pueden bajar y curan', function () {
+  var m = Lluvia.createMatch({ seed: 9, humanBot: true });
+  m.players.forEach(function (pl) { for (var t = 0; t < 120; t++) Lluvia.update(pl.game, 1 / 30, {}); });
+  var d = Lluvia.createDuel(m, m.players[1], m.players[2], Lluvia.findById(Lluvia.data.duelRules, 'anegados'));
+  var seen = 0;
+  while (!d.over && d.time < 20) { Lluvia.updateDuel(d, 1 / 30, null); seen = Math.max(seen, d.creeps.length); }
+  assert.ok(seen > 0, 'no entró ninguna criatura');
+  assert.ok(d.creeps.length <= 20);
+});

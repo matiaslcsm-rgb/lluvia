@@ -42,11 +42,11 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
     doradas y eventos de tormenta cada minuto. *(hecho, ver abajo)*
 11. **Progresión entre partidas — el Cuaderno del Paraguas:** logros que desbloquean personajes, ítems y Leyes del
     Cielo nuevas (por ejemplo: "ganá un Juicio con Vampiros" desbloquea un ítem). Es lo que hace que quieras jugar
-    "una más". Guarda en el navegador. *(hecho como mejoras permanentes + logros; los desbloqueos de contenido
-    quedan para más adelante)*
+    "una más". Guarda en el navegador. *(hecho: mejoras permanentes, logros y desbloqueos de contenido)*
 12. **Jefes distintos:** uno por tramo de la partida (el Coloso; una Reina del Granizo que dispara en abanico; un
     Leviatán del desagüe que sale del piso). Cada uno con un patrón que se aprende.
 13. **Más Leyes del Cielo:** solo cuerpo a cuerpo, Anegados en el Juicio, niebla (se ve poco), viento (te empuja).
+    *(hecho)*
 14. **Personajes 6 a 8**, con ulti propia cada uno, y 4-6 ítems más que abran builds nuevas (por ejemplo, ítems
     que premien quedarse quieto o moverse sin parar).
 15. **Partida diaria:** misma semilla para todos ese día y un récord para batir.
@@ -222,3 +222,13 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   entre el 10 y el 25 (antes casi ninguna). La partida dura **25 minutos de mediana**, el 80% entre 19 y 34.
   Ajuste chico de personajes según esa corrida: Haz de Ceniza 85 de daño (salía primera), Ola de Marea 14, Torreta
   de Óxido 10 (salía última). Con 33 partidas cada personaje sigue con mucho ruido; falta una corrida de 100.
+- **2026-11-21: desbloqueos y modo difícil.**
+  - **Paraguas por desbloquear:** Marea se abre con el logro Alquimista (hacé una fusión), Óxido con Rompeolas
+    (bajá un jefe) y Faro con Podio (terminá entre los 3 primeros). Si no querés esperar, se compran en el
+    Cuaderno (60, 80 y 100 ☀). Los rivales usan siempre los 8. En la Partida del día están todos abiertos.
+  - **Tormenta eterna (modo difícil):** se abre ganando una partida. La horda tiene ×1,5 de vida y ×1,25 de daño en
+    todas las arenas, los rivales juegan mejor y las monedas se pagan dobles. Logro nuevo: «Sol en la tormenta»
+    (ganá en Tormenta eterna, 200 ☀). Se elige con el botón de modo en la pantalla de inicio.
+  - **Ley del Cielo nueva, Anegados en el Juicio:** cada 2,5 s entran 2 criaturas por los bordes y van contra el
+    Paraguas más cercano (hasta 14 a la vez). Cada una que bajás te cura el 4% de tu vida de duelo, así que los kits
+    que limpian multitudes pueden dar vuelta la pelea. Ya son 10 Leyes.

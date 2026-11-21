@@ -68,6 +68,8 @@
       enemies: [], projectiles: [], gems: [], effects: [], chests: [], toasts: [],
       kills: 0, nextId: 1,
       events: opts.listen ? [] : null,
+      hordeHp: opts.storm ? L.data.meta.storm.hpMul : 1,   // Tormenta eterna
+      hordeDps: opts.storm ? L.data.meta.storm.dpsMul : 1,
       grid: new L.Grid(64),
       maxR: 0,             // widest live enemy this tick; grid queries pad by it so big ones are never missed
       _q: []               // reused query buffer for the top-level loops (never re-entered)
@@ -318,12 +320,12 @@
   // Enemies get tougher with the clock: health and damage scale with the difficulty step they appear in.
   L.spawnEnemy = function (g, typeId, x, y) {
     var t = L.findEnemy(typeId), h = L.data.horde, step = L.difficulty(g) - 1;
-    var hp = t.hp * L.enemyHpScale(step);
+    var hp = t.hp * L.enemyHpScale(step) * (g.hordeHp || 1);
     var e = {
       id: g.nextId++, type: t,
       x: L.clamp(x, t.radius, g.arena - t.radius), y: L.clamp(y, t.radius, g.arena - t.radius),
       r: t.radius, speed: t.speed * (1 + Math.min(h.speedMax, h.speedPerLevel * step)), hp: hp, maxHp: hp,
-      dps: t.dps * (1 + h.dpsPerLevel * step), xp: t.xp, dead: false, flash: 0,
+      dps: t.dps * (1 + h.dpsPerLevel * step) * (g.hordeDps || 1), xp: t.xp, dead: false, flash: 0,
       burnDps: 0, burnTtl: 0, stun: 0, slow: 0,
       cd: t.ranged ? t.ranged.every * (0.3 + g.rng() * 0.7) : t.charge ? t.charge.every : 0, // first attack at a random moment
       fuse: 0
@@ -362,7 +364,7 @@
         e.cd -= dt;
         if (e.cd <= 0 && d < rg.range) {
           e.cd = rg.every;
-          var dmg = rg.damage * (1 + L.data.horde.dpsPerLevel * (L.difficulty(g) - 1)) * (e.elite ? L.data.horde.elite.dps : 1);
+          var dmg = rg.damage * (1 + L.data.horde.dpsPerLevel * (L.difficulty(g) - 1)) * (g.hordeDps || 1) * (e.elite ? L.data.horde.elite.dps : 1);
           // One shot, or a fan of `count` spread over `spread` radians (the Reina del Granizo).
           var n = rg.count || 1, base = Math.atan2(dy, dx), hail = !!rg.count;
           for (var k = 0; k < n; k++) {
@@ -442,7 +444,7 @@
   // A Tronador blowing up. If its fuse ran out next to you it hurts you; if you killed it first, only the
   // creatures around it get hurt (so a lucky kill sets off a chain).
   L.explodeBomb = function (g, e, hurtsPlayer) {
-    var b = e.type.bomb, p = g.player, scale = 1 + L.data.horde.dpsPerLevel * (L.difficulty(g) - 1);
+    var b = e.type.bomb, p = g.player, scale = (1 + L.data.horde.dpsPerLevel * (L.difficulty(g) - 1)) * (g.hordeDps || 1);
     if (!e.dead) { e.dead = true; }
     if (hurtsPlayer && p.invuln <= 0) {
       var rr = b.radius + p.r;

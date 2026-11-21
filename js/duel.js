@@ -56,6 +56,9 @@
     d.fighters = [makeFighter(m, a, rule, size * 0.2, size / 2, -1), makeFighter(m, b, rule, size * 0.8, size / 2, -2)];
     d.views = [makeView(d, d.fighters[0], d.fighters[1]), makeView(d, d.fighters[1], d.fighters[0])];
     d.lava = size * 0.75;
+    d.creeps = [];
+    d.nextCreep = rule.creeps ? 1.5 : Infinity;
+    d.creepId = -10;
     d.bots = [a.bot ? L.makeBot(m.rng.int(1e9), a.bot.skill) : null, b.bot ? L.makeBot(m.rng.int(1e9), b.bot.skill) : null];
     [a, b].forEach(function (pl) { pl.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); ab.turrets = []; }); });
     return d;
@@ -87,17 +90,59 @@
     f.y = L.clamp(f.y + (y * speed + wy) * dt, f.r, d.size - f.r);
   }
 
-  // The view's grid holds just the other fighter, where it stands now.
-  function refreshView(v, foe) {
+  // The view's grid holds the other fighter, where it stands now, and the duel's creeps if there are any.
+  function refreshView(v, foe, creeps) {
     v.grid.clear();
     v.grid.insert(foe);
     v.maxR = foe.r;
+    v.enemies.length = 1;
+    if (!creeps) return;
+    for (var i = 0; i < creeps.length; i++) if (!creeps[i].dead) { v.grid.insert(creeps[i]); v.enemies.push(creeps[i]); if (creeps[i].r > v.maxR) v.maxR = creeps[i].r; }
+  }
+
+  // Anegados en el Juicio: creeps sized to the duel (their health and bite are shares of the fighters' pool).
+  function spawnCreeps(d) {
+    var C = d.rule.creeps, F = d.fighters, pool = (F[0].maxHp + F[1].maxHp) / 2, alive = 0, i;
+    for (i = 0; i < d.creeps.length; i++) if (!d.creeps[i].dead) alive++;
+    for (i = 0; i < C.count && alive < C.max; i++, alive++) {
+      var t = L.findEnemy(C.types[d.rng.int(C.types.length)]), side = d.rng.int(4), along = d.rng() * d.size;
+      var x = side === 0 ? t.radius : side === 1 ? d.size - t.radius : along, y = side < 2 ? along : side === 2 ? t.radius : d.size - t.radius;
+      d.creeps.push({ id: d.creepId--, type: { name: t.name, color: t.color, shape: t.shape, gold: 0, goldChance: 0 }, speed: t.speed, x: x, y: y, r: t.radius,
+        hp: pool * C.hp, maxHp: pool * C.hp, dps: pool * C.dps, dead: false, flash: 0, burnDps: 0, burnTtl: 0, stun: 0, slow: 0, credited: false });
+    }
+  }
+
+  function moveCreeps(d, dt) {
+    var F = d.fighters, V = d.views;
+    for (var i = 0; i < d.creeps.length; i++) {
+      var c = d.creeps[i];
+      if (c.dead) continue;
+      if (c.flash > 0) c.flash -= dt;
+      if (c.burnTtl > 0) { c.burnTtl -= dt; c.hp -= c.burnDps * dt; if (c.hp <= 0) c.dead = true; if (c.burnTtl <= 0) c.burnDps = 0; }
+      if (c.stun > 0) { c.stun -= dt; continue; }
+      var d0 = (F[0].x - c.x) * (F[0].x - c.x) + (F[0].y - c.y) * (F[0].y - c.y);
+      var d1 = (F[1].x - c.x) * (F[1].x - c.x) + (F[1].y - c.y) * (F[1].y - c.y);
+      var j = d0 <= d1 ? 0 : 1, f = F[j], dx = f.x - c.x, dy = f.y - c.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var sp = c.speed * (c.slow > 0 ? 0.5 : 1);
+      if (c.slow > 0) c.slow -= dt;
+      if (dist > f.r + c.r) { c.x += dx / dist * sp * dt; c.y += dy / dist * sp * dt; }
+      else if (!(f.invuln > 0)) L.applyHit(V[1 - j], f, c.dps * dt, 0, L.MAX_PROC_DEPTH);
+    }
+  }
+
+  // Creeps that fell this tick heal whoever brought them down (credited to the side whose turn just ran).
+  function creditCreeps(d, i) {
+    var f = d.fighters[i], C = d.rule.creeps;
+    for (var k = 0; k < d.creeps.length; k++) {
+      var c = d.creeps[k];
+      if (c.dead && !c.credited) { c.credited = true; if (!f.dead) f.hp = Math.min(f.maxHp, f.hp + f.maxHp * C.heal); L.emit(d.views[i], 'kill', c.x, c.y, c); }
+    }
   }
 
   // Your ulti in a duel: aimed in duel-arena coordinates.
   L.castDuelUlti = function (d, i, x, y) {
     if (d.over) return false;
-    refreshView(d.views[i], d.fighters[1 - i]);
+    refreshView(d.views[i], d.fighters[1 - i], d.creeps);
     return L.castUlti(d.views[i], x, y);
   };
 
@@ -105,11 +150,17 @@
     d.time += dt;
     var F = d.fighters, V = d.views, i;
     for (i = 0; i < 2; i++) move(d, F[i], inputs[i], dt);
-    for (i = 0; i < 2; i++) { V[i].time = d.time; V[i].procs = L.PROC_BUDGET; refreshView(V[i], F[1 - i]); }
+    if (d.rule.creeps) {
+      if (d.time >= d.nextCreep) { d.nextCreep += d.rule.creeps.every; spawnCreeps(d); }
+      moveCreeps(d, dt);
+      creditCreeps(d, d.rng.int(2)); // burns that finished a creep: a coin flip, it doesn't matter much
+    }
+    for (i = 0; i < 2; i++) { V[i].time = d.time; V[i].procs = L.PROC_BUDGET; refreshView(V[i], F[1 - i], d.creeps); }
     var before = [F[0].hp, F[1].hp];
     for (i = 0; i < 2; i++) {
       var shots = V[i].projectiles.length;
       L.runAbilities(V[i], dt);
+      if (d.rule.creeps) creditCreeps(d, i);
       if (d.rule.bounce) for (var s = shots; s < V[i].projectiles.length; s++) if (!V[i].projectiles[s].long) { V[i].projectiles[s].life *= 3; V[i].projectiles[s].long = true; }
     }
     for (i = 0; i < 2; i++) {
@@ -133,6 +184,7 @@
         if (ld > d.lava && !fl.dead) L.applyHit(V[1 - i], fl, fl.maxHp * LAVA_DPS * dt, 0, 0);
       }
     }
+    if (d.creeps.length > 20) d.creeps = d.creeps.filter(function (c) { return !c.dead; });
     for (i = d.effects.length - 1; i >= 0; i--) { d.effects[i].ttl -= dt; if (d.effects[i].ttl <= 0) d.effects.splice(i, 1); }
     for (i = 0; i < 2; i++) if (F[i].hp <= 0) F[i].dead = true;
 

@@ -28,7 +28,11 @@
     { id: 'niebla', name: 'Niebla', desc: 'Se ve poco: las habilidades llegan la mitad de lejos.', rangeMul: 0.5 },
     { id: 'viento', name: 'Viento', desc: 'Una ráfaga que va cambiando de dirección empuja a los dos.', wind: 150 },
     { id: 'cuerpo', name: 'Cuerpo a cuerpo', desc: 'Lo de lejos pega poco; lo de cerca pega fuerte.',
-      kindMul: { projectile: 0.35, strike: 0.35, nova: 1.6, aura: 1.6, orbit: 1.6 } }
+      kindMul: { projectile: 0.35, strike: 0.35, nova: 1.6, aura: 1.6, orbit: 1.6 } },
+    // creeps: Anegados come in from the edges and go for the closest fighter. Each one you bring down heals you
+    // a share of your duel health, so kits that clear crowds can turn the fight around.
+    { id: 'anegados', name: 'Anegados en el Juicio', desc: 'Entran criaturas por los bordes. Cada una que bajás te cura.',
+      creeps: { every: 2.5, count: 2, types: ['rastrero', 'veloz'], hp: 0.05, dps: 0.025, heal: 0.04, max: 14 } }
   ];
 })(this.Lluvia = this.Lluvia || {});
 

@@ -102,7 +102,8 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
   - **Niebla:** se ve poco y las habilidades llegan la mitad de lejos.
   - **Viento:** una ráfaga que gira empuja a los dos.
   - **Cuerpo a cuerpo:** lo de lejos pega 35%, lo de cerca 160%.
-  - Idea para más adelante: Anegados que entran al Juicio y atacan a los dos.
+  - **Anegados en el Juicio:** entran criaturas por los bordes y van contra el más cercano; cada una que bajás te
+    cura el 4% de tu vida de duelo.
 - **Recta final:** cuando quedan dos, se terminan las hordas y pelean un duelo cada 5 segundos hasta que uno se
   queda sin vidas.
 
@@ -131,7 +132,9 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - Cada partida da **Monedas del Sol**: 60 al 1.º, 35 al 2.º... 4 al 8.º, más 4 por Juicio ganado y 1 cada 100 bajas.
 - Se gastan en 7 **mejoras permanentes** chicas que solo tenés vos: vida, daño, velocidad, imán, oro inicial,
   recarga y suerte en los cofres. Cada nivel cuesta más que el anterior.
-- 12 **logros** con premio en monedas (de "terminá una partida" a "ganá sin perder ninguna vida").
+- 13 **logros** con premio en monedas (de "terminá una partida" a "ganá en Tormenta eterna").
+- **Desbloqueos:** arrancás con 5 Paraguas. Marea, Óxido y Faro se abren con un logro cada uno (o comprándolos con
+  monedas). Ganar una partida abre la **Tormenta eterna**: horda más dura, rivales mejores y monedas dobles.
 - **Partida del día:** misma semilla para todos ese día; se guarda tu mejor resultado.
 - Todo se guarda en el navegador.
 

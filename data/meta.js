@@ -32,7 +32,20 @@
       { id: 'legendario', name: 'Tesoro del barro', desc: 'Conseguí un ítem legendario.', coins: 20 },
       { id: 'apostador', name: 'Ojo de halcón', desc: 'Acertá 3 apuestas en una partida.', coins: 25 },
       { id: 'todos', name: 'Todos los paraguas', desc: 'Jugá una partida con cada personaje.', coins: 50 },
-      { id: 'invicto', name: 'Ni una gota', desc: 'Ganá sin perder ninguna vida.', coins: 150 }
-    ]
+      { id: 'invicto', name: 'Ni una gota', desc: 'Ganá sin perder ninguna vida.', coins: 150 },
+      { id: 'eterna', name: 'Sol en la tormenta', desc: 'Ganá una partida en Tormenta eterna.', coins: 200 }
+    ],
+
+    // Content you unlock: three Paraguas and the hard mode. Each opens with an achievement, or earlier with coins
+    // (cost 0 = only the achievement opens it). The rivals always use every Paraguas.
+    unlocks: [
+      { id: 'marea', kind: 'char', achievement: 'fusion', cost: 60 },
+      { id: 'oxido', kind: 'char', achievement: 'coloso', cost: 80 },
+      { id: 'faro', kind: 'char', achievement: 'podio', cost: 100 },
+      { id: 'tormenta', kind: 'mode', name: 'Tormenta eterna', achievement: 'sol', cost: 0 }
+    ],
+
+    // Tormenta eterna: the hard mode. Tougher horde in every arena, sharper rivals, double coins.
+    storm: { hpMul: 1.5, dpsMul: 1.25, botSkill: 0.15, coinMul: 2 }
   };
 })(this.Lluvia = this.Lluvia || {});

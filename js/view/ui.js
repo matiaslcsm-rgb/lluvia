@@ -36,6 +36,11 @@
     overlay.classList.remove('hidden');
   }
 
+  function lockText(u) {
+    var a = L.findById(L.data.meta.achievements, u.achievement);
+    return 'Se abre con el logro «' + a.name + '» (' + a.desc.toLowerCase().replace(/\.$/, '') + ')' + (u.cost ? ' o por ' + u.cost + ' ☀ en el Cuaderno.' : '.');
+  }
+
   function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
   L.ui = {
@@ -55,9 +60,16 @@
     characterSelect: function (onPick) {
       var cards = el('div', 'cards');
       L.data.characters.forEach(function (c, i) {
-        cards.appendChild(card(String(i + 1), c, function () { onPick(c.id); }, L.data.lore.bios[c.id]));
+        if (L.isUnlocked(L.profile, c.id)) { cards.appendChild(card(String(i + 1), c, function () { onPick(c.id); }, L.data.lore.bios[c.id])); return; }
+        var b = card(null, { color: '#3a3d4a', name: '🔒 ' + c.name, desc: lockText(L.unlockFor(c.id)) }, function () { L.ui.notebook(onPick); });
+        b.classList.add('locked');
+        cards.appendChild(b);
       });
       var row = el('div', 'row');
+      if (L.isUnlocked(L.profile, 'tormenta')) {
+        var mode = button(L.ui.storm ? 'Modo: Tormenta eterna ⚡' : 'Modo: Normal', function () { L.ui.storm = !L.ui.storm; L.ui.characterSelect(onPick); }, L.ui.storm ? 'btn storm' : 'btn ghost');
+        row.appendChild(mode);
+      }
       row.appendChild(button('Cuaderno (' + L.profile.coins + ' ☀)', function () { L.ui.notebook(onPick); }, 'btn'));
       row.appendChild(button('Partida del día', function () { L.ui.daily(onPick); }, 'btn'));
       row.appendChild(button('La historia', function () { L.ui.story(onPick); }, 'btn ghost'));
@@ -88,6 +100,20 @@
         row.appendChild(b);
         shop.appendChild(row);
       });
+      var opens = el('div', 'shop');
+      M.unlocks.forEach(function (u) {
+        var open = L.isUnlocked(P, u.id), c = u.kind === 'char' ? L.findById(L.data.characters, u.id) : null;
+        var row = el('div', 'shoprow'), info = el('div', null);
+        info.appendChild(el('b', null, (open ? '✓ ' : '🔒 ') + (c ? c.name + ' (Paraguas)' : u.name + ' (modo difícil)')));
+        info.appendChild(el('div', 'desc', open ? (c ? c.desc : 'Horda más dura y rivales más hábiles. Monedas dobles.') : lockText(u)));
+        row.appendChild(info);
+        if (!open && u.cost) {
+          var b = button(u.cost + ' ☀', function () { if (L.buyUnlock(P, u.id)) { L.saveProfile(); L.sound.play('chest'); L.ui.notebook(onPick); } }, 'btn small');
+          if (P.coins < u.cost) b.disabled = true;
+          row.appendChild(b);
+        }
+        opens.appendChild(row);
+      });
       var ach = el('div', 'achs');
       M.achievements.forEach(function (a) {
         var got = !!P.achievements[a.id], it = el('div', 'ach' + (got ? ' got' : ''));
@@ -98,7 +124,7 @@
       var s = P.stats;
       var rec = el('p', 'hint', 'Partidas: ' + s.matches + ' · Ganadas: ' + s.wins + ' · Mejor puesto: ' + (s.bestPlace > 8 ? '—' : s.bestPlace + '.º') + ' · Bajas en total: ' + s.kills);
       show([el('h2', null, 'Cuaderno del Paraguas'), el('p', 'tagline', 'Tenés ' + P.coins + ' Monedas del Sol. Las mejoras son para siempre y solo para vos.'),
-        el('h3', null, 'Mejoras'), shop, el('h3', null, 'Logros'), ach, rec, button('Volver', function () { L.ui.characterSelect(onPick); })]);
+        el('h3', null, 'Mejoras'), shop, el('h3', null, 'Desbloqueos'), opens, el('h3', null, 'Logros'), ach, rec, button('Volver', function () { L.ui.characterSelect(onPick); })]);
       L.ui.current = 'notebook';
     },
 
@@ -173,6 +199,7 @@
       var nodes = [el('h2', null, title), el('p', 'tagline', pick(won ? L.data.lore.winLines : L.data.lore.loseLines)), stats];
       if (reward) {
         nodes.push(el('p', 'coins', '+' + reward.coins + ' Monedas del Sol (tenés ' + L.profile.coins + ')'));
+        (reward.opened || []).forEach(function (u) { nodes.push(el('p', 'achnew', '¡Desbloqueaste ' + (u.kind === 'char' ? 'a ' + L.findById(L.data.characters, u.id).name : 'el modo ' + u.name) + '!')); });
         reward.unlocked.forEach(function (a) { nodes.push(el('p', 'achnew', '¡Logro! ' + a.name + ' — ' + a.desc + ' (+' + a.coins + ' ☀)')); });
         if (reward.dailyRecord) nodes.push(el('p', 'achnew', '¡Nuevo récord en la partida del día!'));
       }

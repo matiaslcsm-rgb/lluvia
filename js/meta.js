@@ -4,7 +4,7 @@
   'use strict';
 
   L.newProfile = function () {
-    return { coins: 0, upgrades: {}, achievements: {}, played: {}, daily: {}, stats: { matches: 0, wins: 0, bestPlace: 9, kills: 0 } };
+    return { coins: 0, upgrades: {}, achievements: {}, unlocked: {}, played: {}, daily: {}, stats: { matches: 0, wins: 0, bestPlace: 9, kills: 0 } };
   };
 
   // The daily match: everyone gets the same seed on the same day (same rivals, same horde).
@@ -20,6 +20,23 @@
     var best = profile.daily[key];
     if (best && (best.place < place || (best.place === place && best.kills >= kills))) return false;
     profile.daily[key] = { place: place, kills: kills };
+    return true;
+  };
+
+  // Unlocks: open if nothing locks it, if you bought it, or if you have its achievement.
+  L.unlockFor = function (id) { return L.findById(L.data.meta.unlocks, id); };
+  L.isUnlocked = function (profile, id) {
+    var u = L.unlockFor(id);
+    if (!u) return true;
+    if (!profile) return false;
+    return !!((profile.unlocked || {})[id] || profile.achievements[u.achievement]);
+  };
+  L.buyUnlock = function (profile, id) {
+    var u = L.unlockFor(id);
+    if (!u || !u.cost || L.isUnlocked(profile, id) || profile.coins < u.cost) return false;
+    profile.coins -= u.cost;
+    profile.unlocked = profile.unlocked || {};
+    profile.unlocked[id] = true;
     return true;
   };
 
@@ -80,8 +97,12 @@
       legendario: !!track.legendary,
       apostador: (track.betsWon || 0) >= 3,
       todos: L.data.characters.every(function (c) { return profile.played[c.id]; }),
-      invicto: place === 1 && !(track.livesLost || 0)
+      invicto: place === 1 && !(track.livesLost || 0),
+      eterna: place === 1 && !!m.storm
     };
+    if (m.storm) coins *= M.storm.coinMul;
+    var wasOpen = {};
+    M.unlocks.forEach(function (u) { wasOpen[u.id] = L.isUnlocked(profile, u.id); });
     var unlocked = [];
     M.achievements.forEach(function (a) {
       if (done[a.id] && !profile.achievements[a.id]) {
@@ -91,6 +112,7 @@
       }
     });
     profile.coins += coins;
-    return { coins: coins, unlocked: unlocked, duelsWon: duelsWon };
+    var opened = M.unlocks.filter(function (u) { return !wasOpen[u.id] && L.isUnlocked(profile, u.id); });
+    return { coins: coins, unlocked: unlocked, opened: opened, duelsWon: duelsWon };
   };
 })(this.Lluvia = this.Lluvia || {});
