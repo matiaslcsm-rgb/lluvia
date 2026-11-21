@@ -40,6 +40,13 @@
     return true;
   };
 
+  // Pactos: the product of one field over the pacts turned on (ids), or `none` if no pact touches it.
+  L.pactValue = function (ids, field, none) {
+    var v = none;
+    (ids || []).forEach(function (id) { var p = L.findById(L.data.meta.pacts, id); if (p && p[field] !== undefined) v = (v === none ? 1 : v) * p[field]; });
+    return v;
+  };
+
   L.upgradeLevel = function (profile, id) { return profile.upgrades[id] || 0; };
   L.upgradeCost = function (profile, def) { return def.cost * (L.upgradeLevel(profile, def.id) + 1); };
 
@@ -101,6 +108,7 @@
       eterna: place === 1 && !!m.storm
     };
     if (m.storm) coins *= M.storm.coinMul;
+    if (m.pacts && m.pacts.length) coins = Math.round(coins * (1 + M.pactCoinBonus * m.pacts.length));
     var wasOpen = {};
     M.unlocks.forEach(function (u) { wasOpen[u.id] = L.isUnlocked(profile, u.id); });
     var unlocked = [];

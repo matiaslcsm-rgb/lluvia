@@ -51,6 +51,13 @@
   L.createDuel = function (m, a, b, rule) {
     var size = L.data.duels.arena;
     rule = rule || m.rng.pick(L.data.duelRules);
+    if (L.pactValue(m.pacts, 'mixRules', false)) {
+      // Juicio caótico: a second rule on top (its numbers win where both set one).
+      var other = m.rng.pick(L.data.duelRules.filter(function (r) { return r.id !== rule.id; })), mixed = {};
+      [rule, other].forEach(function (r) { for (var k in r) mixed[k] = r[k]; });
+      mixed.id = rule.id + '+' + other.id; mixed.name = rule.name + ' + ' + other.name; mixed.desc = rule.desc + ' ' + other.desc;
+      rule = mixed;
+    }
     var d = { time: 0, over: false, winner: null, loser: null, timeout: false, size: size, rule: rule, effects: [], rng: m.rng,
       events: (a.game.events || b.game.events) ? [] : null };
     d.players = [a, b];

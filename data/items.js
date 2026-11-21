@@ -9,7 +9,8 @@
   L.data.rarities = {
     comun: { name: 'Común', color: '#e8e8ee' },
     raro: { name: 'Raro', color: '#6fdc6a' },
-    legendario: { name: 'Legendario', color: '#ff5a5a' }
+    legendario: { name: 'Legendario', color: '#ff5a5a' },
+    maldito: { name: 'Maldito', color: '#b07aff' }   // a lot of power with a price
   };
 
   L.data.items = [
@@ -63,7 +64,15 @@
       base: {}, perStack: {},
       desc: '20% de chance de que cada golpe se repita (+20% por copia).' },
     { id: 'fenix', name: 'Fénix', rarity: 'legendario', kind: 'special',
-      desc: 'La próxima vez que caigas en la horda, volvés ahí mismo con media vida en vez de perder una vida. Se gasta.' }
+      desc: 'La próxima vez que caigas en la horda, volvés ahí mismo con media vida en vez de perder una vida. Se gasta.' },
+
+    // Cursed: a big bonus with a price you carry for the rest of the match (stacks too, price included).
+    { id: 'vidrio', name: 'Paraguas de vidrio', rarity: 'maldito', kind: 'stat', stat: 'damageMul', perStack: 0.5, also: { maxHpMul: -0.2 },
+      desc: '+50% de daño, pero -20% de vida máxima.' },
+    { id: 'gotanegra', name: 'Gota negra', rarity: 'maldito', kind: 'stat', stat: 'goldMul', perStack: 0.4, also: { speedMul: -0.08 },
+      desc: '+40% de oro, pero -8% de velocidad.' },
+    { id: 'reloj', name: 'Reloj torcido', rarity: 'maldito', kind: 'stat', stat: 'cooldownHyper', perStack: 0.45, also: { regenAdd: -1.5 },
+      desc: 'Mucha menos recarga, pero perdés 1,5 de vida por segundo (nunca te mata: te deja en 1).' }
   ];
 
   // Chests: `cost` grows with each difficulty step. Weights pick the rarity of what comes out.
@@ -71,7 +80,7 @@
     count: 6,              // chests lying around the arena at any time
     base: 40,              // gold at difficulty 1
     growth: 0.25,          // ×1.25 per difficulty step (compounding, like enemy health)
-    weights: { comun: 79, raro: 20, legendario: 1 },
+    weights: { comun: 78, raro: 20, legendario: 1, maldito: 1 },
     bossWeights: { raro: 80, legendario: 20 }  // the free chest a boss drops
   };
 })(this.Lluvia = this.Lluvia || {});

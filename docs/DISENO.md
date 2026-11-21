@@ -136,6 +136,14 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - Ancla y Raíz dan un poco siempre y mucho más si te plantás (daño, curación); Racha premia no parar nunca (más daño). Charco de oro da
   más oro por criatura.
 
+## Ítems malditos
+- Rareza violeta: un bonus grande con un precio para toda la partida (vidrio: daño por vida; gota negra: oro por
+  velocidad; reloj torcido: recarga por un drenaje de vida que nunca mata).
+
+## Pactos del Cielo
+- Reglas torcidas para una partida entera (Enjambre, Fiebre del oro, Juicio caótico, Todos de cristal). Cada pacto
+  activo da +25% de monedas. Se abren con logros.
+
 ## Entre partidas: el Cuaderno del Paraguas
 - Cada partida da **Monedas del Sol**: 60 al 1.º, 35 al 2.º... 4 al 8.º, más 4 por Juicio ganado y 1 cada 100 bajas.
 - Se gastan en 7 **mejoras permanentes** chicas que solo tenés vos: vida, daño, velocidad, imán, oro inicial,

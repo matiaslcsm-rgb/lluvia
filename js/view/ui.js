@@ -70,6 +70,8 @@
         var mode = button(L.ui.storm ? 'Modo: Tormenta eterna ⚡' : 'Modo: Normal', function () { L.ui.storm = !L.ui.storm; L.ui.characterSelect(onPick); }, L.ui.storm ? 'btn storm' : 'btn ghost');
         row.appendChild(mode);
       }
+      var on = (L.ui.pacts || []).length;
+      row.appendChild(button('Pactos' + (on ? ' (' + on + ')' : ''), function () { L.ui.pactsScreen(onPick); }, on ? 'btn storm' : 'btn ghost'));
       row.appendChild(button('Cuaderno (' + L.profile.coins + ' ☀)', function () { L.ui.notebook(onPick); }, 'btn'));
       row.appendChild(button('Partida del día', function () { L.ui.daily(onPick); }, 'btn'));
       row.appendChild(button('La historia', function () { L.ui.story(onPick); }, 'btn ghost'));
@@ -104,8 +106,9 @@
       M.unlocks.forEach(function (u) {
         var open = L.isUnlocked(P, u.id), c = u.kind === 'char' ? L.findById(L.data.characters, u.id) : null;
         var row = el('div', 'shoprow'), info = el('div', null);
-        info.appendChild(el('b', null, (open ? '✓ ' : '🔒 ') + (c ? c.name + ' (Paraguas)' : u.name + ' (modo difícil)')));
-        info.appendChild(el('div', 'desc', open ? (c ? c.desc : 'Horda más dura y rivales más hábiles. Monedas dobles.') : lockText(u)));
+        var pact = u.kind === 'pact' ? L.findById(M.pacts, u.id) : null;
+        info.appendChild(el('b', null, (open ? '✓ ' : '🔒 ') + (c ? c.name + ' (Paraguas)' : pact ? u.name + ' (Pacto)' : u.name + ' (modo difícil)')));
+        info.appendChild(el('div', 'desc', open ? (c ? c.desc : pact ? pact.desc : 'Horda más dura y rivales más hábiles. Monedas dobles.') : lockText(u)));
         row.appendChild(info);
         if (!open && u.cost) {
           var b = button(u.cost + ' ☀', function () { if (L.buyUnlock(P, u.id)) { L.saveProfile(); L.sound.play('chest'); L.ui.notebook(onPick); } }, 'btn small');
@@ -126,6 +129,29 @@
       show([el('h2', null, 'Cuaderno del Paraguas'), el('p', 'tagline', 'Tenés ' + P.coins + ' Monedas del Sol. Las mejoras son para siempre y solo para vos.'),
         el('h3', null, 'Mejoras'), shop, el('h3', null, 'Desbloqueos'), opens, el('h3', null, 'Logros'), ach, rec, button('Volver', function () { L.ui.characterSelect(onPick); })]);
       L.ui.current = 'notebook';
+    },
+
+    // Pactos del Cielo: twists for the next match. Each one turned on pays more coins.
+    pactsScreen: function (onPick) {
+      var M = L.data.meta, list = el('div', 'shop');
+      L.ui.pacts = (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); });
+      M.pacts.forEach(function (p) {
+        var open = L.isUnlocked(L.profile, p.id), on = L.ui.pacts.indexOf(p.id) !== -1;
+        var row = el('div', 'shoprow'), info = el('div', null);
+        info.appendChild(el('b', null, (open ? '' : '🔒 ') + p.name));
+        info.appendChild(el('div', 'desc', open ? p.desc : lockText(L.unlockFor(p.id))));
+        row.appendChild(info);
+        var b = button(on ? 'Activado' : 'Activar', function () {
+          if (on) L.ui.pacts.splice(L.ui.pacts.indexOf(p.id), 1); else L.ui.pacts.push(p.id);
+          L.ui.pactsScreen(onPick);
+        }, on ? 'btn small storm' : 'btn small');
+        if (!open) b.disabled = true;
+        row.appendChild(b);
+        list.appendChild(row);
+      });
+      show([el('h2', null, 'Pactos del Cielo'), el('p', 'tagline', 'Torcé las reglas de la próxima partida. Cada pacto activo da +' + Math.round(M.pactCoinBonus * 100) + '% de Monedas del Sol. No valen en la Partida del día.'),
+        list, button('Volver', function () { L.ui.characterSelect(onPick); })]);
+      L.ui.current = 'pacts';
     },
 
     // Daily match: same seed for everyone today. Pick your Paraguas; your best result today is kept.
@@ -200,7 +226,7 @@
       var nodes = [el('h2', null, title), el('p', 'tagline', pick(won ? L.data.lore.winLines : L.data.lore.loseLines)), stats];
       if (reward) {
         nodes.push(el('p', 'coins', '+' + reward.coins + ' Monedas del Sol (tenés ' + L.profile.coins + ')'));
-        (reward.opened || []).forEach(function (u) { nodes.push(el('p', 'achnew', '¡Desbloqueaste ' + (u.kind === 'char' ? 'a ' + L.findById(L.data.characters, u.id).name : 'el modo ' + u.name) + '!')); });
+        (reward.opened || []).forEach(function (u) { nodes.push(el('p', 'achnew', '¡Desbloqueaste ' + (u.kind === 'char' ? 'a ' + L.findById(L.data.characters, u.id).name : (u.kind === 'pact' ? 'el Pacto ' : 'el modo ') + u.name) + '!')); });
         reward.unlocked.forEach(function (a) { nodes.push(el('p', 'achnew', '¡Logro! ' + a.name + ' — ' + a.desc + ' (+' + a.coins + ' ☀)')); });
         if (reward.dailyRecord) nodes.push(el('p', 'achnew', '¡Nuevo récord en la partida del día!'));
       }

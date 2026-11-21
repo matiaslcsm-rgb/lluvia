@@ -42,10 +42,24 @@
       { id: 'marea', kind: 'char', achievement: 'fusion', cost: 60 },
       { id: 'oxido', kind: 'char', achievement: 'coloso', cost: 80 },
       { id: 'faro', kind: 'char', achievement: 'podio', cost: 100 },
-      { id: 'tormenta', kind: 'mode', name: 'Tormenta eterna', achievement: 'sol', cost: 0 }
+      { id: 'tormenta', kind: 'mode', name: 'Tormenta eterna', achievement: 'sol', cost: 0 },
+      { id: 'enjambre', kind: 'pact', name: 'Enjambre', achievement: 'mil', cost: 40 },
+      { id: 'fiebre', kind: 'pact', name: 'Fiebre del oro', achievement: 'legendario', cost: 40 },
+      { id: 'caos', kind: 'pact', name: 'Juicio caótico', achievement: 'juicio', cost: 60 },
+      { id: 'cristal', kind: 'pact', name: 'Todos de cristal', achievement: 'apostador', cost: 60 }
     ],
 
     // Tormenta eterna: the hard mode. Tougher horde in every arena, sharper rivals, double coins.
-    storm: { hpMul: 1.5, dpsMul: 1.25, botSkill: 0.15, coinMul: 2 }
+    storm: { hpMul: 1.5, dpsMul: 1.25, botSkill: 0.15, coinMul: 2 },
+
+    // Pactos del Cielo: optional twists for a whole match (every arena). Each one you turn on adds coinBonus to
+    // your coins. They open with achievements (see `unlocks`). Numbers multiply what they touch.
+    pacts: [
+      { id: 'enjambre', name: 'Enjambre', desc: 'El doble de Anegados, con la mitad de vida.', spawnMul: 2, hordeHp: 0.5 },
+      { id: 'cristal', name: 'Todos de cristal', desc: 'Todos los Paraguas tienen la mitad de vida.', playerHp: 0.5 },
+      { id: 'caos', name: 'Juicio caótico', desc: 'Cada Juicio junta dos Leyes del Cielo a la vez.', mixRules: true },
+      { id: 'fiebre', name: 'Fiebre del oro', desc: 'Los cofres cuestan la mitad, pero la horda tiene +30% de vida.', chestMul: 0.5, hordeHp: 1.3 }
+    ],
+    pactCoinBonus: 0.25
   };
 })(this.Lluvia = this.Lluvia || {});

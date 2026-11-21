@@ -36,7 +36,7 @@
 
   L.rollItem = function (g, weights) {
     var luck = g.meta && g.meta.luck;
-    if (luck) weights = { comun: (weights.comun || 0), raro: (weights.raro || 0) + 6 * luck, legendario: (weights.legendario || 0) + 2 * luck };
+    if (luck) { var w = {}; for (var k in weights) w[k] = weights[k]; w.raro = (w.raro || 0) + 6 * luck; w.legendario = (w.legendario || 0) + 2 * luck; weights = w; }
     var total = 0, r, rarity = null;
     for (r in weights) total += weights[r];
     var roll = g.rng() * total;
@@ -50,7 +50,7 @@
 
   L.chestCost = function (g) {
     var c = L.data.chests;
-    return Math.round(c.base * Math.pow(1 + c.growth, L.difficulty(g) - 1));
+    return Math.round(c.base * Math.pow(1 + c.growth, L.difficulty(g) - 1) * (g.chestMul || 1));
   };
 
   L.dropChest = function (g, x, y, kind) {

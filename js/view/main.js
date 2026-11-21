@@ -26,7 +26,8 @@
     L.fx.clear();
     daily = !!isDaily;
     var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
-    match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta') });
+    match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta'),
+      pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }) });
     reward = null;
     paused = false;
     L.ui.hide();

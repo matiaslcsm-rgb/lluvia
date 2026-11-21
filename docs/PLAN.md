@@ -260,3 +260,18 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   en puesto. Cambios: la vida de la horda crece ×1,21 por minuto (era ×1,22), Charco de oro +10% (era +15%; los
   ganadores bajaron de 140 a unos 120 ítems), Roca con 190 de velocidad (era 180) y Filo con 108 de vida (era 100).
   Control de 60: pico de 5,0, **25:22 de mediana**, todos los personajes entre 4,2 y 4,8 de puesto promedio.
+- **2026-11-21: ítems malditos y Pactos del Cielo** (ideas de Risk of Rain: los ítems lunares y los artefactos).
+  - **3 ítems malditos** (rareza nueva, violeta; salen en el 1% de los cofres comunes). Dan mucho y cobran algo
+    para toda la partida, y se apilan con su precio:
+    - Paraguas de vidrio: +50% de daño, -20% de vida máxima.
+    - Gota negra: +40% de oro, -8% de velocidad.
+    - Reloj torcido: mucha menos recarga, pero perdés 1,5 de vida por segundo (el drenaje nunca te mata).
+  - **4 Pactos del Cielo:** se activan antes de la partida y cambian todas las arenas. Cada uno da +25% de monedas.
+    Se abren con logros (o con monedas en el Cuaderno) y no valen en la Partida del día.
+    - Enjambre: el doble de Anegados con la mitad de vida (logro Mil gotas).
+    - Fiebre del oro: cofres a mitad de precio, horda con +30% de vida (logro Tesoro del barro).
+    - Juicio caótico: cada Juicio junta dos Leyes del Cielo (logro Juez del Trueno).
+    - Todos de cristal: todos los Paraguas con la mitad de vida (logro Ojo de halcón).
+  - **Banco:** con los malditos al 2% y la Gota negra al +60%, los Juicios bajaron de 12 a 9 s (el vidrio apilado)
+    y los ganadores volvieron a 137 ítems. Al 1% y +40%: Juicios de 10,6 s, 124 ítems, la curva igual (pico 5,2,
+    **25:14 de mediana**, banco de 40).

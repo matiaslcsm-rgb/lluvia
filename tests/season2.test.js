@@ -161,3 +161,21 @@ test('Ancla sube el daño quieto y Racha moviéndote', function () {
   Lluvia.updateStance(p, true, 1);
   assert.ok(p.still === 0);
 });
+
+test('los ítems malditos dan y cobran, y el drenaje nunca mata', function () {
+  var g = Lluvia.createGame({ seed: 5, characterId: 'roca' }), p = g.player, hp0 = p.stats.maxHp;
+  Lluvia.addItem(g, 'vidrio');
+  assert.ok(Math.abs(p.stats.damageMul - 1.5) < 1e-9 && Math.abs(p.stats.maxHp - hp0 * 0.8) < 1e-6);
+  Lluvia.addItem(g, 'reloj'); Lluvia.addItem(g, 'reloj'); Lluvia.addItem(g, 'reloj');
+  g.enemies.length = 0; g.spawning = false; p.hp = 3;
+  for (var i = 0; i < 300; i++) Lluvia.update(g, 1 / 30, {});
+  assert.ok(p.hp >= 1 && g.lives === Lluvia.data.horde.lives);
+});
+
+test('los Pactos cambian la partida: Enjambre, Cristal y Juicio caótico', function () {
+  var m = Lluvia.createMatch({ seed: 6, humanBot: true, pacts: ['enjambre', 'cristal', 'caos'] }), g = m.human.game;
+  assert.strictEqual(g.spawnMul, 2);
+  assert.ok(Math.abs(g.player.stats.maxHp - g.player.char.stats.maxHp * 0.5) < 1e-6);
+  var d = Lluvia.createDuel(m, m.players[1], m.players[2]);
+  assert.ok(d.rule.name.indexOf(' + ') > 0);
+});

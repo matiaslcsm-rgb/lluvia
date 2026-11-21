@@ -68,7 +68,10 @@
       enemies: [], projectiles: [], gems: [], effects: [], chests: [], toasts: [],
       kills: 0, nextId: 1,
       events: opts.listen ? [] : null,
-      hordeHp: opts.storm ? L.data.meta.storm.hpMul : 1,   // Tormenta eterna
+      hordeHp: (opts.storm ? L.data.meta.storm.hpMul : 1) * L.pactValue(opts.pacts, 'hordeHp', 1),   // Tormenta eterna, Pactos
+      spawnMul: L.pactValue(opts.pacts, 'spawnMul', 1),
+      pactHp: L.pactValue(opts.pacts, 'playerHp', 1),
+      chestMul: L.pactValue(opts.pacts, 'chestMul', 1),
       hordeDps: opts.storm ? L.data.meta.storm.dpsMul : 1,
       grid: new L.Grid(64),
       maxR: 0,             // widest live enemy this tick; grid queries pad by it so big ones are never missed
@@ -94,14 +97,14 @@
     var p = g.player, b = p.char.stats;
     var m = { speedMul: 0, maxHpAdd: 0, pickupMul: 0, cooldownMul: 0, damageMul: 0, regenAdd: 0,
       cooldownHyper: 0, crit: 0, extraProjectiles: 0, areaMul: 0, armorHyper: 0, extraChoices: 0,
-      stillRegen: 0, goldMul: 0, stillDamage: 0, rushDamage: 0 };
+      stillRegen: 0, goldMul: 0, stillDamage: 0, rushDamage: 0, maxHpMul: 0 };
     p.passives.forEach(function (ps) { m[ps.def.stat] += ps.def.perLevel * ps.level; });
     L.applyItemMods(g, m);
     var meta = g.meta || {}; // your Cuaderno upgrades (js/meta.js); none for the rivals
     var oldMax = p.stats.maxHp;
     p.stats = {
       speed: b.speed * (1 + m.speedMul + (meta.speedMul || 0)),
-      maxHp: (b.maxHp + m.maxHpAdd) * (1 + (meta.maxHpMul || 0)),
+      maxHp: (b.maxHp + m.maxHpAdd) * Math.max(0.2, 1 + (meta.maxHpMul || 0) + m.maxHpMul) * (g.pactHp || 1),
       pickup: b.pickup * (1 + m.pickupMul + (meta.pickupMul || 0)),
       // Passives subtract linearly (floor 40%); items divide, so each copy helps a bit less.
       cooldownMul: Math.max(0.4, 1 + m.cooldownMul + (meta.cooldownMul || 0)) / (1 + m.cooldownHyper),
@@ -115,6 +118,7 @@
       stillRegen: m.stillRegen, goldMul: m.goldMul, stillDamage: m.stillDamage, rushDamage: m.rushDamage
     };
     if (oldMax !== undefined && p.stats.maxHp > oldMax) p.hp += p.stats.maxHp - oldMax;
+    p.hp = Math.min(p.hp, p.stats.maxHp);
   }
   L.recalcStats = recalcStats;
 
@@ -218,7 +222,8 @@
     L.updateShrines(g, dt);
     updateTimed(g.effects, dt);
     updateTimed(g.toasts, dt);
-    p.hp = Math.min(p.stats.maxHp, p.hp + (p.stats.regen + p.stats.stillRegen * (p.still || 0)) * dt);
+    var regen = p.stats.regen + p.stats.stillRegen * (p.still || 0);
+    p.hp = Math.min(p.stats.maxHp, regen >= 0 || p.hp <= 1 ? p.hp + Math.max(0, regen) * dt : Math.max(1, p.hp + regen * dt)); // a drain never kills
     if (p.hurt > 0) p.hurt -= dt;
     checkLevel(g);
   }
@@ -252,7 +257,7 @@
     var h = L.data.horde, step = L.difficulty(g) - 1, minute = g.time / 60;
     var mult = 1;
     if (g.surge > 0) { g.surge -= dt; mult = g.surgeMult || 1; }
-    g.spawnAcc += (h.spawnBase + h.spawnPerLevel * step) * mult * dt;
+    g.spawnAcc += (h.spawnBase + h.spawnPerLevel * step) * mult * (g.spawnMul || 1) * dt;
     var eliteChance = minute < h.eliteFrom ? 0 : h.eliteChance + h.elitePerMinute * (minute - h.eliteFrom);
     while (g.spawnAcc >= 1) {
       g.spawnAcc -= 1;
