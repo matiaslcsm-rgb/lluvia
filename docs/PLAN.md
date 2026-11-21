@@ -232,3 +232,8 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - **Ley del Cielo nueva, Anegados en el Juicio:** cada 2,5 s entran 2 criaturas por los bordes y van contra el
     Paraguas más cercano (hasta 14 a la vez). Cada una que bajás te cura el 4% de tu vida de duelo, así que los kits
     que limpian multitudes pueden dar vuelta la pelea. Ya son 10 Leyes.
+- **2026-11-21: balance de personajes (banco de 100 partidas + control de 40).** En 100 partidas, Marea ganaba el
+  22% y Brasa y Óxido el 5-6% (lo justo es 13%). Cambios: Ola 12 de daño (+5 por nivel, era 14 y +6); Chispa 14
+  (era 12) y Brasa con 115 de vida (era 105); Torreta 12 (era 10) y Óxido con 120 de vida (era 110). En el control
+  de 40, Brasa gana 14% y Óxido 15%, y Marea bajó de puesto promedio 3,8 a 4,3. El resto queda dentro del ruido
+  de 40 partidas (±5 puntos); la partida sigue durando 26 minutos de mediana.

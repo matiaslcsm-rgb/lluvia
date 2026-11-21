@@ -6,7 +6,7 @@
     {
       id: 'brasa', name: 'Brasa', color: '#ff7a3d',
       desc: 'Equilibrada. Arranca con Chispa. Ulti: Lluvia de fuego, meteoros donde apuntás.',
-      stats: { maxHp: 105, speed: 210, regen: 0, pickup: 70 },
+      stats: { maxHp: 115, speed: 210, regen: 0, pickup: 70 },
       start: 'chispa', ulti: 'meteoros'
     },
     {
@@ -42,7 +42,7 @@
     {
       id: 'oxido', name: 'Óxido', color: '#c07a45',
       desc: 'Arma el terreno. Arranca con Torreta, que dispara sola. Ulti: Chatarra, esquirlas en todas direcciones.',
-      stats: { maxHp: 110, speed: 195, regen: 0, pickup: 75 },
+      stats: { maxHp: 120, speed: 195, regen: 0, pickup: 75 },
       start: 'torreta', ulti: 'chatarra'
     },
     {

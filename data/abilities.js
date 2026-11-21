@@ -10,7 +10,7 @@
     {
       id: 'chispa', name: 'Chispa', kind: 'projectile', proc: 1, color: '#ffb347',
       desc: 'Dispara al enemigo más cercano.',
-      base: { damage: 12, cooldown: 0.8, count: 1, speed: 450, pierce: 0, radius: 5, range: 500 },
+      base: { damage: 14, cooldown: 0.8, count: 1, speed: 450, pierce: 0, radius: 5, range: 500 },
       perLevel: [{ damage: 4 }, { count: 1 }, { cooldown: -0.15 }, { damage: 6, pierce: 1 }]
     },
     {
@@ -59,13 +59,13 @@
     {
       id: 'ola', name: 'Ola', kind: 'projectile', proc: 1, color: '#4fa3e0', boomerang: true,
       desc: 'Una ola que se aleja, vuelve hacia vos y atraviesa todo en los dos viajes.',
-      base: { damage: 14, cooldown: 1.6, count: 1, speed: 380, pierce: 99, radius: 12, range: 360 },
-      perLevel: [{ damage: 6 }, { count: 1 }, { radius: 4, damage: 6 }, { count: 1, cooldown: -0.3 }]
+      base: { damage: 12, cooldown: 1.6, count: 1, speed: 380, pierce: 99, radius: 12, range: 360 },
+      perLevel: [{ damage: 5 }, { count: 1 }, { radius: 4, damage: 6 }, { count: 1, cooldown: -0.3 }]
     },
     {
       id: 'torreta', name: 'Torreta', kind: 'turret', proc: 0.7, color: '#c07a45',
       desc: 'Planta una torreta donde estás. Dispara sola a lo más cercano durante un rato.',
-      base: { damage: 10, cooldown: 4, life: 9, fireEvery: 0.55, range: 320, speed: 520, max: 2 },
+      base: { damage: 12, cooldown: 4, life: 9, fireEvery: 0.55, range: 320, speed: 520, max: 2 },
       perLevel: [{ damage: 4 }, { max: 1 }, { fireEvery: -0.15 }, { max: 1, damage: 6 }]
     },
     {
