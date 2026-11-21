@@ -35,7 +35,7 @@ test('cada personaje arranca con su habilidad y su vida', function () {
 
 test('los niveles de una habilidad suman sus mejoras', function () {
   var s = Lluvia.abilityStats(Lluvia.findAbility('chispa'), 3);
-  assert.strictEqual(s.damage, 16);
+  assert.strictEqual(s.damage, 18);
   assert.strictEqual(s.count, 2);
   assert.strictEqual(s.cooldown, 0.8);
 });

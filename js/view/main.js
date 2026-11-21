@@ -73,6 +73,7 @@
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
+    else if (e.code === 'KeyR' && match && !paused) send();
     else if (e.code === 'Space' && match && !paused && !match.over) { e.preventDefault(); ulti(); }
     else if (e.code === 'KeyM') L.ui.flash(L.sound.toggle() ? 'Sonido apagado (M)' : 'Sonido prendido (M)');
   });
@@ -103,8 +104,14 @@
       } else if (match && !paused && !match.over) {
         if (b === 'a') padUlti();
         else if ((b === 'lb' || b === 'rb') && match.betting) bet(b === 'lb' ? 0 : 1);
+        else if (b === 'y') send();
       }
     });
+  }
+
+  function send() {
+    if (L.sendAnegados(match, match.human)) L.sound.play('bet');
+    else L.ui.flash('Mandar Anegados: ' + L.cantSend(match, match.human));
   }
 
   function padUlti() {
@@ -123,6 +130,8 @@
     if (!match || paused || match.over) return;
     var W = canvas.width, H = canvas.height;
     if (match.betting && match.betting.byPlayer[match.human.index] && y > H - 150 && y < H - 54) { bet(x < W / 2 ? 0 : 1); return; }
+    var sb = L.sendBadgeRect;
+    if (sb && x >= sb.x && x <= sb.x + sb.w && y >= sb.y && y <= sb.y + sb.h) { send(); return; }
     var mouse = L.input.mouse;
     mouse.x = x; mouse.y = y;
     ulti();

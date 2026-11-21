@@ -25,7 +25,7 @@
   // `proc` (0 to 1) scales the chance of on-hit item effects.
   L.hit = function (g, e, amount, proc) {
     if (e.dead) return;
-    var s = g.player.stats, dmg = amount * s.damageMul;
+    var p = g.player, s = p.stats, dmg = amount * (s.damageMul + s.stillDamage * (p.still || 0) + s.rushDamage * (p.rush || 0));
     if (s.crit > 0 && g.rng() < s.crit) dmg *= 2;
     L.applyHit(g, e, dmg, proc, 0);
   };
@@ -60,7 +60,7 @@
   function enemyKilled(g, e) {
     var t = e.type, h = L.data.horde;
     if (t.gold && (e.elite || g.rng() < t.goldChance)) {
-      g.gold += Math.round(t.gold * Math.pow(1 + h.goldGrowth, L.difficulty(g) - 1) * (e.elite ? h.elite.gold : 1));
+      g.gold += Math.round(t.gold * Math.pow(1 + h.goldGrowth, L.difficulty(g) - 1) * (e.elite ? h.elite.gold : 1) * (1 + (g.player.stats.goldMul || 0)));
     }
     if (e.elite && g.rng() < h.elite.chestChance) L.dropChest(g, e.x, e.y, 'elite');
     if (t.splits) {

@@ -28,6 +28,7 @@
     f.r = p.r * (rule.sizeMul || 1);
     f.hp = pool; f.maxHp = pool;
     f.id = id; f.dead = false; f.flash = 0; f.hurt = 0; f.invuln = 0;
+    f.still = 0; f.rush = 0;
     f.burnDps = 0; f.burnTtl = 0; f.xp = 0; f.speed = 0; f.dps = 0; f.stun = 0; f.slow = 0;
     f.type = { name: pl.name, gold: 0, goldChance: 0, boss: false, color: p.char.color };
     f.owner = pl;
@@ -82,6 +83,7 @@
     if (f.stun > 0) { f.stun -= dt; input = {}; }
     var x = input.x || 0, y = input.y || 0, len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
+    L.updateStance(f, len > 0.2, dt);
     var speed = f.stats.speed * (f.slow > 0 ? 0.5 : 1);
     if (f.slow > 0) f.slow -= dt;
     var wx = 0, wy = 0;

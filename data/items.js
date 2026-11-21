@@ -1,5 +1,5 @@
 // Items bought from chests. They stack without limit: every copy adds `perStack` on top of `base`.
-// kind 'stat'  : changes a player stat (see recalcStats in js/game.js).
+// kind 'stat'  : changes a player stat (see recalcStats in js/game.js); `also` adds other stats per copy.
 // kind 'onHit' : may trigger when one of your hits lands; `chance` is scaled by the ability's proc coefficient.
 // kind 'onKill': triggers when you kill an enemy.
 // Numbers are provisional until the simulated-game bench exists.
@@ -28,6 +28,10 @@
       desc: '+12% de área en tus habilidades (ondas, auras, órbitas y rayos).' },
     { id: 'escudo', name: 'Escudo', rarity: 'comun', kind: 'stat', stat: 'armorHyper', perStack: 0.1,
       desc: 'Recibís menos daño (cada copia rinde un poco menos que la anterior).' },
+    { id: 'raiz', name: 'Raíz', rarity: 'comun', kind: 'stat', stat: 'stillRegen', perStack: 3, also: { regenAdd: 1 },
+      desc: '+1 de vida por segundo, y quieto te curás 3 más (se enciende de a poco).' },
+    { id: 'charco', name: 'Charco de oro', rarity: 'comun', kind: 'stat', stat: 'goldMul', perStack: 0.15,
+      desc: '+15% del oro que sueltan las criaturas.' },
     { id: 'mecha', name: 'Mecha', rarity: 'comun', kind: 'onKill', effect: 'explode',
       base: { mult: 1.5, radius: 60 }, perStack: { mult: 0.75, radius: 10 },
       desc: 'Los enemigos que matás explotan: 150% del golpe a los de al lado (+75% por copia).' },
@@ -44,6 +48,10 @@
       desc: 'Cada golpe te cura 1 de vida.' },
     { id: 'eco', name: 'Eco', rarity: 'raro', kind: 'stat', stat: 'extraProjectiles', perStack: 1,
       desc: '+1 proyectil en tus habilidades que disparan.' },
+    { id: 'ancla', name: 'Ancla', rarity: 'raro', kind: 'stat', stat: 'stillDamage', perStack: 0.35, also: { damageMul: 0.1 },
+      desc: '+10% de daño, y plantado sube hasta +35% más en un segundo y medio. Moverte lo apaga rápido.' },
+    { id: 'racha', name: 'Racha', rarity: 'raro', kind: 'stat', stat: 'rushDamage', perStack: 0.3,
+      desc: 'No pares: moviéndote, tu daño sube hasta +30% en tres segundos. Frenar lo corta.' },
     { id: 'trebol', name: 'Trébol', rarity: 'raro', kind: 'stat', stat: 'extraChoices', perStack: 1,
       desc: 'Al subir de nivel elegís entre una opción más.' },
 

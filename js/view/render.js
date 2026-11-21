@@ -45,6 +45,25 @@
   }
   L.ultiBadge = ultiBadge;
 
+  // Above the ulti: sending Anegados to the leader, its price and whether you can.
+  function sendBadge(ctx, m, W, y) {
+    L.sendBadgeRect = null;
+    if (!m || m.final || m.human.out || m.human.inDuel) return;
+    var to = L.sendTarget(m, m.human), why = L.cantSend(m, m.human);
+    if (!to) return;
+    var text = 'R · Mandar Anegados a ' + to.name + ' · ' + L.sendCost(m.human.game) + ' oro' + (why ? ' (' + why + ')' : '');
+    ctx.font = '600 13px system-ui, sans-serif';
+    var w = ctx.measureText(text).width + 24;
+    ctx.fillStyle = why ? 'rgba(14, 15, 20, 0.7)' : 'rgba(40, 20, 50, 0.9)';
+    ctx.fillRect(W / 2 - w / 2, y - 16, w, 22);
+    ctx.strokeStyle = why ? '#343846' : '#c9b8ff'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(W / 2 - w / 2, y - 16, w, 22);
+    ctx.fillStyle = why ? '#8a8d9a' : '#efe6ff';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, W / 2, y);
+    L.sendBadgeRect = { x: W / 2 - w / 2, y: y - 16, w: w, h: 22 };
+  }
+
   // What your abilities leave on the floor or around you: blades, turrets, beams of light.
   function drawKit(ctx, f) {
     f.abilities.forEach(function (a) {
@@ -339,6 +358,10 @@
     // Player (blinking while invulnerable, hidden while down).
     if (g.respawn <= 0) {
       if (p.invuln > 0 && Math.floor(g.time * 10) % 2) ctx.globalAlpha = 0.4;
+      // Stance items glow while they are on: gold ring when planted (Ancla/Raíz), blue streak when rushing (Racha).
+      var st = p.stats, planted = (st.stillDamage || st.stillRegen) ? p.still || 0 : 0, rush = st.rushDamage ? p.rush || 0 : 0;
+      if (planted > 0.05) { ctx.globalAlpha = 0.5 * planted; ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 10, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+      if (rush > 0.05) { ctx.globalAlpha = 0.45 * rush; ctx.strokeStyle = '#7ad0ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - (p.dirX || 0) * 40 * rush, p.y - (p.dirY || 0) * 40 * rush); ctx.stroke(); ctx.globalAlpha = 1; }
       L.drawHero(ctx, p, t, p.hurt > 0);
       ctx.globalAlpha = 1;
     }
@@ -413,6 +436,7 @@
     });
 
     ultiBadge(ctx, p, W, H, H - 16);
+    sendBadge(ctx, m, W, H - 44);
 
     // The touch stick, where your finger is.
     var st = L.input && L.input.stick && L.input.stick();

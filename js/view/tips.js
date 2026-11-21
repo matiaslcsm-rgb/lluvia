@@ -19,6 +19,7 @@
     wave: 'Evento de tormenta: cada minuto la horda hace algo especial. Leé el aviso y movete.',
     elite: 'Los Anegados con brillo dorado son élites: más duros, pero dejan mucho oro y a veces un cofre.',
     final: 'Quedan dos: se terminan las hordas y el Juicio sigue hasta que uno se quede sin vidas.',
+    send: 'Ya te alcanza para mandarle Anegados al que va primero: apretá R (o Y en el joystick, o tocá el cartel). Le cae una tanda con una élite. Los rivales también te pueden mandar.',
     shrine: 'Los santuarios son riesgos opcionales: el del Trueno te da un cofre si aguantás 20 s de élites; el Pozo te dobla o te saca un cuarto del oro.'
   };
 
@@ -45,6 +46,7 @@
       if (g.lastWave) L.tips.show('wave');
       if (m.final) L.tips.show('final');
       if (g.shrines && g.shrines.length) L.tips.show('shrine');
+      if (!L.cantSend(m, me)) L.tips.show('send');
       if (!seen.elite) {
         for (var i = 0; i < g.enemies.length; i++) {
           var e = g.enemies[i];

@@ -21,7 +21,7 @@
     p.onHit = []; p.onKill = [];
     p.itemOrder.forEach(function (id) {
       var def = L.findItem(id), n = p.items[id];
-      if (def.kind === 'stat') m[def.stat] += def.perStack * n;
+      if (def.kind === 'stat') { m[def.stat] += def.perStack * n; for (var k in def.also) m[k] += def.also[k] * n; }
       else if (def.kind === 'onHit') p.onHit.push({ def: def, n: n, chance: L.itemChance(def, n), params: L.itemParams(def, n) });
       else if (def.kind === 'onKill') p.onKill.push({ def: def, n: n, params: L.itemParams(def, n) });
     });

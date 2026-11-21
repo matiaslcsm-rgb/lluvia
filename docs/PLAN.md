@@ -48,7 +48,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 13. **Más Leyes del Cielo:** solo cuerpo a cuerpo, Anegados en el Juicio, niebla (se ve poco), viento (te empuja).
     *(hecho)*
 14. **Personajes 6 a 8**, con ulti propia cada uno, y 4-6 ítems más que abran builds nuevas (por ejemplo, ítems
-    que premien quedarse quieto o moverse sin parar).
+    que premien quedarse quieto o moverse sin parar). *(hecho)*
 15. **Partida diaria:** misma semilla para todos ese día y un récord para batir.
 16. **Pulido:** menú de opciones (volumen, tamaño de letra), joystick, pantallas chicas.
 17. **Online contra personas** (grande: necesita un servidor).
@@ -237,3 +237,21 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   (era 12) y Brasa con 115 de vida (era 105); Torreta 12 (era 10) y Óxido con 120 de vida (era 110). En el control
   de 40, Brasa gana 14% y Óxido 15%, y Marea bajó de puesto promedio 3,8 a 4,3. El resto queda dentro del ruido
   de 40 partidas (±5 puntos); la partida sigue durando 26 minutos de mediana.
+- **2026-11-21: ítems de postura y mandar Anegados.**
+  - **4 ítems nuevos** (ya son 20), para builds que no existían:
+    - Ancla (raro): +10% de daño siempre, y quieto sube hasta +35% más en 1,5 s.
+    - Racha (raro): moviéndote sin parar, tu daño sube hasta +30% en 3 s.
+    - Raíz (común): +1 de vida por segundo siempre, y quieto 3 más.
+    - Charco de oro (común): +15% de oro de las criaturas.
+    - Se ven en pantalla: un aro dorado cuando estás plantado y una estela celeste cuando venís en racha.
+  - **Mandar Anegados** (como en Custom Hero Chaos, donde se le mandan creeps a otro):
+    - Con R, Y en el joystick o tocando el cartel, pagás oro (60 al principio, crece como los cofres) y al que va
+      primero le cae una tanda de 6 criaturas, con una élite y más con el reloj. Recarga de 30 s.
+    - La IA también lo hace desde el minuto 9, cuando le sobra el doble del precio.
+    - Funciona como freno para el que se escapa. Tiene consejo propio en el tutorial y está en "Cómo se juega".
+  - **Lo que midió el banco:** con los ítems de postura "puros", la IA (que no para de moverse) recibía ítems
+    que no le servían. El pico de vidas perdidas entre los minutos 5 y 10 subió de 5,3 a 6,8, y la partida bajó a
+    22 minutos. Mandar Anegados desde el minuto 4 lo empeoraba (7,3). Con el piso fijo de Ancla y Raíz, y la IA
+    mandando desde el minuto 9, volvió a 5,5 y a **26:40 de mediana** (banco de 40).
+  - Pendiente: los ganadores juntan más ítems (unos 140, eran 107) por el Charco de oro, y Roca sale último en
+    puesto promedio en cuatro bancos seguidos. Hace falta una corrida larga antes de tocarlos.

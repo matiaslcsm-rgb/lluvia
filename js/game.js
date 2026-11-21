@@ -93,7 +93,8 @@
   function recalcStats(g) {
     var p = g.player, b = p.char.stats;
     var m = { speedMul: 0, maxHpAdd: 0, pickupMul: 0, cooldownMul: 0, damageMul: 0, regenAdd: 0,
-      cooldownHyper: 0, crit: 0, extraProjectiles: 0, areaMul: 0, armorHyper: 0, extraChoices: 0 };
+      cooldownHyper: 0, crit: 0, extraProjectiles: 0, areaMul: 0, armorHyper: 0, extraChoices: 0,
+      stillRegen: 0, goldMul: 0, stillDamage: 0, rushDamage: 0 };
     p.passives.forEach(function (ps) { m[ps.def.stat] += ps.def.perLevel * ps.level; });
     L.applyItemMods(g, m);
     var meta = g.meta || {}; // your Cuaderno upgrades (js/meta.js); none for the rivals
@@ -110,7 +111,8 @@
       extraProjectiles: m.extraProjectiles,
       area: 1 + m.areaMul,
       armor: 1 - 1 / (1 + m.armorHyper),   // share of damage you don't take; each copy helps a bit less
-      extraChoices: m.extraChoices
+      extraChoices: m.extraChoices,
+      stillRegen: m.stillRegen, goldMul: m.goldMul, stillDamage: m.stillDamage, rushDamage: m.rushDamage
     };
     if (oldMax !== undefined && p.stats.maxHp > oldMax) p.hp += p.stats.maxHp - oldMax;
   }
@@ -216,16 +218,24 @@
     L.updateShrines(g, dt);
     updateTimed(g.effects, dt);
     updateTimed(g.toasts, dt);
-    p.hp = Math.min(p.stats.maxHp, p.hp + p.stats.regen * dt);
+    p.hp = Math.min(p.stats.maxHp, p.hp + (p.stats.regen + p.stats.stillRegen * (p.still || 0)) * dt);
     if (p.hurt > 0) p.hurt -= dt;
     checkLevel(g);
   }
+
+  // Stance for the Ancla / Raíz / Racha items: `still` fills in 1.5 s standing and drains fast when you move;
+  // `rush` fills in 3 s moving and drops to nothing when you stop.
+  L.updateStance = function (p, moving, dt) {
+    if (moving) { p.still = Math.max(0, (p.still || 0) - dt * 3); p.rush = Math.min(1, (p.rush || 0) + dt / 3); }
+    else { p.still = Math.min(1, (p.still || 0) + dt / 1.5); p.rush = 0; }
+  };
 
   function movePlayer(g, dt, input) {
     var p = g.player, x = input.x || 0, y = input.y || 0;
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
     if (x || y) { p.dirX = x; p.dirY = y; } // the way you face, for drawing
+    L.updateStance(p, len > 0.2, dt);
     p.x = L.clamp(p.x + x * p.stats.speed * dt, p.r, g.arena - p.r);
     p.y = L.clamp(p.y + y * p.stats.speed * dt, p.r, g.arena - p.r);
   }

@@ -76,8 +76,8 @@
       row.appendChild(button('Cómo se juega', function () { L.ui.howTo(onPick); }, 'btn ghost'));
       row.appendChild(button('Volver a ver los consejos', function () { L.tips.reset(); L.ui.flash('Los consejos van a aparecer de nuevo'); }, 'btn ghost'));
       show([el('h1', null, 'LLUVIA'), el('p', 'tagline', L.data.lore.tagline), el('p', null, 'Elegí tu Paraguas'), cards, row,
-        el('p', 'hint', 'WASD o flechas para moverte · Espacio: ulti hacia el mouse · Q / E: apostar · P: pausa · M: sonido'),
-        el('p', 'hint', 'Con joystick: palanca para moverte · A: ulti · LB / RB: apostar · Start: pausa'),
+        el('p', 'hint', 'WASD o flechas para moverte · Espacio: ulti hacia el mouse · R: mandar Anegados · Q / E: apostar · P: pausa · M: sonido'),
+        el('p', 'hint', 'Con joystick: palanca para moverte · A: ulti · Y: mandar Anegados · LB / RB: apostar · Start: pausa'),
         el('p', 'hint', 'En pantalla táctil: arrastrá un dedo para moverte · tocá con otro para la ulti · tocá un lado del panel para apostar')]);
       L.ui.current = 'select';
     },
@@ -156,6 +156,7 @@
         ['Crecer', 'Al subir de nivel elegís una mejora: habilidades nuevas, subir las que tenés o pasivas. Con una habilidad al nivel 5 y su ítem justo aparece una fusión.'],
         ['Oro y cofres', 'Los Anegados dejan oro. Con oro abrís los cofres del barrio: cada ítem se apila sin tope y algunos encadenan efectos.'],
         ['El reloj', 'Cada minuto la horda se endurece y hay un evento de tormenta. Desde el minuto 10 aprieta mucho más: hay que crecer más rápido que el reloj.'],
+        ['Mandar Anegados', 'Con la R (o Y en el joystick) pagás oro y le mandás una tanda de criaturas con una élite al que va primero. Sirve para frenar al que se escapa; los rivales también lo hacen.'],
         ['El Juicio', 'Cada 2 minutos el Trueno elige a dos Paraguas para un duelo bajo una Ley del Cielo. El que pierde, pierde una vida. Los demás apuestan con Q y E.'],
         ['Ganar', 'Tenés 3 vidas. Las perdés cayendo en la horda o perdiendo un Juicio. Cuando quedan dos, pelean hasta el final. El último en pie gana el Sol.']
       ].forEach(function (r) { box.appendChild(el('h3', null, r[0])); box.appendChild(el('p', null, r[1])); });

@@ -144,6 +144,7 @@
       });
     }
 
+    if (!m.final) L.updateSends(m, played);
     var duelLoser = null;
     if (m.duel) {
       L.updateDuel(m.duel, played, human.inDuel && !human.bot ? input : null);

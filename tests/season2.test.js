@@ -135,3 +135,29 @@ test('en el Juicio con Anegados entran criaturas, se pueden bajar y curan', func
   assert.ok(seen > 0, 'no entró ninguna criatura');
   assert.ok(d.creeps.length <= 20);
 });
+
+test('mandar Anegados cuesta oro, cae sobre el que va primero y tiene recarga', function () {
+  var m = Lluvia.createMatch({ seed: 12, humanBot: true }), me = m.human, g = me.game;
+  var to = Lluvia.sendTarget(m, me);
+  assert.ok(to && to !== me);
+  assert.ok(Lluvia.cantSend(m, me), 'sin oro no se puede');
+  g.gold = 1000;
+  var before = to.game.enemies.length;
+  assert.ok(Lluvia.sendAnegados(m, me));
+  assert.strictEqual(g.gold, 1000 - Lluvia.sendCost(g));
+  assert.ok(to.game.enemies.length >= before + Lluvia.data.send.pack.length);
+  assert.ok(to.game.enemies.some(function (e) { return e.elite; }));
+  assert.ok(!Lluvia.sendAnegados(m, me), 'hay recarga');
+});
+
+test('Ancla sube el daño quieto y Racha moviéndote', function () {
+  var g = Lluvia.createGame({ seed: 3, characterId: 'brasa' }), p = g.player;
+  Lluvia.addItem(g, 'ancla');
+  var e = Lluvia.spawnEnemy(g, 'bruto', p.x + 50, p.y);
+  Lluvia.updateStance(p, false, 2);
+  var hp = e.hp; p.stats.crit = 0; Lluvia.hit(g, e, 10, 0);
+  assert.ok(Math.abs(hp - e.hp - 10 * (p.stats.damageMul + 0.35)) < 1e-6);
+  assert.ok(Math.abs(p.stats.damageMul - 1.1) < 1e-9, 'el Ancla da +10% siempre');
+  Lluvia.updateStance(p, true, 1);
+  assert.ok(p.still === 0);
+});

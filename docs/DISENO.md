@@ -128,6 +128,14 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - Se llaman Nube, Trueno, Granizo, Bruma, Rocío, Relámpago y Llovizna. Cada uno tiene su nivel de habilidad.
 - Juegan su arena de verdad, con las mismas reglas que vos: no hay números inventados para ellos.
 
+## Mandar Anegados
+- Con R (o Y, o tocando el cartel) pagás oro y le mandás al que va primero una tanda de criaturas con una élite.
+  Cuesta como un cofre y medio, tiene 30 s de recarga y la IA también lo usa. Frena al que se escapa.
+
+## Ítems de postura
+- Ancla y Raíz dan un poco siempre y mucho más si te plantás (daño, curación); Racha premia no parar nunca (más daño). Charco de oro da
+  más oro por criatura.
+
 ## Entre partidas: el Cuaderno del Paraguas
 - Cada partida da **Monedas del Sol**: 60 al 1.º, 35 al 2.º... 4 al 8.º, más 4 por Juicio ganado y 1 cada 100 bajas.
 - Se gastan en 7 **mejoras permanentes** chicas que solo tenés vos: vida, daño, velocidad, imán, oro inicial,
@@ -140,5 +148,4 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 
 ## Afuera de la 1.0
 - Jugar online contra otras personas.
-- Mandar enemigos a la arena de un rival.
 - Arte final y música (primero figuras simples).

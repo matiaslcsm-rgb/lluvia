@@ -50,7 +50,7 @@
 
   // Gamepad buttons pressed this frame (not held): A, LB, RB, Start, D-pad.
   var held = {};
-  var NAMES = { 0: 'a', 4: 'lb', 5: 'rb', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
+  var NAMES = { 0: 'a', 3: 'y', 4: 'lb', 5: 'rb', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
 
   L.input = {
     mouse: mouse,

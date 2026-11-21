@@ -71,3 +71,19 @@
     { id: 'lodo', name: '¡Lluvia de lodo!', desc: 'Llega una banda de Escupelodos.', type: 'escupidor', count: 5, perStep: 1, pattern: 'scatter', from: 5 }
   ];
 })(this.Lluvia = this.Lluvia || {});
+
+// Sending Anegados (js/send.js): pay gold to drop a pack on the rival who is ahead.
+(function (L) {
+  'use strict';
+  L.data.send = {
+    cost: 60,            // gold at difficulty 1, grows like chest prices
+    growth: 0.25,
+    cooldown: 30,        // seconds between sends, per player
+    pack: ['rastrero', 'rastrero', 'veloz', 'veloz', 'bruto', 'escupidor'],
+    elites: 1,           // how many of the pack come golden
+    perStep: 0.5,        // extra creatures per difficulty step
+    botEvery: 8,         // a bot thinks about sending this often (seconds)
+    botChance: 0.35,     // ...and sends with this chance when it can afford it twice over
+    botFrom: 540         // bots don't send before 9:00 (earlier, it piled onto the hardest stretch)
+  };
+})(this.Lluvia = this.Lluvia || {});
