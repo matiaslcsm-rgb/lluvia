@@ -73,10 +73,17 @@
       pactHp: L.pactValue(opts.pacts, 'playerHp', 1),
       chestMul: L.pactValue(opts.pacts, 'chestMul', 1),
       hordeDps: opts.storm ? L.data.meta.storm.dpsMul : 1,
+      forecast: opts.forecast ? L.findById(L.data.forecasts, opts.forecast) : null, // the match's weather
       grid: new L.Grid(64),
       maxR: 0,             // widest live enemy this tick; grid queries pad by it so big ones are never missed
       _q: []               // reused query buffer for the top-level loops (never re-entered)
     };
+    var fc = g.forecast;
+    if (fc) {
+      g.hordeHp *= fc.hordeHp || 1; g.hordeDps *= fc.hordeDps || 1;
+      g.spawnMul *= fc.spawnMul || 1; g.chestMul *= fc.chestMul || 1;
+      g.toasts.push({ text: 'Pronóstico: ' + fc.name + '. ' + fc.desc, color: fc.color, ttl: 8 });
+    }
     L.addAbility(g, ch.start);
     var ulti = L.findUlti(ch.ulti);
     g.player.ulti = { def: ulti, cd: ulti.cooldown / 2 }; // the first one is ready halfway through its cooldown
@@ -100,6 +107,8 @@
       stillRegen: 0, goldMul: 0, stillDamage: 0, rushDamage: 0, maxHpMul: 0 };
     p.passives.forEach(function (ps) { m[ps.def.stat] += ps.def.perLevel * ps.level; });
     L.applyItemMods(g, m);
+    var fs = g.forecast && g.forecast.stats;
+    if (fs) for (var k in fs) m[k] += fs[k];
     var meta = g.meta || {}; // your Cuaderno upgrades (js/meta.js); none for the rivals
     var oldMax = p.stats.maxHp;
     p.stats = {

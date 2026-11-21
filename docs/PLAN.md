@@ -53,6 +53,11 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 16. **Pulido:** menú de opciones (volumen, tamaño de letra), joystick, pantallas chicas. *(hecho)*
 17. **Online contra personas** (grande: necesita un servidor).
 
+### Tercera temporada
+18. **Pronóstico del día:** cada partida trae un clima que cambia la horda para las 8 arenas por igual. *(hecho)*
+19. **Rival:** el Paraguas que más vidas te sacó pasa a ser tu rival; ganarle en duelo paga el doble y tiene frase.
+20. **Maestría de personaje:** cada Paraguas sube de rango con las partidas y gana un título y un color.
+
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
 - **2026-11-20: etapas 0 y 1.** Se juega abriendo `index.html` (o con un servidor local). Hay 3 personajes (Brasa,
@@ -288,3 +293,14 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - **Banco de 60 partidas:** la curva aguanta (mediana 25:28; 4,5 vidas perdidas contra la horda en los minutos
     5-10). Duelos de 10,9 s, ganadores con 144 ítems y 5 fusiones. Puestos promedio entre 4,0 y 4,9: ningún
     personaje se despega.
+- **2026-11-21: pronóstico del día** (tercera temporada). Cada partida sale con un clima, el mismo en las 8 arenas,
+  que se anuncia al empezar y queda escrito debajo del reloj:
+  - Llovizna (sin cambios, la más común), Chaparrón (más bichos y más oro), Granizada (la horda pega más, vos
+    también), Neblina (salen más pero son frágiles), Ventarrón (todos corren más, la horda aguanta un poco más) y
+    Arcoíris (cofres más baratos, el más raro).
+  - Cada clima tiene su contra: con solo ventajas, el banco de 30 dio partidas de 30 minutos, la mitad de vidas
+    perdidas en los minutos 5-10 y ganadores con 192 ítems (más bichos ya es más oro y experiencia). Con las
+    contras: mediana 27:17, 4,4 vidas perdidas en los minutos 5-10 y 169 ítems.
+  - Se suma a la Tormenta eterna y a los Pactos. La partida diaria también tiene pronóstico (igual para todos).
+  - Las pruebas ahora son más livianas para gastar menos (decisión del usuario): las automáticas en cada tanda, y
+    30 partidas simuladas solo cuando cambian números del balance.

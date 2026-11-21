@@ -86,4 +86,29 @@
     botChance: 0.35,     // ...and sends with this chance when it can afford it twice over
     botFrom: 540         // bots don't send before 9:00 (earlier, it piled onto the hardest stretch)
   };
+
+  // Forecast: one per match, the same for all eight arenas. It bends the horde and gives everyone a small bonus.
+  // `weight` is how often it comes up; the multipliers stack with Tormenta eterna and the Pactos.
+  L.data.forecasts = [
+    { id: 'llovizna', name: 'Llovizna', desc: 'Un día como cualquiera en Aguaverde.', color: '#9fc3e6', weight: 4 },
+    { id: 'chaparron', name: 'Chaparrón', desc: 'Más bichos y un poco más duros, pero dejan más oro.', color: '#5fb0ff', weight: 2,
+      spawnMul: 1.2, hordeHp: 1.15, stats: { goldMul: 0.1 } },
+    { id: 'granizada', name: 'Granizada', desc: 'La horda pega más fuerte, pero vos también.', color: '#d8eeff', weight: 2,
+      hordeDps: 1.35, stats: { damageMul: 0.1 } },
+    { id: 'neblina', name: 'Neblina', desc: 'Salen más y pegan más, pero son más frágiles.', color: '#b8c0c8', weight: 2,
+      spawnMul: 1.2, hordeHp: 0.9, hordeDps: 1.15 },
+    { id: 'ventarron', name: 'Ventarrón', desc: 'Todos corren más rápido; la horda aguanta más.', color: '#9fe0c0', weight: 2,
+      hordeHp: 1.2, stats: { speedMul: 0.1 } },
+    { id: 'arcoiris', name: 'Arcoíris', desc: 'Los cofres salen más baratos, pero la horda aguanta un poco más.', color: '#ffd86a', weight: 1,
+      chestMul: 0.85, hordeHp: 1.1 }
+  ];
+
+  // Weighted pick from its own rng, so it doesn't change the rest of the match's dice.
+  L.pickForecast = function (seed) {
+    var list = L.data.forecasts, total = 0, rng = L.makeRng((seed ^ 0x2545f491) >>> 0 || 1);
+    list.forEach(function (f) { total += f.weight; });
+    var r = rng() * total;
+    for (var i = 0; i < list.length; i++) { r -= list[i].weight; if (r < 0) return list[i].id; }
+    return list[0].id;
+  };
 })(this.Lluvia = this.Lluvia || {});

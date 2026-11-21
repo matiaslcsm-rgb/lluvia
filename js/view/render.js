@@ -401,6 +401,11 @@
     ctx.font = '600 13px system-ui, sans-serif';
     ctx.fillStyle = '#ff9a7a';
     ctx.fillText('Dificultad ' + L.difficulty(g), W / 2, 64);
+    if (g.forecast) {
+      ctx.font = '600 12px system-ui, sans-serif';
+      ctx.fillStyle = g.forecast.color;
+      ctx.fillText(g.forecast.name, W / 2, 81);
+    }
     ctx.textAlign = 'right';
     ctx.font = '600 16px system-ui, sans-serif';
     ctx.fillStyle = '#e8e8ee';

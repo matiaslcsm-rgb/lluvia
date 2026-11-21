@@ -173,7 +173,7 @@ test('los ítems malditos dan y cobran, y el drenaje nunca mata', function () {
 });
 
 test('los Pactos cambian la partida: Enjambre, Cristal y Juicio caótico', function () {
-  var m = Lluvia.createMatch({ seed: 6, humanBot: true, pacts: ['enjambre', 'cristal', 'caos'] }), g = m.human.game;
+  var m = Lluvia.createMatch({ seed: 6, humanBot: true, forecast: null, pacts: ['enjambre', 'cristal', 'caos'] }), g = m.human.game;
   assert.strictEqual(g.spawnMul, 2);
   assert.ok(Math.abs(g.player.stats.maxHp - g.player.char.stats.maxHp * 0.5) < 1e-6);
   var d = Lluvia.createDuel(m, m.players[1], m.players[2]);
@@ -186,4 +186,16 @@ test('cada habilidad que se ofrece tiene su fusión, con un ítem que existe', f
     assert.ok(f, a.id + ' no tiene fusión');
     assert.ok(Lluvia.findItem(f.item) && Lluvia.findAbility(f.into).fused, a.id);
   });
+});
+
+test('el pronóstico es el mismo en las 8 arenas y cambia la horda y a los jugadores', function () {
+  var m = Lluvia.createMatch({ seed: 9, humanBot: true, forecast: 'chaparron' });
+  m.players.forEach(function (pl) {
+    assert.strictEqual(pl.game.forecast.id, 'chaparron');
+    assert.strictEqual(pl.game.spawnMul, 1.2);
+    assert.strictEqual(pl.game.player.stats.goldMul, 0.1);
+  });
+  var seen = {};
+  for (var s = 1; s <= 60; s++) seen[Lluvia.pickForecast(s)] = true;
+  assert.ok(Object.keys(seen).length >= 5, 'casi siempre sale el mismo pronóstico');
 });
