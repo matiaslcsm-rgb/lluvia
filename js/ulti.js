@@ -13,8 +13,8 @@
     return s;
   }
 
-  // Enemies whose body is within `w` of the segment (x1,y1)-(x2,y2).
-  function alongSegment(g, x1, y1, x2, y2, w) {
+  // Enemies whose body is within `w` of the segment (x1,y1)-(x2,y2). Also used by the sweep piece.
+  var alongSegment = L.alongSegment = function (g, x1, y1, x2, y2, w) {
     var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
     var len = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) || 1;
     return L.nearby(g, mx, my, len / 2 + w).filter(function (e) {
@@ -23,7 +23,7 @@
       var rr = w + e.r;
       return (e.x - px) * (e.x - px) + (e.y - py) * (e.y - py) < rr * rr;
     });
-  }
+  };
 
   function stun(e, t) { e.stun = Math.max(e.stun || 0, t); }
 
@@ -70,6 +70,34 @@
       g.effects.push({ kind: 'ring', x: p.x, y: p.y, r: s.radius, ttl: 0.6, max: 0.6, color: def.color });
     }
   };
+  // Resaca: everyone near you is dragged to the aimed point, hit and stunned.
+  KINDS.pull = function (g, p, s, def, x, y) {
+    var c = aimPoint(p, x, y, s.range);
+    L.nearby(g, p.x, p.y, s.radius).forEach(function (e) {
+      if (!e.type.boss) { var a = g.rng() * Math.PI * 2, r = g.rng() * 40; e.x = c.x + Math.cos(a) * r; e.y = c.y + Math.sin(a) * r; }
+      L.hit(g, e, s.damage, 1);
+      stun(e, s.stun);
+    });
+    g.effects.push({ kind: 'ring', x: c.x, y: c.y, r: 90, ttl: 0.5, max: 0.5, color: def.color });
+    g.effects.push({ kind: 'line', x: p.x, y: p.y, x2: c.x, y2: c.y, w: 12, ttl: 0.3, max: 0.3, color: def.color });
+  };
+
+  // Chatarra: a ring of piercing shrapnel.
+  KINDS.shrapnel = function (g, p, s, def) {
+    for (var i = 0; i < s.count; i++) {
+      var a = i / s.count * Math.PI * 2;
+      g.projectiles.push({ x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: 7, proc: 0.5,
+        damage: s.damage, pierce: s.pierce, life: s.range / s.speed, hit: [], color: def.color, dead: false });
+    }
+    g.effects.push({ kind: 'ring', x: p.x, y: p.y, r: 60, ttl: 0.3, max: 0.3, color: def.color });
+  };
+
+  // Destello: a blinding light that stuns everything in sight.
+  KINDS.flash = function (g, p, s, def) {
+    L.nearby(g, p.x, p.y, s.radius).forEach(function (e) { L.hit(g, e, s.damage, 0.5); stun(e, s.stun); });
+    g.effects.push({ kind: 'ring', x: p.x, y: p.y, r: s.radius, ttl: 0.6, max: 0.6, color: def.color });
+  };
+
   L.ULTI_KINDS = KINDS;
 
   // Casts the player's ulti toward (x, y) if it is ready. Returns true if it went off.
@@ -80,6 +108,7 @@
     var def = p.ulti.def;
     KINDS[def.kind](g, p, scaled(p, def), def, x, y);
     p.ulti.cd = def.cooldown * p.stats.cooldownMul;
+    L.emit(g, 'ulti', p.x, p.y, def);
     return true;
   };
 

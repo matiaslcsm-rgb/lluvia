@@ -56,6 +56,25 @@
       perLevel: [{ damage: 30 }, { splash: 20 }, { cooldown: -0.7 }, { count: 1, damage: 30 }]
     },
 
+    {
+      id: 'ola', name: 'Ola', kind: 'projectile', proc: 1, color: '#4fa3e0', boomerang: true,
+      desc: 'Una ola que se aleja, vuelve hacia vos y atraviesa todo en los dos viajes.',
+      base: { damage: 16, cooldown: 1.6, count: 1, speed: 380, pierce: 99, radius: 12, range: 360 },
+      perLevel: [{ damage: 6 }, { count: 1 }, { radius: 4, damage: 6 }, { count: 1, cooldown: -0.3 }]
+    },
+    {
+      id: 'torreta', name: 'Torreta', kind: 'turret', proc: 0.7, color: '#c07a45',
+      desc: 'Planta una torreta donde estás. Dispara sola a lo más cercano durante un rato.',
+      base: { damage: 10, cooldown: 4, life: 9, fireEvery: 0.55, range: 320, speed: 520, max: 2 },
+      perLevel: [{ damage: 4 }, { max: 1 }, { fireEvery: -0.15 }, { max: 1, damage: 6 }]
+    },
+    {
+      id: 'faro', name: 'Haz giratorio', kind: 'sweep', proc: 0.5, color: '#ffe08a',
+      desc: 'Un haz de luz gira a tu alrededor y quema lo que barre.',
+      base: { damage: 11, length: 170, width: 14, spin: 2.2, hitEvery: 0.5, count: 1 },
+      perLevel: [{ length: 30 }, { damage: 6 }, { count: 1 }, { damage: 8, length: 30 }]
+    },
+
     // Fusions: never offered as new abilities. They replace their base ability (see L.data.fusions) and are
     // already at their top level, so they have no perLevel steps.
     { id: 'enjambre', name: 'Enjambre de chispas', kind: 'projectile', proc: 1, color: '#ffd166', fused: true,
@@ -81,7 +100,16 @@
       base: { damage: 40, cooldown: 1.8, radius: 220, slow: 3 }, perLevel: [] },
     { id: 'apocalipsis', name: 'Apocalipsis', kind: 'strike', proc: 1, color: '#ff3d2e', fused: true,
       desc: 'Tres meteoros gigantes a la vez.',
-      base: { damage: 220, cooldown: 2, count: 3, range: 500, splash: 130 }, perLevel: [] }
+      base: { damage: 220, cooldown: 2, count: 3, range: 500, splash: 130 }, perLevel: [] },
+    { id: 'tsunami', name: 'Tsunami', kind: 'projectile', proc: 1, color: '#7fc4ff', boomerang: true, fused: true,
+      desc: 'Cuatro olas gigantes que van y vuelven.',
+      base: { damage: 60, cooldown: 1.2, count: 4, speed: 420, pierce: 99, radius: 22, range: 460 }, perLevel: [] },
+    { id: 'fortaleza', name: 'Fortaleza', kind: 'turret', proc: 0.8, color: '#e09a5a', fused: true,
+      desc: 'Cinco torretas que disparan sin parar.',
+      base: { damage: 30, cooldown: 2, life: 14, fireEvery: 0.25, range: 380, speed: 600, max: 5 }, perLevel: [] },
+    { id: 'faro_mayor', name: 'Faro mayor', kind: 'sweep', proc: 0.6, color: '#fff2b0', fused: true,
+      desc: 'Tres haces enormes girando a toda velocidad.',
+      base: { damage: 34, length: 300, width: 22, spin: 3.4, hitEvery: 0.3, count: 3 }, perLevel: [] }
   ];
 
   // Ability at level 5 + at least one copy of the item = the fusion shows up as a level-up option.
@@ -93,7 +121,10 @@
     { ability: 'niebla', item: 'colmillo', into: 'pantano' },
     { ability: 'rayo', item: 'arpa', into: 'tormenta' },
     { ability: 'escarcha', item: 'escudo', into: 'glaciar' },
-    { ability: 'meteoro', item: 'mecha', into: 'apocalipsis' }
+    { ability: 'meteoro', item: 'mecha', into: 'apocalipsis' },
+    { ability: 'ola', item: 'ascua', into: 'tsunami' },
+    { ability: 'torreta', item: 'cristal', into: 'fortaleza' },
+    { ability: 'faro', item: 'lupa', into: 'faro_mayor' }
   ];
 
   L.data.passives = [
@@ -109,6 +140,6 @@
   L.data.statLabels = {
     damage: 'de daño', cooldown: 's de recarga', count: 'de cantidad', pierce: 'enemigos atravesados',
     radius: 'de radio', dps: 'de daño por segundo', spin: 'de velocidad de giro', splash: 'de área',
-    slow: 's de lentitud'
+    slow: 's de lentitud', length: 'de largo', max: 'torreta más', fireEvery: 's entre disparos', life: 's de vida'
   };
 })(this.Lluvia = this.Lluvia || {});

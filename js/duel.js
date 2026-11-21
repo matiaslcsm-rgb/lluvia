@@ -41,7 +41,8 @@
     return {
       player: me, enemies: [foe], projectiles: [], effects: d.effects, toasts: [], chests: [],
       grid: new L.Grid(64), maxR: foe.r, rng: d.rng, time: 0, gold: 0, kills: 0, boss: null,
-      arena: d.size, bounce: !!d.rule.bounce, _q: []
+      arena: d.size, bounce: !!d.rule.bounce, _q: [], events: d.events,
+      rangeMul: d.rule.rangeMul || 1, kindMul: d.rule.kindMul || null
     };
   }
 
@@ -49,14 +50,14 @@
   L.createDuel = function (m, a, b, rule) {
     var size = L.data.duels.arena;
     rule = rule || m.rng.pick(L.data.duelRules);
-    var d = { time: 0, over: false, winner: null, loser: null, timeout: false, size: size, rule: rule, effects: [], rng: m.rng };
+    var d = { time: 0, over: false, winner: null, loser: null, timeout: false, size: size, rule: rule, effects: [], rng: m.rng,
+      events: (a.game.events || b.game.events) ? [] : null };
     d.players = [a, b];
     d.fighters = [makeFighter(m, a, rule, size * 0.2, size / 2, -1), makeFighter(m, b, rule, size * 0.8, size / 2, -2)];
     d.views = [makeView(d, d.fighters[0], d.fighters[1]), makeView(d, d.fighters[1], d.fighters[0])];
     d.lava = size * 0.75;
     d.bots = [a.bot ? L.makeBot(m.rng.int(1e9), a.bot.skill) : null, b.bot ? L.makeBot(m.rng.int(1e9), b.bot.skill) : null];
-    a.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); });
-    b.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); });
+    [a, b].forEach(function (pl) { pl.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); ab.turrets = []; }); });
     return d;
   };
 
@@ -75,13 +76,15 @@
   };
 
   function move(d, f, input, dt) {
-    if (f.stun > 0) { f.stun -= dt; return; }
+    if (f.stun > 0) { f.stun -= dt; input = {}; }
     var x = input.x || 0, y = input.y || 0, len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
     var speed = f.stats.speed * (f.slow > 0 ? 0.5 : 1);
     if (f.slow > 0) f.slow -= dt;
-    f.x = L.clamp(f.x + x * speed * dt, f.r, d.size - f.r);
-    f.y = L.clamp(f.y + y * speed * dt, f.r, d.size - f.r);
+    var wx = 0, wy = 0;
+    if (d.rule.wind) { var wa = d.time * 0.35; wx = Math.cos(wa) * d.rule.wind; wy = Math.sin(wa) * d.rule.wind; }
+    f.x = L.clamp(f.x + (x * speed + wx) * dt, f.r, d.size - f.r);
+    f.y = L.clamp(f.y + (y * speed + wy) * dt, f.r, d.size - f.r);
   }
 
   // The view's grid holds just the other fighter, where it stands now.
@@ -102,7 +105,7 @@
     d.time += dt;
     var F = d.fighters, V = d.views, i;
     for (i = 0; i < 2; i++) move(d, F[i], inputs[i], dt);
-    for (i = 0; i < 2; i++) { V[i].time = d.time; refreshView(V[i], F[1 - i]); }
+    for (i = 0; i < 2; i++) { V[i].time = d.time; V[i].procs = L.PROC_BUDGET; refreshView(V[i], F[1 - i]); }
     var before = [F[0].hp, F[1].hp];
     for (i = 0; i < 2; i++) {
       var shots = V[i].projectiles.length;

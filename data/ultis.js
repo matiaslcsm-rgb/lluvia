@@ -18,6 +18,15 @@
       stats: { damage: 100, length: 900, width: 70 } },
     { id: 'raices', name: 'Raíces', kind: 'roots', color: '#7ddc6a', cooldown: 55,
       desc: 'Atrapa a todos los que tenés cerca 3 segundos y te cura un 30% de la vida.',
-      stats: { damage: 30, radius: 350, stun: 3, heal: 0.3 } }
+      stats: { damage: 30, radius: 350, stun: 3, heal: 0.3 } },
+    { id: 'resaca', name: 'Resaca', kind: 'pull', color: '#4fa3e0', cooldown: 40,
+      desc: 'Arrastra a todos los que están cerca hacia donde apuntás, los golpea y los aturde 1,5 segundos.',
+      stats: { damage: 60, radius: 420, range: 400, stun: 1.5 } },
+    { id: 'chatarra', name: 'Chatarra', kind: 'shrapnel', color: '#c07a45', cooldown: 35,
+      desc: 'Una explosión de 20 esquirlas en todas direcciones que atraviesan enemigos.',
+      stats: { damage: 55, count: 20, speed: 600, range: 500, pierce: 6 } },
+    { id: 'destello', name: 'Destello', kind: 'flash', color: '#ffe08a', cooldown: 50,
+      desc: 'Una luz enceguecedora: aturde 2 segundos a todo lo que se ve y le pega un poco.',
+      stats: { damage: 40, radius: 700, stun: 2 } }
   ];
 })(this.Lluvia = this.Lluvia || {});

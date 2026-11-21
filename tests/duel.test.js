@@ -51,6 +51,7 @@ test('si nadie muere en 60 segundos, gana el que tiene más vida en porcentaje',
   var m = duelMatch(), a = m.players[1], b = m.players[2];
   var d = Lluvia.createDuel(m, a, b, rule('gigantes'));
   a.game.player.abilities.length = 0; b.game.player.abilities.length = 0; // nobody can hurt anybody
+  a.game.player.ulti.cd = b.game.player.ulti.cd = Infinity;
   d.fighters[1].hp = d.fighters[1].maxHp * 0.9;
   fight(d, 70);
   assert.ok(d.over && d.timeout);
@@ -89,6 +90,7 @@ test('regla de vampiros: pegar te cura', function () {
   var F = d.fighters;
   F[0].hp = F[0].maxHp * 0.5;
   b.game.player.abilities.length = 0; // b can't hit back
+  a.game.player.ulti.cd = b.game.player.ulti.cd = Infinity;
   var lowest = F[0].hp;
   fight(d, 20);
   assert.ok(F[0].hp > lowest, 'no se curó');

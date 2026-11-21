@@ -33,6 +33,26 @@ comprobar.
 7. **Banco de partidas simuladas:** muchas partidas solo con IA para ajustar números.
 8. **Arte y sonido.**
 
+### Segunda temporada (hoja de ruta como diseñador)
+La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diversión por esfuerzo:
+
+9. **Mundo y bienvenida:** lore de Aguaverde (`docs/LORE.md`), pantalla de inicio con la historia, cómo se juega,
+   y un tutorial de consejos que aparecen solos la primera vez que pasa cada cosa. *(hecho, ver abajo)*
+10. **Horda con personalidad:** Escupelodo (dispara), Charco madre (se divide), Tronador (kamikaze), élites
+    doradas y eventos de tormenta cada minuto. *(hecho, ver abajo)*
+11. **Progresión entre partidas — el Cuaderno del Paraguas:** logros que desbloquean personajes, ítems y Leyes del
+    Cielo nuevas (por ejemplo: "ganá un Juicio con Vampiros" desbloquea un ítem). Es lo que hace que quieras jugar
+    "una más". Guarda en el navegador. *(hecho como mejoras permanentes + logros; los desbloqueos de contenido
+    quedan para más adelante)*
+12. **Jefes distintos:** uno por tramo de la partida (el Coloso; una Reina del Granizo que dispara en abanico; un
+    Leviatán del desagüe que sale del piso). Cada uno con un patrón que se aprende.
+13. **Más Leyes del Cielo:** solo cuerpo a cuerpo, Anegados en el Juicio, niebla (se ve poco), viento (te empuja).
+14. **Personajes 6 a 8**, con ulti propia cada uno, y 4-6 ítems más que abran builds nuevas (por ejemplo, ítems
+    que premien quedarse quieto o moverse sin parar).
+15. **Partida diaria:** misma semilla para todos ese día y un récord para batir.
+16. **Pulido:** menú de opciones (volumen, tamaño de letra), joystick, pantallas chicas.
+17. **Online contra personas** (grande: necesita un servidor).
+
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
 - **2026-11-20: etapas 0 y 1.** Se juega abriendo `index.html` (o con un servidor local). Hay 3 personajes (Brasa,
@@ -127,3 +147,40 @@ comprobar.
     pocos puntos son ruido; para afinar más hacen falta corridas más largas (100 partidas tardan media hora).
   - Sigue habiendo más vidas perdidas entre los minutos 5 y 10 que en el resto (unas 5 por partida), pero ya no es
     un muro: es cuando la horda se pone seria por primera vez.
+- **2026-11-20 (pedido del usuario):** seguir solo, como diseñador, hasta gastar el límite de la semana: lore,
+  tutorial, más variedad de enemigos, mejor escalado y un loop divertido, gastando pocas pruebas.
+- **2026-11-20: etapa 8, arte y sonido.** Todo dibujado con código, sin archivos de imagen ni de audio:
+  - Cada Paraguas tiene su silueta (Brasa con llamas, Roca de piedra, Filo con capa, Ceniza con capucha y aura,
+    Musgo con hojas), mira hacia donde camina y tiene sombra.
+  - Cada criatura tiene su forma (gotas con ojos que te miran, triángulos, flechas, bloques, el Coloso con púas) y
+    cambia de color si está quemada, lenta o golpeada. Las élites brillan doradas.
+  - Piso inundado con baldosas y charcos que hacen ondas, lluvia cayendo sobre la pantalla (más fuerte durante la
+    Marea), cofres con tapa y brillo, cristales que flotan, proyectiles con estela.
+  - Partículas al matar, al subir de nivel y al abrir cofres, textos flotantes, y la pantalla tiembla con las
+    ultis, al perder una vida y al bajar un Coloso.
+  - Sonido sintetizado con el navegador: disparos, bajas, cristales, nivel, cofres (uno especial para legendarios),
+    ulti, explosiones, jefe, Juicio, apuestas, victoria y derrota, y una lluvia suave de fondo. **M** silencia.
+  - El motor avisa lo que pasa (L.emit) solo en la arena que mirás; las de los rivales no gastan en eso.
+- **2026-11-20: etapa 9, mundo y bienvenida.** `docs/LORE.md` cuenta Aguaverde, los Paraguas, la Torre del Trueno
+  y los Anegados. Pantalla de inicio con la frase del juego, una bio por personaje, "La historia" y "Cómo se juega".
+  Pantalla final con una frase según ganes o pierdas.
+  - **Tutorial:** 11 consejos que aparecen solos la primera vez que pasa cada cosa (moverte, cristales, primer
+    cofre pagable, ulti lista, apuestas, tu primer Juicio, el Coloso, perder una vida, eventos, élites, la final).
+    Cada uno sale una vez; se pueden volver a ver desde el inicio.
+- **2026-11-20: etapa 10, horda con personalidad.**
+  - Criaturas nuevas: **Escupelodo** (se queda lejos y escupe barro), **Charco madre** (se parte en tres Gotitas),
+    **Tronador** (corre, prende la mecha y explota; si lo matás antes, explota sobre los suyos). Nombres nuevos
+    según el lore para las de siempre.
+  - **Élites** doradas desde el minuto 6: 6 veces más vida, más grandes, más daño, 5 veces más experiencia y oro, y
+    1 de cada 4 deja un cofre gratis.
+  - **Eventos de tormenta** cada minuto desde el 1:45, anunciados en pantalla: Cerco (te rodean), Estampida (una
+    fila cruza), Tormenta eléctrica (Tronadores), Marea (el triple de Anegados 10 s) y Lluvia de lodo.
+  - La IA también esquiva el barro.
+  - **Arreglo de rendimiento:** al final de partidas largas, las cadenas de efectos de ítems se multiplicaban y el
+    juego se trababa (en una partida simulada, 20 s por minuto de juego). Ahora hay un tope de 300 efectos por
+    cuadro y por arena; los golpes siguen pegando igual.
+- **2026-11-20: etapa 11, el Cuaderno del Paraguas** (progresión entre partidas). Cada partida da Monedas del Sol
+  (por puesto, Juicios ganados y bajas). En el Cuaderno se gastan en 7 mejoras permanentes chicas (vida, daño,
+  velocidad, imán, oro inicial, recarga, suerte en los cofres) que solo tenés vos. 12 logros con premio en monedas
+  (ganar, podio, fusiones, Coloso, 1.000 bajas, legendario, apuestas, todos los personajes, ganar sin perder
+  vidas...). Récords: partidas, victorias, mejor puesto, bajas. Se guarda en el navegador.

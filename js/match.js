@@ -8,7 +8,8 @@
   L.data.rivals = ['Nube', 'Trueno', 'Granizo', 'Bruma', 'Rocío', 'Relámpago', 'Llovizna'];
   var AI_STEP = 1 / 30; // the engine's longest safe step
 
-  // opts: { seed, characterId, viewW, viewH, humanBot } — humanBot makes "you" a bot too (simulated games).
+  // opts: { seed, characterId, viewW, viewH, humanBot, profile } — humanBot makes "you" a bot too (simulated
+  // games); profile is your Cuaderno (upgrades apply only to you).
   L.createMatch = function (opts) {
     opts = opts || {};
     var seed = opts.seed || 1, rng = L.makeRng(seed ^ 0x5bd1e995);
@@ -29,7 +30,7 @@
         name: isHuman ? 'Vos' : L.data.rivals[i - 1],
         isHuman: isHuman,
         game: L.createGame({
-          seed: (seed + i * 7919) >>> 0, characterId: charId,
+          seed: (seed + i * 7919) >>> 0, characterId: charId, listen: isHuman && !opts.humanBot,
           viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720
         }),
         // Rivals get a spread of skills so some fall early and some go far.
@@ -44,6 +45,7 @@
       m.players.push(pl);
     }
     m.human = m.players[0];
+    if (opts.profile && !opts.humanBot) L.applyMeta(m.human.game, opts.profile);
     return m;
   };
 
@@ -98,6 +100,7 @@
     var d = m.duel, w = d.winner, l = d.loser, step = Math.floor(m.time / 60);
     var prize = Math.round(L.data.duels.prize * Math.pow(1 + L.data.horde.goldGrowth, step));
     w.game.gold += prize;
+    w.duelsWon = (w.duelsWon || 0) + 1;
     l.game.lives--;
     if (l.game.lives <= 0) l.game.over = true;
     d.players.forEach(function (pl) {
@@ -105,11 +108,12 @@
       pl.game.time = m.time;
       pl.game.player.invuln = L.data.duels.returnInvuln;
       pl.game.projectiles.length = 0;
+      pl.game.player.abilities.forEach(function (ab) { ab.turrets = []; }); // duel turrets stay in the duel
     });
     d.prize = prize;
     d.payout = L.settleBets(m, d.betting, d.players.indexOf(w));
     var me = String(m.human.index);
-    if (me in d.payout.paid) tell(m, 'Tu apuesta salió: cobraste ' + d.payout.paid[me] + ' oro', '#6fdc6a');
+    if (me in d.payout.paid) { m.human.betsWon = (m.human.betsWon || 0) + 1; tell(m, 'Tu apuesta salió: cobraste ' + d.payout.paid[me] + ' oro', '#6fdc6a'); }
     else if (me in d.payout.lost) tell(m, 'Perdiste tu apuesta' + (d.payout.lost[me] ? ' (' + d.payout.lost[me] + ' oro)' : ''), '#ff9a7a');
     m.lastDuel = d;
     m.duel = null;

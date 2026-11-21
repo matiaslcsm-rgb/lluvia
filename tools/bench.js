@@ -15,7 +15,7 @@ const vm = require('vm');
 const os = require('os');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 
-const MAX_MINUTES = 90;
+const MAX_MINUTES = 45; // a match still going at this point counts as unfinished
 
 function loadEngine() {
   const root = path.join(__dirname, '..');

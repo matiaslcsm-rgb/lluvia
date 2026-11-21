@@ -24,7 +24,7 @@ function ring(g, n, r, type) {
 
 test('los datos están completos: personajes, ultis y fusiones apuntan a cosas que existen', function () {
   var D = Lluvia.data;
-  assert.strictEqual(D.characters.length, 5);
+  assert.strictEqual(D.characters.length, 8);
   D.characters.forEach(function (c) {
     assert.ok(Lluvia.findAbility(c.start), c.id + ': falta ' + c.start);
     assert.ok(Lluvia.findUlti(c.ulti), c.id + ': falta la ulti ' + c.ulti);

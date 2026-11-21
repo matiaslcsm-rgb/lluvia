@@ -27,6 +27,11 @@
         fx += dx / d * w; fy += dy / d * w;
       }
     }
+    // Mud flying at it counts as a threat too.
+    for (i = 0; i < g.enemyShots.length; i++) {
+      var s = g.enemyShots[i], sx = p.x - s.x, sy = p.y - s.y, s2 = sx * sx + sy * sy;
+      if (s2 < 120 * 120) { var sd = Math.sqrt(s2) || 1; fx += sx / sd * 1.5; fy += sy / sd * 1.5; }
+    }
     var cost = L.chestCost(g), best = null, bestD = Infinity;
     for (i = 0; i < g.chests.length; i++) {
       var c = g.chests[i];
@@ -71,7 +76,7 @@
     var me = d.fighters[i], foe = d.fighters[1 - i];
     if (!L.ultiReady(me)) return false;
     var dist = Math.sqrt((foe.x - me.x) * (foe.x - me.x) + (foe.y - me.y) * (foe.y - me.y));
-    var reach = { meteors: 550, quake: 300, dash: 360, beam: 850, roots: 320 }[me.ulti.def.kind];
+    var reach = { meteors: 550, quake: 300, dash: 360, beam: 850, roots: 320, pull: 420, shrapnel: 400, flash: 650 }[me.ulti.def.kind];
     return dist < reach && L.castDuelUlti(d, i, foe.x, foe.y);
   };
 

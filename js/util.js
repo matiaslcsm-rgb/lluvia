@@ -30,4 +30,12 @@
   };
 
   L.data = L.data || {};
+
+  // Things the screen and the sound want to know about (a kill, a level up, a chest...). Only games that
+  // someone watches keep the list (g.events); the rest skip it, so 7 bot arenas don't pile up events.
+  L.emit = function (g, type, x, y, extra) {
+    if (!g.events) return;
+    g.events.push({ type: type, x: x, y: y, extra: extra });
+    if (g.events.length > 400) g.events.splice(0, g.events.length - 400);
+  };
 })(this.Lluvia = this.Lluvia || {});

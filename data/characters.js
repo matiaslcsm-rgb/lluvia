@@ -32,6 +32,24 @@
       desc: 'Aguanta y se cura. Arranca con Niebla ácida. Ulti: Raíces, que atrapan y te curan.',
       stats: { maxHp: 130, speed: 190, regen: 1.5, pickup: 70 },
       start: 'niebla', ulti: 'raices'
+    },
+    {
+      id: 'marea', name: 'Marea', color: '#4fa3e0',
+      desc: 'Va y vuelve. Arranca con Ola, que se aleja y regresa. Ulti: Resaca, que arrastra a todos a un punto.',
+      stats: { maxHp: 100, speed: 215, regen: 0, pickup: 80 },
+      start: 'ola', ulti: 'resaca'
+    },
+    {
+      id: 'oxido', name: 'Óxido', color: '#c07a45',
+      desc: 'Arma el terreno. Arranca con Torreta, que dispara sola. Ulti: Chatarra, esquirlas en todas direcciones.',
+      stats: { maxHp: 110, speed: 195, regen: 0, pickup: 75 },
+      start: 'torreta', ulti: 'chatarra'
+    },
+    {
+      id: 'faro', name: 'Faro', color: '#ffe08a',
+      desc: 'Ilumina todo. Arranca con Haz giratorio, que barre alrededor. Ulti: Destello, que aturde a todo lo que ve.',
+      stats: { maxHp: 105, speed: 200, regen: 0, pickup: 75 },
+      start: 'faro', ulti: 'destello'
     }
   ];
 })(this.Lluvia = this.Lluvia || {});

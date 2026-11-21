@@ -35,6 +35,8 @@
   };
 
   L.rollItem = function (g, weights) {
+    var luck = g.meta && g.meta.luck;
+    if (luck) weights = { comun: (weights.comun || 0), raro: (weights.raro || 0) + 6 * luck, legendario: (weights.legendario || 0) + 2 * luck };
     var total = 0, r, rarity = null;
     for (r in weights) total += weights[r];
     var roll = g.rng() * total;
@@ -75,12 +77,14 @@
     for (var i = g.chests.length - 1; i >= 0; i--) {
       var ch = g.chests[i], rr = ch.r + p.r;
       if ((ch.x - p.x) * (ch.x - p.x) + (ch.y - p.y) * (ch.y - p.y) >= rr * rr) continue;
-      var cost = ch.kind === 'boss' ? 0 : L.chestCost(g);
+      var cost = ch.kind === 'normal' ? L.chestCost(g) : 0; // boss and elite chests are free
       if (g.gold < cost) continue;
       g.gold -= cost;
       g.chests.splice(i, 1);
       var item = L.rollItem(g, ch.kind === 'boss' ? L.data.chests.bossWeights : L.data.chests.weights);
       L.addItem(g, item.id);
+      L.emit(g, 'chest', ch.x, ch.y, item);
+      if (item.rarity === 'legendario') g.gotLegendary = true;
       var copies = p.items[item.id];
       L.toast(g, item.name + (copies > 1 ? ' ×' + copies : '') + ': ' + item.desc, L.data.rarities[item.rarity].color);
       opened = true;

@@ -5,6 +5,10 @@
   'use strict';
 
   L.MAX_PROC_DEPTH = 3;
+  // Most item effects that may trigger in one arena per tick. Late in a match, with dozens of items and
+  // creatures that soak up hits, chains multiplied without end and froze the game; past this budget hits still
+  // land but don't trigger more effects that tick. Hundreds per tick: you don't notice it playing.
+  L.PROC_BUDGET = 300;
 
   // Live enemies whose body touches the circle. Returns a new array, so it is safe inside nested effects.
   L.nearby = function (g, x, y, r) {
@@ -33,18 +37,21 @@
     e.hp -= dmg;
     e.flash = 0.1;
     var killed = e.hp <= 0;
-    if (killed) { e.dead = true; g.kills++; enemyKilled(g, e); }
+    if (killed) { e.dead = true; g.kills++; enemyKilled(g, e); L.emit(g, 'kill', e.x, e.y, e); }
     if (depth >= L.MAX_PROC_DEPTH) return;
     var p = g.player, i, it;
-    if (proc > 0) {
+    if (g.procs === undefined) g.procs = L.PROC_BUDGET;
+    if (proc > 0 && g.procs > 0) {
       for (i = 0; i < p.onHit.length; i++) {
         it = p.onHit[i];
-        if (g.rng() < it.chance * proc) ON_HIT[it.def.effect](g, e, dmg, it.params, proc, depth);
+        var c = it.chance * proc;
+        if (c >= 1 || g.rng() < c) { g.procs--; ON_HIT[it.def.effect](g, e, dmg, it.params, proc, depth); }
       }
     }
-    if (killed) {
+    if (killed && g.procs > 0) {
       for (i = 0; i < p.onKill.length; i++) {
         it = p.onKill[i];
+        g.procs--;
         ON_KILL[it.def.effect](g, e, dmg, it.params, depth);
       }
     }
@@ -52,13 +59,23 @@
 
   function enemyKilled(g, e) {
     var t = e.type, h = L.data.horde;
-    if (t.gold && g.rng() < t.goldChance) {
-      g.gold += Math.round(t.gold * Math.pow(1 + h.goldGrowth, L.difficulty(g) - 1));
+    if (t.gold && (e.elite || g.rng() < t.goldChance)) {
+      g.gold += Math.round(t.gold * Math.pow(1 + h.goldGrowth, L.difficulty(g) - 1) * (e.elite ? h.elite.gold : 1));
     }
+    if (e.elite && g.rng() < h.elite.chestChance) L.dropChest(g, e.x, e.y, 'elite');
+    if (t.splits) {
+      for (var i = 0; i < t.splits.count; i++) {
+        var a = i / t.splits.count * Math.PI * 2;
+        L.spawnEnemy(g, t.splits.into, e.x + Math.cos(a) * e.r, e.y + Math.sin(a) * e.r);
+      }
+      L.emit(g, 'split', e.x, e.y);
+    }
+    if (t.bomb) L.explodeBomb(g, e, false);
     if (t.boss) {
+      g.bossKills = (g.bossKills || 0) + 1;
       if (g.boss === e) g.boss = null;
       L.dropChest(g, e.x, e.y, 'boss');
-      L.toast(g, 'Cayó el ' + t.name + ': dejó un cofre gratis', '#ffd27a');
+      L.toast(g, 'Cayó ' + t.article + ' ' + t.name + ': dejó un cofre gratis', '#ffd27a');
     }
   }
 

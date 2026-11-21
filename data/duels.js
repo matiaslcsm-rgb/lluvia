@@ -16,14 +16,19 @@
 
   // Crazy rules: each duel gets one at random.
   // poolMul: duel health ×; sizeMul: body size ×; speedMul: movement ×; timeScale: the whole duel runs faster;
-  // shrink: the lava closes in; lifesteal: share of your damage you heal; bounce: projectiles bounce off walls.
+  // shrink: the lava closes in; lifesteal: share of your damage you heal; bounce: projectiles bounce off walls;
+  // rangeMul: how far abilities reach; wind: px/s of a gust that turns around; kindMul: damage × per ability kind.
   L.data.duelRules = [
     { id: 'gigantes', name: 'Gigantes', desc: 'Los dos son enormes: más vida y más lentos.', poolMul: 1.5, sizeMul: 2.2, speedMul: 0.7 },
     { id: 'lava', name: 'Piso de lava', desc: 'La lava se va cerrando. Afuera del círculo te quemás.', shrink: true },
     { id: 'velocidad', name: 'A toda velocidad', desc: 'Todo pasa al doble de rápido.', timeScale: 2 },
     { id: 'fragiles', name: 'De cristal', desc: 'Los dos tienen la mitad de vida.', poolMul: 0.5 },
     { id: 'vampiros', name: 'Vampiros', desc: 'Cada golpe te cura un cuarto del daño que hacés.', lifesteal: 0.25 },
-    { id: 'rebote', name: 'Rebote', desc: 'Los proyectiles rebotan en las paredes.', bounce: true }
+    { id: 'rebote', name: 'Rebote', desc: 'Los proyectiles rebotan en las paredes.', bounce: true },
+    { id: 'niebla', name: 'Niebla', desc: 'Se ve poco: las habilidades llegan la mitad de lejos.', rangeMul: 0.5 },
+    { id: 'viento', name: 'Viento', desc: 'Una ráfaga que va cambiando de dirección empuja a los dos.', wind: 150 },
+    { id: 'cuerpo', name: 'Cuerpo a cuerpo', desc: 'Lo de lejos pega poco; lo de cerca pega fuerte.',
+      kindMul: { projectile: 0.35, strike: 0.35, nova: 1.6, aura: 1.6, orbit: 1.6 } }
   ];
 })(this.Lluvia = this.Lluvia || {});
 

@@ -1,4 +1,5 @@
-// Draws the arena with simple shapes, plus the HUD. Camera follows the player.
+// Draws your barrio (the arena) and the HUD. Camera follows you. The shapes themselves are in art.js,
+// particles and shake in fx.js. L.frameDt (set by main.js) drives the animations.
 (function (L) {
   'use strict';
   var TAU = Math.PI * 2;
@@ -43,6 +44,24 @@
     ctx.fillText(text, W / 2, y);
   }
   L.ultiBadge = ultiBadge;
+
+  // What your abilities leave on the floor or around you: blades, turrets, beams of light.
+  function drawKit(ctx, f) {
+    f.abilities.forEach(function (a) {
+      if (a.def.kind === 'orbit') a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.bladeSize || a.stats.size, a.def.color); });
+      else if (a.def.kind === 'turret' && a.turrets) a.turrets.forEach(function (t) {
+        ctx.fillStyle = '#3a2a1e'; ctx.fillRect(t.x - 10, t.y - 10, 20, 20);
+        ctx.fillStyle = a.def.color; ctx.fillRect(t.x - 7, t.y - 7, 14, 14);
+        circle(ctx, t.x, t.y, 4, '#ffe0b0');
+      });
+      else if (a.def.kind === 'sweep' && a.beams) a.beams.forEach(function (b) {
+        if (!b) return;
+        ctx.globalAlpha = 0.55;
+        drawLine(ctx, { x: f.x, y: f.y, x2: b.x2, y2: b.y2, w: b.w / 2, color: a.def.color }, 1);
+        ctx.globalAlpha = 1;
+      });
+    });
+  }
 
   function hearts(n) { var s = ''; for (var i = 0; i < n; i++) s += '♥'; return s; }
 
@@ -133,8 +152,8 @@
     ctx.save();
     ctx.translate(ox, oy);
     ctx.scale(scale, scale);
-    ctx.fillStyle = '#1b1622';
-    ctx.fillRect(0, 0, size, size);
+    var t = d.time, dt = L.frameDt || 1 / 60;
+    L.drawFloor(ctx, -20, -20, size + 40, size + 40, size, 777, t, '#1d1828');
     if (d.rule.shrink) {
       ctx.fillStyle = 'rgba(255, 90, 40, 0.28)';
       ctx.beginPath();
@@ -152,10 +171,10 @@
       f.abilities.forEach(function (a) {
         if (a.def.kind === 'aura') { ctx.globalAlpha = 0.16; circle(ctx, f.x, f.y, a.stats.radius, a.def.color); ctx.globalAlpha = 1; }
       });
-      v.projectiles.forEach(function (pr) { circle(ctx, pr.x, pr.y, pr.r, pr.color); });
+      v.projectiles.forEach(function (pr) { L.drawShot(ctx, pr); });
       f.abilities.forEach(function (a) {
-        if (a.def.kind === 'orbit') a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.bladeSize || a.stats.size, a.def.color); });
       });
+      drawKit(ctx, f);
     });
     d.effects.forEach(function (fx) {
       var k = Math.max(0, fx.ttl / fx.max);
@@ -170,13 +189,31 @@
     ctx.textAlign = 'center';
     ctx.font = '600 22px system-ui, sans-serif';
     d.fighters.forEach(function (f) {
-      circle(ctx, f.x, f.y, f.r + 4, '#0b0c10');
-      circle(ctx, f.x, f.y, f.r, f.flash > 0 ? '#ffffff' : f.burnTtl > 0 ? '#ff8a3d' : f.type.color);
+      L.drawHero(ctx, f, t, f.flash > 0);
+      if (f.stun > 0) { ctx.fillStyle = '#ffd166'; ctx.fillText('✦', f.x, f.y - f.r - 4); }
       ctx.fillStyle = '#e8e8ee';
       ctx.fillText(f.type.name, f.x, f.y - f.r - 22);
       bar(ctx, f.x - 40, f.y - f.r - 16, 80, 8, f.hp / f.maxHp, '#e05060');
     });
+    L.fx.draw(ctx, dt);
+    if (d.rule.rangeMul) {
+      ctx.fillStyle = 'rgba(200, 210, 225, 0.55)';
+      ctx.beginPath(); ctx.rect(-20, -20, size + 40, size + 40);
+      d.fighters.forEach(function (f) { ctx.moveTo(f.x + 170, f.y); ctx.arc(f.x, f.y, 170, 0, TAU, true); });
+      ctx.fill('evenodd');
+    }
+    if (d.rule.wind) {
+      var wa = d.time * 0.35;
+      ctx.strokeStyle = 'rgba(220, 235, 255, 0.25)'; ctx.lineWidth = 2; ctx.beginPath();
+      for (var w = 0; w < 24; w++) {
+        var sx = (w * 137 + d.time * 300 * Math.cos(wa)) % size, sy = (w * 251 + d.time * 300 * Math.sin(wa)) % size;
+        sx = (sx + size) % size; sy = (sy + size) % size;
+        ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.cos(wa) * 40, sy + Math.sin(wa) * 40);
+      }
+      ctx.stroke();
+    }
     ctx.restore();
+    L.drawRain(ctx, W, H, dt, true);
 
     // Header: names and health, the rule, time left.
     var F = d.fighters, bw = Math.min(260, W / 2 - 40);
@@ -203,21 +240,15 @@
     ctx.fillStyle = '#14161c';
     ctx.fillRect(0, 0, W, H);
     if (!g) return;
-    var p = g.player, camX = p.x - W / 2, camY = p.y - H / 2;
-    var pad = 40;
+    var dt = L.frameDt || 1 / 60, shake = L.fx.offset(dt);
+    var p = g.player, camX = p.x - W / 2 + shake.x, camY = p.y - H / 2 + shake.y;
+    var pad = 40, t = g.time;
     function visible(x, y, r) { return x + r > camX - pad && x - r < camX + W + pad && y + r > camY - pad && y - r < camY + H + pad; }
 
     ctx.save();
     ctx.translate(-camX, -camY);
 
-    // Floor grid and arena edge.
-    var step = 80, x, y;
-    ctx.strokeStyle = '#1c1f28'; ctx.lineWidth = 1; ctx.beginPath();
-    for (x = Math.floor(camX / step) * step; x < camX + W; x += step) { ctx.moveTo(x, camY); ctx.lineTo(x, camY + H); }
-    for (y = Math.floor(camY / step) * step; y < camY + H; y += step) { ctx.moveTo(camX, y); ctx.lineTo(camX + W, y); }
-    ctx.stroke();
-    ctx.strokeStyle = '#6a3448'; ctx.lineWidth = 6;
-    ctx.strokeRect(0, 0, g.arena, g.arena);
+    L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
 
     // Auras under everything.
     p.abilities.forEach(function (a) {
@@ -233,39 +264,37 @@
     ctx.font = '600 12px system-ui, sans-serif';
     g.chests.forEach(function (ch) {
       if (!visible(ch.x, ch.y, 30)) return;
-      var free = ch.kind === 'boss', can = free || g.gold >= cost;
-      ctx.fillStyle = free ? '#ff5a5a' : can ? '#d9a441' : '#5b5648';
-      ctx.fillRect(ch.x - 16, ch.y - 12, 32, 24);
-      ctx.fillStyle = '#0b0c10';
-      ctx.fillRect(ch.x - 16, ch.y - 2, 32, 3);
+      var free = ch.kind !== 'normal', can = free || g.gold >= cost;
+      L.drawChest(ctx, ch, can, t);
       ctx.fillStyle = can ? '#ffe6a0' : '#9a958a';
-      ctx.fillText(free ? 'GRATIS' : cost + ' oro', ch.x, ch.y - 18);
+      ctx.fillText(free ? 'GRATIS' : cost + ' oro', ch.x, ch.y - 20);
     });
 
     // Experience gems.
-    ctx.fillStyle = '#5fe0d0';
-    g.gems.forEach(function (gem) {
-      if (!visible(gem.x, gem.y, 6)) return;
-      var s = gem.v >= 5 ? 6 : 4;
-      ctx.beginPath();
-      ctx.moveTo(gem.x, gem.y - s); ctx.lineTo(gem.x + s, gem.y); ctx.lineTo(gem.x, gem.y + s); ctx.lineTo(gem.x - s, gem.y);
-      ctx.fill();
-    });
+    g.gems.forEach(function (gem) { if (visible(gem.x, gem.y, 8)) L.drawGem(ctx, gem, t); });
 
     // Enemies.
     g.enemies.forEach(function (e) {
       if (!visible(e.x, e.y, e.r)) return;
-      circle(ctx, e.x, e.y, e.r, e.flash > 0 ? '#ffffff' : e.burnTtl > 0 ? '#ff8a3d' : e.type.color);
-      if (e.type.boss) { ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 4, 0, TAU); ctx.stroke(); }
-      if (e.hp < e.maxHp && e.r >= 20 && !e.type.boss) bar(ctx, e.x - e.r, e.y - e.r - 8, e.r * 2, 4, e.hp / e.maxHp, '#e05060');
+      L.drawCreature(ctx, e, p.x, p.y, t);
+      if (e.fuse > 0) { ctx.globalAlpha = 0.25; circle(ctx, e.x, e.y, e.type.bomb.radius, '#ff5a3d'); ctx.globalAlpha = 1; }
+      if (e.mode === 'wind') {
+        // The Leviatán shows where it is about to charge.
+        ctx.strokeStyle = 'rgba(255, 90, 60, 0.6)'; ctx.lineWidth = e.r * 1.6; ctx.lineCap = 'round';
+        var ca = Math.atan2(p.y - e.y, p.x - e.x);
+        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x + Math.cos(ca) * 400, e.y + Math.sin(ca) * 400); ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+      if (e.hp < e.maxHp && (e.r >= 20 || e.elite) && !e.type.boss) bar(ctx, e.x - e.r, e.y - e.r - 8, e.r * 2, 4, e.hp / e.maxHp, '#e05060');
     });
 
-    // Projectiles and spinning blades.
-    g.projectiles.forEach(function (pr) { circle(ctx, pr.x, pr.y, pr.r, pr.color); });
-    p.abilities.forEach(function (a) {
-      if (a.def.kind !== 'orbit') return;
-      a.blades.forEach(function (b) { if (b) circle(ctx, b.x, b.y, a.bladeSize || a.stats.size, a.def.color); });
+    // Mud, projectiles and spinning blades.
+    g.enemyShots.forEach(function (s) {
+      circle(ctx, s.x, s.y, s.r + 2, s.hail ? '#3a6a8a' : '#2c3318');
+      circle(ctx, s.x, s.y, s.r, s.hail ? '#e8f6ff' : '#8aa04a');
     });
+    g.projectiles.forEach(function (pr) { L.drawShot(ctx, pr); });
+    drawKit(ctx, p);
 
     // Short-lived effects.
     g.effects.forEach(function (fx) {
@@ -292,11 +321,12 @@
     // Player (blinking while invulnerable, hidden while down).
     if (g.respawn <= 0) {
       if (p.invuln > 0 && Math.floor(g.time * 10) % 2) ctx.globalAlpha = 0.4;
-      circle(ctx, p.x, p.y, p.r + 3, '#0b0c10');
-      circle(ctx, p.x, p.y, p.r, p.hurt > 0 ? '#ffffff' : p.char.color);
+      L.drawHero(ctx, p, t, p.hurt > 0);
       ctx.globalAlpha = 1;
     }
+    L.fx.draw(ctx, dt);
     ctx.restore();
+    L.drawRain(ctx, W, H, dt, !!g.surge);
 
     if (g.respawn > 0) {
       ctx.fillStyle = 'rgba(10, 11, 15, 0.55)';
