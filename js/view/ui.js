@@ -64,7 +64,9 @@
       row.appendChild(button('Cómo se juega', function () { L.ui.howTo(onPick); }, 'btn ghost'));
       row.appendChild(button('Volver a ver los consejos', function () { L.tips.reset(); L.ui.flash('Los consejos van a aparecer de nuevo'); }, 'btn ghost'));
       show([el('h1', null, 'LLUVIA'), el('p', 'tagline', L.data.lore.tagline), el('p', null, 'Elegí tu Paraguas'), cards, row,
-        el('p', 'hint', 'WASD o flechas para moverte · Espacio: ulti hacia el mouse · Q / E: apostar · P: pausa · M: sonido')]);
+        el('p', 'hint', 'WASD o flechas para moverte · Espacio: ulti hacia el mouse · Q / E: apostar · P: pausa · M: sonido'),
+        el('p', 'hint', 'Con joystick: palanca para moverte · A: ulti · LB / RB: apostar · Start: pausa'),
+        el('p', 'hint', 'En pantalla táctil: arrastrá un dedo para moverte · tocá con otro para la ulti · tocá un lado del panel para apostar')]);
       L.ui.current = 'select';
     },
 

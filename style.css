@@ -60,3 +60,7 @@ canvas { display: block; }
 .achnew { color: #6fdc6a !important; font-weight: 600; }
 
 .volume { align-self: center; min-width: 120px; }
+
+canvas { touch-action: none; }
+@media (max-width: 700px) { .card { width: 44vw; padding: 10px; } #overlay h1 { font-size: 32px; } .card .bio { display: none; } }
+#overlay { overflow-y: auto; justify-content: safe center; }

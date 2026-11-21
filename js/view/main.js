@@ -85,9 +85,53 @@
     seen.duel = match.duel; seen.over = match.over;
   }
 
+  // Gamepad: Start pauses, A casts the ulti the way you walk (or picks), LB/RB bet, D-pad moves between options.
+  var padPick = 0;
+  function gamepad() {
+    L.input.padPresses().forEach(function (b) {
+      if (b === 'start' && match && !match.over) togglePause();
+      else if (L.ui.current) {
+        // Any menu: the D-pad moves between its buttons and A presses the one in focus.
+        var items = [].slice.call(document.querySelectorAll('#overlay button:not([disabled])'));
+        if (!items.length) return;
+        var cur = items.indexOf(document.activeElement);
+        if (b === 'left' || b === 'up') padPick = cur < 0 ? 0 : (cur + items.length - 1) % items.length;
+        else if (b === 'right' || b === 'down') padPick = cur < 0 ? 0 : (cur + 1) % items.length;
+        else if (b === 'a') { if (cur >= 0) items[cur].click(); else items[0].focus(); return; }
+        else return;
+        items[padPick].focus();
+      } else if (match && !paused && !match.over) {
+        if (b === 'a') padUlti();
+        else if ((b === 'lb' || b === 'rb') && match.betting) bet(b === 'lb' ? 0 : 1);
+      }
+    });
+  }
+
+  function padUlti() {
+    var v = L.input.vector();
+    if (match.duel && match.human.inDuel) {
+      var i = match.duel.players.indexOf(match.human), f = match.duel.fighters[i], foe = match.duel.fighters[1 - i];
+      L.castDuelUlti(match.duel, i, foe.x, foe.y); // on a gamepad, the duel ulti aims at the other one
+      return;
+    }
+    var g = game(), p = g.player, dx = v.x || p.dirX, dy = v.y || p.dirY;
+    if (!g.choice && !match.final) L.castUlti(g, p.x + dx * 300, p.y + dy * 300);
+  }
+
+  // Touch taps: on the betting panel they bet on that side; anywhere else they cast the ulti toward that point.
+  L.input.onTap = function (x, y) {
+    if (!match || paused || match.over) return;
+    var W = canvas.width, H = canvas.height;
+    if (match.betting && match.betting.byPlayer[match.human.index] && y > H - 150 && y < H - 54) { bet(x < W / 2 ? 0 : 1); return; }
+    var mouse = L.input.mouse;
+    mouse.x = x; mouse.y = y;
+    ulti();
+  };
+
   function frame(t) {
     var dt = Math.min((t - last) / 1000, 0.05);
     last = t;
+    gamepad();
     L.frameDt = paused ? 0 : dt;
     if (match && !paused) {
       L.updateMatch(match, dt, L.input.vector());

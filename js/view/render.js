@@ -396,6 +396,14 @@
 
     ultiBadge(ctx, p, W, H, H - 16);
 
+    // The touch stick, where your finger is.
+    var st = L.input && L.input.stick && L.input.stick();
+    if (st) {
+      ctx.globalAlpha = 0.3; circle(ctx, st.sx, st.sy, 50, '#9fd8ff');
+      ctx.globalAlpha = 0.6; circle(ctx, st.sx + L.clamp(st.x - st.sx, -50, 50), st.sy + L.clamp(st.y - st.sy, -50, 50), 22, '#e8f4ff');
+      ctx.globalAlpha = 1;
+    }
+
     // Messages (new item, boss), newest at the bottom.
     ctx.textAlign = 'center';
     ctx.font = '600 15px system-ui, sans-serif';
