@@ -21,9 +21,12 @@
     if (match) { game().view.w = canvas.width; game().view.h = canvas.height; }
   }
 
-  function start(characterId) {
+  var daily = false;
+  function start(characterId, isDaily) {
     L.fx.clear();
-    match = L.createMatch({ seed: (Date.now() >>> 0) || 1, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile });
+    daily = !!isDaily;
+    var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
+    match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile });
     reward = null;
     paused = false;
     L.ui.hide();
@@ -65,6 +68,7 @@
   addEventListener('keydown', function (e) {
     var n = /^(Digit|Numpad)[1-8]$/.test(e.code) ? Number(e.code.slice(-1)) - 1 : undefined;
     if (L.ui.current === 'select' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id);
+    else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
@@ -94,7 +98,11 @@
       var g = game();
       if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick);
       if (match.over && L.ui.current !== 'over') {
-        if (!reward) { reward = L.settleMatch(L.profile, match); L.saveProfile(); }
+        if (!reward) {
+          reward = L.settleMatch(L.profile, match);
+          if (daily) reward.dailyRecord = L.recordDaily(L.profile, L.dailyKey(new Date()), match.human.place || 1, game().kills);
+          L.saveProfile();
+        }
         L.ui.result(match, menu, reward);
       }
     }

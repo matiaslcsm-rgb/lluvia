@@ -184,3 +184,25 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   velocidad, imán, oro inicial, recarga, suerte en los cofres) que solo tenés vos. 12 logros con premio en monedas
   (ganar, podio, fusiones, Coloso, 1.000 bajas, legendario, apuestas, todos los personajes, ganar sin perder
   vidas...). Récords: partidas, victorias, mejor puesto, bajas. Se guarda en el navegador.
+- **2026-11-20: etapas 12 a 16.**
+  - **Jefes que rotan:** Coloso del Diluvio, Reina del Granizo (abanicos de granizo desde lejos) y Leviatán del
+    desagüe (se agazapa, marca con una línea roja y embiste).
+  - **3 Leyes del Cielo nuevas** para el Juicio: Niebla (la mitad de alcance, se ve poco), Viento (una ráfaga que
+    gira y empuja) y Cuerpo a cuerpo (lo de lejos pega 35%, lo de cerca 160%). Ya son 9.
+  - **3 personajes nuevos:** Marea (Ola que va y vuelve; ulti Resaca, que arrastra), Óxido (Torretas que disparan
+    solas; ulti Chatarra, esquirlas) y Faro (Haz giratorio; ulti Destello, que aturde todo). Con sus fusiones
+    (Tsunami, Fortaleza, Faro mayor). Ya son 8 personajes y 11 habilidades.
+  - **Partida del día:** misma semilla para todos ese día y tu mejor resultado guardado.
+  - **Volumen** en la pausa.
+  - **Balance con todo junto (banco de 22 partidas):** la partida dura **21 minutos de mediana** (el 80% entre 12 y
+    28). Se suavizaron los jefes nuevos (la Reina tira 5 granizos de 7 de daño; el Leviatán pega 24), el Tronador
+    llega en el minuto 8, el Escupelodo pega 7, las élites dan el doble de oro (no 5 veces) y 1 de cada 12 deja
+    cofre: antes los ganadores terminaban con más de 200 ítems, ahora con unos 75. Musgo con más vida y curación,
+    el Haz de Faro pega más, las Torretas de Óxido un poco menos.
+  - **Pendiente:** entre los minutos 5 y 10 la horda saca unas 8 vidas por partida (casi una por jugador), y entre
+    el 10 y el 15 casi ninguna. Probé sacando las élites, los eventos y las criaturas nuevas, de a una: ninguna lo
+    explica sola. Es el salto general de dificultad de esos minutos, cuando todos tienen poco armado. Para
+    suavizarlo habría que repartir la dificultad de otra forma (por ejemplo, crecer menos entre el 5 y el 10 y más
+    después); queda para una próxima pasada con el banco.
+  - **Personajes:** con 22 partidas, cuánto gana cada uno salta de una corrida a otra (Marea pasó de 10% a 24%).
+    Para medirlos bien hacen falta unas 100 partidas (media hora de banco).

@@ -30,7 +30,7 @@
     {
       id: 'musgo', name: 'Musgo', color: '#7ddc6a',
       desc: 'Aguanta y se cura. Arranca con Niebla ácida. Ulti: Raíces, que atrapan y te curan.',
-      stats: { maxHp: 130, speed: 190, regen: 1.5, pickup: 70 },
+      stats: { maxHp: 140, speed: 190, regen: 2, pickup: 70 },
       start: 'niebla', ulti: 'raices'
     },
     {

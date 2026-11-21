@@ -22,12 +22,23 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
   - Filo: **Corte**, un salto que corta lo que cruza (sin recibir daño mientras salta).
   - Ceniza: **Haz**, una línea de energía larguísima.
   - Musgo: **Raíces**, atrapa a los cercanos 3 s y te cura un 30%.
+  - Marea: **Resaca**, arrastra a todos los cercanos a donde apuntás, los golpea y los aturde.
+  - Óxido: **Chatarra**, 20 esquirlas en todas direcciones que atraviesan.
+  - Faro: **Destello**, aturde 2 s a todo lo que se ve.
+- **Sonido:** M lo prende y lo apaga; el volumen se cambia en la pausa.
 - **Apostar:** Q y E (ver Apuestas).
 
 ## La horda (tu arena)
 - Los enemigos aparecen desde los bordes y vienen hacia vos. Cuanto más avanza el reloj, más y más fuertes.
 - Matar deja **experiencia** (hay que juntarla caminando encima) y a veces **oro**.
-- Aparece un **jefe** a los 2:30 y después cada 3 minutos. Al matarlo deja un cofre gratis que nunca da comunes.
+- Aparece un **jefe** a los 2:30 y después cada 3 minutos, rotando entre tres: **Coloso del Diluvio** (grande y
+  lento), **Reina del Granizo** (se queda lejos y dispara abanicos de granizo) y **Leviatán del desagüe** (se
+  agazapa, marca con una línea roja hacia dónde va y embiste). Al matarlo deja un cofre gratis que nunca da comunes.
+- Criaturas con comportamiento propio: **Escupelodo** (dispara barro desde lejos), **Charco madre** (se parte en
+  tres Gotitas), **Tronador** (kamikaze; si lo matás antes, explota sobre los suyos). **Élites** doradas desde el
+  minuto 6: más duras, más oro, a veces un cofre gratis.
+- **Eventos de tormenta** cada minuto desde el 2:45: Cerco, Estampida, Tormenta eléctrica, Marea y Lluvia de lodo.
+  Nunca el mismo dos veces seguidas. Los nombres y el porqué de todo están en `docs/LORE.md`.
 - Desde el minuto 7 llegan los **cazadores**, rápidos: no se puede escapar corriendo para siempre.
 - **Morir en la horda:** perdés una vida y la mitad del oro que llevás, y volvés a los 5 segundos. Al volver tenés
   2 segundos de invulnerabilidad y se van los enemigos que tenías encima (el jefe no).
@@ -39,8 +50,10 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
 - **5 ranuras** de habilidades automáticas + **1 ulti**, y **4 ranuras de pasivas** (más velocidad, más vida, más
   daño...). Se arranca eligiendo 1 de 3 personajes, que da la primera
   habilidad y las estadísticas base.
-- Hay 5 personajes (Brasa, Roca, Filo, Ceniza y Musgo) y 8 habilidades: Chispa, Lanza, Temblor, Cuchillas,
-  Niebla ácida, Rayo, Escarcha (deja lentos) y Meteoro.
+- Hay 8 personajes (Brasa, Roca, Filo, Ceniza, Musgo, Marea, Óxido y Faro) y 11 habilidades: Chispa, Lanza, Temblor,
+  Cuchillas, Niebla ácida, Rayo, Escarcha (deja lentos), Meteoro, Ola (va y vuelve), Torreta (dispara sola) y Haz
+  giratorio. Cada una tiene su fusión (Ola + Ascua = Tsunami, Torreta + Cristal = Fortaleza, Haz giratorio + Lupa =
+  Faro mayor, además de las 8 de antes).
 - **Fusiones:** habilidad al nivel 5 + su ítem = aparece la fusión al subir de nivel (siempre entre las opciones), y
   reemplaza a la habilidad por una versión mucho más fuerte:
   Chispa + Eco = Enjambre de chispas · Lanza + Afilador = Lanza real · Temblor + Vendas = Cataclismo ·
@@ -86,7 +99,10 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
   - **De cristal:** los dos con la mitad de vida.
   - **Vampiros:** cada golpe te cura un cuarto del daño que hacés.
   - **Rebote:** los proyectiles rebotan en las paredes.
-  - Ideas para más adelante: solo cuerpo a cuerpo, y enemigos de la horda que atacan a los dos.
+  - **Niebla:** se ve poco y las habilidades llegan la mitad de lejos.
+  - **Viento:** una ráfaga que gira empuja a los dos.
+  - **Cuerpo a cuerpo:** lo de lejos pega 35%, lo de cerca 160%.
+  - Idea para más adelante: Anegados que entran al Juicio y atacan a los dos.
 - **Recta final:** cuando quedan dos, se terminan las hordas y pelean un duelo cada 5 segundos hasta que uno se
   queda sin vidas.
 
@@ -110,6 +126,14 @@ Cada tanto, dos se enfrentan en un duelo con reglas locas mientras los demás ap
   más fuerte. Tienen que perder a veces y ganar a veces.
 - Se llaman Nube, Trueno, Granizo, Bruma, Rocío, Relámpago y Llovizna. Cada uno tiene su nivel de habilidad.
 - Juegan su arena de verdad, con las mismas reglas que vos: no hay números inventados para ellos.
+
+## Entre partidas: el Cuaderno del Paraguas
+- Cada partida da **Monedas del Sol**: 60 al 1.º, 35 al 2.º... 4 al 8.º, más 4 por Juicio ganado y 1 cada 100 bajas.
+- Se gastan en 7 **mejoras permanentes** chicas que solo tenés vos: vida, daño, velocidad, imán, oro inicial,
+  recarga y suerte en los cofres. Cada nivel cuesta más que el anterior.
+- 12 **logros** con premio en monedas (de "terminá una partida" a "ganá sin perder ninguna vida").
+- **Partida del día:** misma semilla para todos ese día; se guarda tu mejor resultado.
+- Todo se guarda en el navegador.
 
 ## Afuera de la 1.0
 - Jugar online contra otras personas.

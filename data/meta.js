@@ -27,7 +27,7 @@
       { id: 'juicio', name: 'Juez del Trueno', desc: 'Ganá 3 Juicios en una partida.', coins: 30 },
       { id: 'fusion', name: 'Alquimista', desc: 'Hacé una fusión.', coins: 20 },
       { id: 'dosfusiones', name: 'Gran alquimista', desc: 'Tené 2 fusiones a la vez.', coins: 40 },
-      { id: 'coloso', name: 'Rompeolas', desc: 'Bajá un Coloso del Diluvio.', coins: 20 },
+      { id: 'coloso', name: 'Rompeolas', desc: 'Bajá un jefe (Coloso, Reina o Leviatán).', coins: 20 },
       { id: 'mil', name: 'Mil gotas', desc: 'Llegá a 1.000 bajas en una partida.', coins: 25 },
       { id: 'legendario', name: 'Tesoro del barro', desc: 'Conseguí un ítem legendario.', coins: 20 },
       { id: 'apostador', name: 'Ojo de halcón', desc: 'Acertá 3 apuestas en una partida.', coins: 25 },

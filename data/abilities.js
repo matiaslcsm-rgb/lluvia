@@ -65,13 +65,13 @@
     {
       id: 'torreta', name: 'Torreta', kind: 'turret', proc: 0.7, color: '#c07a45',
       desc: 'Planta una torreta donde estás. Dispara sola a lo más cercano durante un rato.',
-      base: { damage: 10, cooldown: 4, life: 9, fireEvery: 0.55, range: 320, speed: 520, max: 2 },
+      base: { damage: 8, cooldown: 4, life: 9, fireEvery: 0.55, range: 320, speed: 520, max: 2 },
       perLevel: [{ damage: 4 }, { max: 1 }, { fireEvery: -0.15 }, { max: 1, damage: 6 }]
     },
     {
       id: 'faro', name: 'Haz giratorio', kind: 'sweep', proc: 0.5, color: '#ffe08a',
       desc: 'Un haz de luz gira a tu alrededor y quema lo que barre.',
-      base: { damage: 11, length: 170, width: 14, spin: 2.2, hitEvery: 0.5, count: 1 },
+      base: { damage: 14, length: 170, width: 14, spin: 2.2, hitEvery: 0.5, count: 1 },
       perLevel: [{ length: 30 }, { damage: 6 }, { count: 1 }, { damage: 8, length: 30 }]
     },
 

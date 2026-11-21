@@ -58,3 +58,5 @@ canvas { display: block; }
 #overlay h3 { margin: 4px 0 0; color: #9fd8ff; }
 .coins { color: #ffd27a !important; font-weight: 700; font-size: 18px; }
 .achnew { color: #6fdc6a !important; font-weight: 600; }
+
+.volume { align-self: center; min-width: 120px; }

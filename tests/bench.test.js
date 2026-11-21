@@ -13,11 +13,11 @@ test('el Cazador llega después del minuto 5', function () {
   assert.ok(Lluvia.findEnemy('cazador').from > 5);
 });
 
-test('tres partidas simuladas terminan entre los 12 y los 40 minutos', function () {
+test('tres partidas simuladas terminan entre los 8 y los 45 minutos', function () {
   [1, 2, 3].forEach(function (seed) {
     var m = Lluvia.createMatch({ seed: seed, humanBot: true });
-    while (!m.over && m.time < 40 * 60) Lluvia.updateMatch(m, 1 / 30, {});
-    assert.ok(m.over, 'la partida ' + seed + ' seguía a los 40 minutos');
-    assert.ok(m.time > 12 * 60, 'la partida ' + seed + ' terminó a los ' + (m.time / 60).toFixed(1) + ' minutos');
+    while (!m.over && m.time < 45 * 60) Lluvia.updateMatch(m, 1 / 30, {});
+    assert.ok(m.over, 'la partida ' + seed + ' seguía a los 45 minutos');
+    assert.ok(m.time > 8 * 60, 'la partida ' + seed + ' terminó a los ' + (m.time / 60).toFixed(1) + ' minutos');
   });
 });

@@ -59,6 +59,7 @@
       });
       var row = el('div', 'row');
       row.appendChild(button('Cuaderno (' + L.profile.coins + ' ☀)', function () { L.ui.notebook(onPick); }, 'btn'));
+      row.appendChild(button('Partida del día', function () { L.ui.daily(onPick); }, 'btn'));
       row.appendChild(button('La historia', function () { L.ui.story(onPick); }, 'btn ghost'));
       row.appendChild(button('Cómo se juega', function () { L.ui.howTo(onPick); }, 'btn ghost'));
       row.appendChild(button('Volver a ver los consejos', function () { L.tips.reset(); L.ui.flash('Los consejos van a aparecer de nuevo'); }, 'btn ghost'));
@@ -99,6 +100,19 @@
       L.ui.current = 'notebook';
     },
 
+    // Daily match: same seed for everyone today. Pick your Paraguas; your best result today is kept.
+    daily: function (onPick) {
+      var best = (L.profile.daily || {})[L.dailyKey(new Date())];
+      var cards = el('div', 'cards');
+      L.data.characters.forEach(function (c, i) {
+        cards.appendChild(card(String(i + 1), c, function () { onPick(c.id, true); }));
+      });
+      show([el('h2', null, 'Partida del día'), el('p', 'tagline', 'Hoy todos juegan la misma partida: los mismos rivales y la misma horda.'),
+        el('p', null, best ? 'Tu mejor resultado de hoy: ' + best.place + '.º con ' + best.kills + ' bajas' : 'Todavía no la jugaste hoy.'),
+        cards, button('Volver', function () { L.ui.characterSelect(onPick); }, 'btn ghost')]);
+      L.ui.current = 'daily';
+    },
+
     story: function (onPick) {
       var box = el('div', 'text');
       L.data.lore.intro.forEach(function (par) { box.appendChild(el('p', null, par)); });
@@ -131,7 +145,12 @@
     },
 
     pause: function (onResume) {
-      show([el('h2', null, 'Pausa'), button('Seguir', onResume), el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
+      var vol = el('div', 'row');
+      var label = el('span', 'volume', 'Volumen ' + Math.round(L.sound.volume() * 100) + '%');
+      vol.appendChild(button('−', function () { L.sound.setVolume(L.sound.volume() - 0.1); label.textContent = 'Volumen ' + Math.round(L.sound.volume() * 100) + '%'; }, 'btn small'));
+      vol.appendChild(label);
+      vol.appendChild(button('+', function () { L.sound.setVolume(L.sound.volume() + 0.1); label.textContent = 'Volumen ' + Math.round(L.sound.volume() * 100) + '%'; }, 'btn small'));
+      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
       L.ui.current = 'pause';
     },
 
@@ -153,6 +172,7 @@
       if (reward) {
         nodes.push(el('p', 'coins', '+' + reward.coins + ' Monedas del Sol (tenés ' + L.profile.coins + ')'));
         reward.unlocked.forEach(function (a) { nodes.push(el('p', 'achnew', '¡Logro! ' + a.name + ' — ' + a.desc + ' (+' + a.coins + ' ☀)')); });
+        if (reward.dailyRecord) nodes.push(el('p', 'achnew', '¡Nuevo récord en la partida del día!'));
       }
       nodes.push(button('Jugar de nuevo', onRestart), el('p', 'hint', 'Enter para volver a empezar · gastá tus monedas en el Cuaderno'));
       show(nodes);

@@ -3,8 +3,12 @@
 // M mutes and unmutes (remembered in this browser).
 (function (L) {
   'use strict';
-  var ac = null, master = null, rainGain = null, muted = false, last = {};
-  try { muted = localStorage.getItem('lluvia.muted') === '1'; } catch (e) { /* storage blocked: start unmuted */ }
+  var ac = null, master = null, rainGain = null, muted = false, last = {}, volume = 0.5;
+  try {
+    muted = localStorage.getItem('lluvia.muted') === '1';
+    var v = parseFloat(localStorage.getItem('lluvia.volume'));
+    if (v >= 0 && v <= 1) volume = v;
+  } catch (e) { /* storage blocked: defaults */ }
 
   function start() {
     if (ac) return;
@@ -12,7 +16,7 @@
     if (!AC) return;
     ac = new AC();
     master = ac.createGain();
-    master.gain.value = muted ? 0 : 0.5;
+    master.gain.value = muted ? 0 : volume;
     master.connect(ac.destination);
     startRain();
   }
@@ -88,8 +92,15 @@
     toggle: function () {
       muted = !muted;
       try { localStorage.setItem('lluvia.muted', muted ? '1' : '0'); } catch (e) { /* not saved, fine */ }
-      if (master) master.gain.value = muted ? 0 : 0.5;
+      if (master) master.gain.value = muted ? 0 : volume;
       return muted;
+    },
+    volume: function () { return volume; },
+    setVolume: function (v) {
+      volume = Math.max(0, Math.min(1, Math.round(v * 10) / 10));
+      try { localStorage.setItem('lluvia.volume', String(volume)); } catch (e) { /* not saved */ }
+      if (master && !muted) master.gain.value = volume;
+      return volume;
     },
     muted: function () { return muted; }
   };

@@ -4,7 +4,23 @@
   'use strict';
 
   L.newProfile = function () {
-    return { coins: 0, upgrades: {}, achievements: {}, played: {}, stats: { matches: 0, wins: 0, bestPlace: 9, kills: 0 } };
+    return { coins: 0, upgrades: {}, achievements: {}, played: {}, daily: {}, stats: { matches: 0, wins: 0, bestPlace: 9, kills: 0 } };
+  };
+
+  // The daily match: everyone gets the same seed on the same day (same rivals, same horde).
+  L.dailySeed = function (date) {
+    var key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+    return ((key * 2654435761) >>> 0) || 1;
+  };
+  L.dailyKey = function (date) { return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate(); };
+
+  // Keeps your best place on that day's daily match (lower is better). Returns true if it is a new record.
+  L.recordDaily = function (profile, key, place, kills) {
+    profile.daily = profile.daily || {};
+    var best = profile.daily[key];
+    if (best && (best.place < place || (best.place === place && best.kills >= kills))) return false;
+    profile.daily[key] = { place: place, kills: kills };
+    return true;
   };
 
   L.upgradeLevel = function (profile, id) { return profile.upgrades[id] || 0; };

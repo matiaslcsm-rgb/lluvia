@@ -13,20 +13,20 @@
     { id: 'rastrero', name: 'Anegado', shape: 'blob', hp: 10, speed: 70, dps: 10, radius: 12, xp: 1, gold: 1, goldChance: 0.3, color: '#b04a5a', from: 0, weight: 6 },
     { id: 'veloz', name: 'Salpicón', shape: 'tri', hp: 6, speed: 135, dps: 6, radius: 9, xp: 1, gold: 1, goldChance: 0.3, color: '#d98a3a', from: 1, weight: 3 },
     { id: 'escupidor', name: 'Escupelodo', shape: 'spitter', hp: 16, speed: 60, dps: 6, radius: 13, xp: 2, gold: 1, goldChance: 0.5, color: '#7a9a3a', from: 4, weight: 1.2,
-      ranged: { range: 340, keep: 250, every: 2.4, speed: 240, damage: 9 } },
+      ranged: { range: 340, keep: 250, every: 2.4, speed: 240, damage: 7 } },
     { id: 'divisor', name: 'Charco madre', shape: 'splitter', hp: 40, speed: 55, dps: 10, radius: 18, xp: 2, gold: 2, goldChance: 0.5, color: '#c9b04a', from: 5, weight: 1,
       splits: { into: 'gotita', count: 3 } },
     { id: 'gotita', name: 'Gotita', shape: 'droplet', hp: 6, speed: 125, dps: 5, radius: 8, xp: 1, gold: 0, goldChance: 0, color: '#e8d36a', from: 0, weight: 0 },
-    { id: 'tronador', name: 'Tronador', shape: 'bomber', hp: 14, speed: 115, dps: 0, radius: 12, xp: 2, gold: 1, goldChance: 0.5, color: '#d0503a', from: 7, weight: 1,
+    { id: 'tronador', name: 'Tronador', shape: 'bomber', hp: 14, speed: 115, dps: 0, radius: 12, xp: 2, gold: 1, goldChance: 0.5, color: '#d0503a', from: 8, weight: 1,
       bomb: { trigger: 70, fuse: 0.7, radius: 95, damage: 30 } },
     { id: 'cazador', name: 'Correntada', shape: 'arrow', hp: 25, speed: 165, dps: 12, radius: 11, xp: 2, gold: 2, goldChance: 0.4, color: '#3fb6a8', from: 7, weight: 1 },
     { id: 'bruto', name: 'Ahogón', shape: 'square', hp: 70, speed: 45, dps: 18, radius: 22, xp: 5, gold: 3, goldChance: 1, color: '#7a4ab0', from: 2.5, weight: 1 },
     { id: 'coloso', name: 'Coloso del Diluvio', article: 'el', shape: 'boss', hp: 700, speed: 62, dps: 30, radius: 40, xp: 40, gold: 30, goldChance: 1, color: '#d4344f', from: 0, weight: 0, boss: true },
     // Hangs back and fires fans of hail you have to slip through.
     { id: 'reina', name: 'Reina del Granizo', article: 'la', shape: 'queen', hp: 800, speed: 50, dps: 20, radius: 36, xp: 45, gold: 35, goldChance: 1, color: '#bfe6ff', from: 0, weight: 0, boss: true,
-      ranged: { range: 520, keep: 300, every: 2.6, speed: 250, damage: 11, count: 7, spread: 0.9 } },
+      ranged: { range: 520, keep: 300, every: 2.6, speed: 250, damage: 7, count: 5, spread: 0.9 } },
     // Crouches (you see it coming), then charges in a straight line at great speed.
-    { id: 'leviatan', name: 'Leviatán del desagüe', article: 'el', shape: 'leviathan', hp: 1100, speed: 55, dps: 34, radius: 38, xp: 50, gold: 40, goldChance: 1, color: '#2f7f86', from: 0, weight: 0, boss: true,
+    { id: 'leviatan', name: 'Leviatán del desagüe', article: 'el', shape: 'leviathan', hp: 1100, speed: 55, dps: 24, radius: 38, xp: 50, gold: 40, goldChance: 1, color: '#2f7f86', from: 0, weight: 0, boss: true,
       charge: { every: 4.5, windup: 0.9, dash: 0.75, speed: 540 } }
   ];
 
@@ -56,7 +56,7 @@
     eliteFrom: 6,         // minute they start
     eliteChance: 0.015,   // chance per spawned creature at eliteFrom...
     elitePerMinute: 0.003, // ...plus this per minute after
-    elite: { hp: 6, size: 1.35, dps: 1.5, xp: 4, gold: 3, chestChance: 0.08 },
+    elite: { hp: 6, size: 1.35, dps: 1.5, xp: 4, gold: 2, chestChance: 0.08 },
     // Storm events: every minute from 1:15, the horde does something special (see L.data.waves).
     waveFirst: 165,
     waveEvery: 60
