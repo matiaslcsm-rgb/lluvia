@@ -255,3 +255,8 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
     mandando desde el minuto 9, volvió a 5,5 y a **26:40 de mediana** (banco de 40).
   - Pendiente: los ganadores juntan más ítems (unos 140, eran 107) por el Charco de oro, y Roca sale último en
     puesto promedio en cuatro bancos seguidos. Hace falta una corrida larga antes de tocarlos.
+- **2026-11-21: ajuste fino con banco de 100 + control de 60.** La corrida de 100 mostró que el tramo de los
+  minutos 5-10 seguía más duro que antes de los ítems nuevos (6,1 vidas perdidas) y que Filo y Roca salían últimos
+  en puesto. Cambios: la vida de la horda crece ×1,21 por minuto (era ×1,22), Charco de oro +10% (era +15%; los
+  ganadores bajaron de 140 a unos 120 ítems), Roca con 190 de velocidad (era 180) y Filo con 108 de vida (era 100).
+  Control de 60: pico de 5,0, **25:22 de mediana**, todos los personajes entre 4,2 y 4,8 de puesto promedio.

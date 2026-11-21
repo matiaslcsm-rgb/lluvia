@@ -12,13 +12,13 @@
     {
       id: 'roca', name: 'Roca', color: '#c8a165',
       desc: 'Lenta y dura. Arranca con Temblor. Ulti: Terremoto, que aturde todo alrededor.',
-      stats: { maxHp: 150, speed: 180, regen: 0.3, pickup: 70 },
+      stats: { maxHp: 150, speed: 190, regen: 0.3, pickup: 70 },
       start: 'temblor', ulti: 'terremoto'
     },
     {
       id: 'filo', name: 'Filo', color: '#9fe3ff',
       desc: 'Rápida y frágil. Arranca con Cuchillas. Ulti: Corte, un salto que corta lo que cruza.',
-      stats: { maxHp: 100, speed: 240, regen: 0, pickup: 80 },
+      stats: { maxHp: 108, speed: 240, regen: 0, pickup: 80 },
       start: 'cuchillas', ulti: 'corte'
     },
     {
