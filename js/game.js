@@ -266,7 +266,7 @@
     var h = L.data.horde, step = L.difficulty(g) - 1, minute = g.time / 60;
     var mult = 1;
     if (g.surge > 0) { g.surge -= dt; mult = g.surgeMult || 1; }
-    g.spawnAcc += (h.spawnBase + h.spawnPerLevel * step) * mult * (g.spawnMul || 1) * dt;
+    g.spawnAcc += (h.spawnBase + h.spawnPerLevel * step) * mult * (g.spawnMul || 1) * (g.underCloud ? L.data.shrines.cloud.spawnMul : 1) * dt;
     var eliteChance = minute < h.eliteFrom ? 0 : h.eliteChance + h.elitePerMinute * (minute - h.eliteFrom);
     while (g.spawnAcc >= 1) {
       g.spawnAcc -= 1;

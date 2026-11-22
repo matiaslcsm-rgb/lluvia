@@ -242,3 +242,18 @@ test('el Mercader errante vende 3 ítems a elección, y sin oro no te deja compr
   assert.strictEqual(g.gold, 5);
   assert.strictEqual(g.choice, null);
 });
+
+test('la lluvia de oro da oro mientras estás debajo, y la horda sale más rápido', function () {
+  var g = s2Game({ listen: true }), p = g.player;
+  g.time = Lluvia.data.shrines.cloud.first;
+  Lluvia.updateCloud(g, 0.01);
+  assert.ok(g.cloud, 'no apareció la nube');
+  g.cloud.x = p.x; g.cloud.y = p.y; g.cloud.dx = 0; g.cloud.dy = 0;
+  var gold = g.gold;
+  for (var i = 0; i < 30; i++) Lluvia.updateCloud(g, 0.1);
+  assert.ok(g.gold >= gold + 15, 'no dio oro');
+  assert.ok(g.underCloud);
+  g.cloud.x = p.x + 1000;
+  Lluvia.updateCloud(g, 0.1);
+  assert.ok(!g.underCloud);
+});

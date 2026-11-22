@@ -61,7 +61,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 
 ### Cuarta temporada
 21. **Mercader errante:** aparece en tu barrio como los santuarios y te vende 1 de 3 ítems a elección. *(hecho)*
-22. **Lluvia de oro:** una nube dorada cruza el barrio; quedarte debajo da oro, pero la horda la sigue.
+22. **Lluvia de oro:** una nube dorada cruza el barrio; quedarte debajo da oro, pero la horda la sigue. *(hecho)*
 23. **Jefe del Juicio final:** en el duelo final, a mitad de la pelea entra un jefe que ataca a los dos.
 
 ## Hecho
@@ -328,3 +328,8 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - Precio: el costo del cofre del momento ×1,6 los comunes, ×3,2 los raros, ×9 los legendarios y ×2,5 los
     malditos. Sale más caro que un cofre, pero elegís vos y salen más raros.
   - Como los santuarios, solo está en tu arena: no cambia el balance de la IA.
+- **2026-11-22: lluvia de oro.** A los 5:00 y después cada 4 minutos, una nube dorada cruza tu barrio durante 18
+  segundos (a paso lento, así que hay que seguirla).
+  - Debajo de la nube ganás oro todo el tiempo (6 por segundo al principio, y crece con el reloj como el oro de
+    cada bicho), pero mientras estás ahí la horda sale casi el doble de rápido.
+  - Al irse te dice cuánto juntaste. Como los santuarios, solo está en tu arena.

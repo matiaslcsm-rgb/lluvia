@@ -296,6 +296,22 @@
       ctx.fillText(free ? 'GRATIS' : cost + ' oro', ch.x, ch.y - 20);
     });
 
+    // Lluvia de oro: a golden patch on the ground, coins falling, and the cloud's puffs on top.
+    var cl = g.cloud;
+    if (cl && visible(cl.x, cl.y, cl.r + 40)) {
+      var fade = Math.min(1, cl.life / 2);
+      ctx.globalAlpha = (g.underCloud ? 0.22 : 0.14) * fade; circle(ctx, cl.x, cl.y, cl.r, '#ffd27a');
+      ctx.globalAlpha = 0.8 * fade; ctx.fillStyle = '#ffd86a';
+      for (var ci = 0; ci < 14; ci++) {
+        var ca = ci * 2.399, cr = cl.r * Math.sqrt((ci + 0.5) / 14), fall = ((t * 1.3 + ci * 0.37) % 1);
+        ctx.fillRect(cl.x + Math.cos(ca) * cr - 2, cl.y + Math.sin(ca) * cr - 40 + fall * 40, 4, 4);
+      }
+      ctx.globalAlpha = 0.4 * fade;
+      for (var pi = 0; pi < 5; pi++) circle(ctx, cl.x + (pi - 2) * cl.r * 0.28, cl.y - cl.r - 30 + Math.abs(pi - 2) * 6, cl.r * 0.2, '#f2d27a');
+      ctx.globalAlpha = fade; ctx.fillStyle = '#ffd27a'; ctx.fillText('LLUVIA DE ORO', cl.x, cl.y - cl.r - 62);
+      ctx.globalAlpha = 1;
+    }
+
     // Shrines: a stone altar with a glowing top; the active challenge shows its countdown.
     (g.shrines || []).forEach(function (s) {
       if (!visible(s.x, s.y, 40)) return;

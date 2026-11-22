@@ -3,6 +3,7 @@
 //    life and it leaves a boss chest.
 //  - Pozo de los deseos: costs a quarter of your gold; heads you get double back, tails you lose it.
 //  - Mercader errante: sells you one of 3 items for gold (a chest lets luck pick; he lets you choose).
+//  - Lluvia de oro: a golden cloud drifts across; under it you earn gold, but the horde comes faster.
 // Only the watched arena has them (the bots don't use them), so they don't change the rivals' balance.
 (function (L) {
   'use strict';
@@ -13,6 +14,8 @@
     life: 60,            // it disappears if you don't touch it in this time
     challenge: { seconds: 20, elites: 3, perStep: 0.5 },
     well: { share: 0.25, min: 10 },
+    // Golden cloud: gold per second under it grows with the clock like gold per kill.
+    cloud: { first: 300, every: 240, seconds: 18, speed: 60, radius: 120, gold: 6, spawnMul: 1.8 },
     // Prices are the current chest cost times this; the odds are better than a chest's.
     merchant: { offers: 3, weights: { comun: 55, raro: 38, legendario: 5, maldito: 2 },
       price: { comun: 1.6, raro: 3.2, legendario: 9, maldito: 2.5 } }
@@ -33,6 +36,7 @@
         pozo: 'Apareció un Pozo de los deseos: tocalo para jugarte un cuarto de tu oro.',
         mercader: 'Llegó el Mercader errante: tocalo para ver qué vende.' }[kind], '#c9b8ff');
     }
+    updateCloud(g, dt);
     for (var i = g.shrines.length - 1; i >= 0; i--) {
       var s = g.shrines[i];
       if (s.active) {
@@ -71,6 +75,35 @@
     L.toast(g, '¡Desafío del Trueno! Aguantá ' + C.seconds + ' segundos sin perder una vida.', '#c9b8ff');
     L.emit(g, 'boss', s.x, s.y);
   }
+
+  function updateCloud(g, dt) {
+    var C = L.data.shrines.cloud, p = g.player;
+    if (g.nextCloud === undefined) g.nextCloud = C.first;
+    if (!g.cloud && g.time >= g.nextCloud) {
+      g.nextCloud += C.every;
+      var a = g.rng() * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a);
+      g.cloud = { x: p.x - dx * 400, y: p.y - dy * 400, dx: dx, dy: dy, r: C.radius, life: C.seconds, earned: 0 };
+      L.toast(g, '¡Lluvia de oro! Quedate debajo de la nube dorada... si la horda te deja.', '#ffd27a');
+    }
+    var c = g.cloud;
+    g.underCloud = false;
+    if (!c) return;
+    c.life -= dt;
+    c.x = L.clamp(c.x + c.dx * C.speed * dt, 0, g.arena);
+    c.y = L.clamp(c.y + c.dy * C.speed * dt, 0, g.arena);
+    if (c.life <= 0) {
+      if (c.earned > 0) L.toast(g, 'La nube dorada se fue. Juntaste ' + Math.floor(c.earned) + ' de oro.', '#ffd27a');
+      g.cloud = null;
+      return;
+    }
+    if (g.respawn > 0 || (c.x - p.x) * (c.x - p.x) + (c.y - p.y) * (c.y - p.y) > c.r * c.r) return;
+    g.underCloud = true;
+    var rate = C.gold * Math.pow(1 + L.data.horde.goldGrowth, L.difficulty(g) - 1) * (1 + (p.stats.goldMul || 0));
+    g.goldAcc = (g.goldAcc || 0) + rate * dt;
+    var whole = Math.floor(g.goldAcc);
+    if (whole > 0) { g.gold += whole; c.earned += whole; g.goldAcc -= whole; }
+  }
+  L.updateCloud = updateCloud;
 
   // The merchant's offers go on the choice screen (the game waits while it is open), plus a way out.
   function openShop(g) {
