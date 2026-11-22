@@ -60,7 +60,15 @@
     characterSelect: function (onPick) {
       var cards = el('div', 'cards');
       L.data.characters.forEach(function (c, i) {
-        if (L.isUnlocked(L.profile, c.id)) { cards.appendChild(card(String(i + 1), c, function () { onPick(c.id); }, L.data.lore.bios[c.id])); return; }
+        if (L.isUnlocked(L.profile, c.id)) {
+          var mr = L.masteryRank(L.profile, c.id), stars = mr.index ? new Array(mr.index + 1).join('★') + ' ' : '';
+          var shown = Object.create(c);
+          shown.tag = stars + mr.rank.name + (mr.next ? ' · ' + mr.points + '/' + mr.next.at : '');
+          var cb = card(String(i + 1), shown, function () { onPick(c.id); }, L.data.lore.bios[c.id]);
+          if (mr.rank.color) cb.style.borderColor = mr.rank.color;
+          cards.appendChild(cb);
+          return;
+        }
         var b = card(null, { color: '#3a3d4a', name: '🔒 ' + c.name, desc: lockText(L.unlockFor(c.id)) }, function () { L.ui.notebook(onPick); });
         b.classList.add('locked');
         cards.appendChild(b);
@@ -233,6 +241,7 @@
         nodes.push(el('p', 'coins', '+' + reward.coins + ' Monedas del Sol (tenés ' + L.profile.coins + ')'));
         (reward.opened || []).forEach(function (u) { nodes.push(el('p', 'achnew', '¡Desbloqueaste ' + (u.kind === 'char' ? 'a ' + L.findById(L.data.characters, u.id).name : (u.kind === 'pact' ? 'el Pacto ' : 'el modo ') + u.name) + '!')); });
         reward.unlocked.forEach(function (a) { nodes.push(el('p', 'achnew', '¡Logro! ' + a.name + ' — ' + a.desc + ' (+' + a.coins + ' ☀)')); });
+        if (reward.rankUp) nodes.push(el('p', 'achnew', g.player.char.name + ' subió de rango: ' + reward.rankUp.name + '.'));
         if (reward.dailyRecord) nodes.push(el('p', 'achnew', '¡Nuevo récord en la partida del día!'));
       }
       nodes.push(button('Jugar de nuevo', onRestart), el('p', 'hint', 'Enter para volver a empezar · gastá tus monedas en el Cuaderno'));

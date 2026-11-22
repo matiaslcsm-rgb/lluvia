@@ -61,6 +61,20 @@
       { id: 'caos', name: 'Juicio caótico', desc: 'Cada Juicio junta dos Leyes del Cielo a la vez.', mixRules: true },
       { id: 'fiebre', name: 'Fiebre del oro', desc: 'Los cofres cuestan la mitad, pero la horda tiene +30% de vida.', chestMul: 0.5, hordeHp: 1.3 }
     ],
-    pactCoinBonus: 0.25
+    pactCoinBonus: 0.25,
+    // Mastery: each Paraguas gains points every match you play with it (by place, plus one per duel won)
+    // and climbs ranks with a title and an aura color. Only looks; it gives no power.
+    mastery: {
+      placePoints: [10, 7, 5, 4, 3, 2, 1, 1],
+      perDuelWon: 1,
+      ranks: [
+        { at: 0, name: 'Aprendiz', color: null },
+        { at: 15, name: 'Paraguas de barrio', color: '#9fc3e6' },
+        { at: 40, name: 'Veterano del charco', color: '#6fdc6a' },
+        { at: 80, name: 'Guardián del arroyo', color: '#5fb0ff' },
+        { at: 140, name: 'Señor de la tormenta', color: '#b07aff' },
+        { at: 220, name: 'Leyenda de Aguaverde', color: '#ffd27a' }
+      ]
+    }
   };
 })(this.Lluvia = this.Lluvia || {});

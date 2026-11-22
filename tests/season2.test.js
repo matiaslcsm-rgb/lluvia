@@ -216,3 +216,15 @@ test('el que más duelos te gana es tu rival, y ganarle paga el doble', function
   assert.strictEqual(revenge, normal * 2);
   assert.strictEqual(me.revenges, 1);
 });
+
+test('jugar con un Paraguas le suma maestría y lo hace subir de rango', function () {
+  var prof = Lluvia.newProfile();
+  var m = Lluvia.createMatch({ seed: 12, humanBot: true, forecast: null, characterId: 'brasa' });
+  m.human.place = 1; m.human.duelsWon = 5;
+  var r = Lluvia.settleMatch(prof, m);
+  assert.strictEqual(prof.mastery.brasa, 15);
+  assert.strictEqual(r.rankUp.name, 'Paraguas de barrio');
+  var r2 = Lluvia.settleMatch(prof, m);
+  assert.strictEqual(r2.rankUp, null);
+  assert.strictEqual(Lluvia.masteryRank(prof, 'brasa').next.at, 40);
+});

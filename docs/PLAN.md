@@ -57,7 +57,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 18. **Pronóstico del día:** cada partida trae un clima que cambia la horda para las 8 arenas por igual. *(hecho)*
 19. **Rival:** el Paraguas que más duelos te ganó pasa a ser tu rival; ganarle en duelo paga el doble y tiene frase.
     *(hecho)*
-20. **Maestría de personaje:** cada Paraguas sube de rango con las partidas y gana un título y un color.
+20. **Maestría de personaje:** cada Paraguas sube de rango con las partidas y gana un título y un color. *(hecho)*
 
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
@@ -311,3 +311,10 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
     el doble del premio del duelo.
   - Logro nuevo: Revancha (ganale un duelo a tu rival, 30 monedas). Consejo nuevo la primera vez que tenés rival.
   - Solo vos tenés rival, así que no cambia el balance entre los Paraguas de la IA; no hizo falta banco.
+- **2026-11-22: maestría de personaje.** Cada partida le suma puntos al Paraguas que usaste: 10 por ganar, 7 por
+  salir segundo, y así hasta 1; más 1 por cada duelo ganado.
+  - Seis rangos: Aprendiz, Paraguas de barrio (15), Veterano del charco (40), Guardián del arroyo (80), Señor de la
+    tormenta (140) y Leyenda de Aguaverde (220).
+  - Se ve en la tarjeta del personaje (estrellas, título, puntos y borde del color del rango), en un aura suave del
+    mismo color alrededor tuyo en la partida, y en la pantalla final cuando subís.
+  - Es solo de adorno: no da poder, así que no cambia el balance.

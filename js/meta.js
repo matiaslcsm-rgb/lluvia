@@ -4,7 +4,7 @@
   'use strict';
 
   L.newProfile = function () {
-    return { coins: 0, upgrades: {}, achievements: {}, unlocked: {}, played: {}, daily: {}, stats: { matches: 0, wins: 0, bestPlace: 9, kills: 0 } };
+    return { coins: 0, upgrades: {}, achievements: {}, unlocked: {}, played: {}, mastery: {}, daily: {}, stats: { matches: 0, wins: 0, bestPlace: 9, kills: 0 } };
   };
 
   // The daily match: everyone gets the same seed on the same day (same rivals, same horde).
@@ -85,6 +85,11 @@
     var coins = M.placeCoins[place - 1] + duelsWon * M.perDuelWon + Math.floor(g.kills / 100) * M.per100Kills;
     var charId = g.player.char.id;
     profile.played[charId] = true;
+    var MS = M.mastery, before = L.masteryRank(profile, charId).index;
+    profile.mastery = profile.mastery || {};
+    profile.mastery[charId] = (profile.mastery[charId] || 0) + MS.placePoints[place - 1] + (me.duelsWon || 0) * MS.perDuelWon;
+    var after = L.masteryRank(profile, charId);
+    var rankUp = after.index > before ? after.rank : null;
     profile.stats.matches++;
     profile.stats.kills += g.kills;
     if (place === 1) profile.stats.wins++;
@@ -122,6 +127,13 @@
     });
     profile.coins += coins;
     var opened = M.unlocks.filter(function (u) { return !wasOpen[u.id] && L.isUnlocked(profile, u.id); });
-    return { coins: coins, unlocked: unlocked, opened: opened, duelsWon: duelsWon };
+    return { coins: coins, unlocked: unlocked, opened: opened, duelsWon: duelsWon, rankUp: rankUp };
+  };
+
+  // Where a Paraguas stands in mastery: its rank, its index, the points, and the next rank (null at the top).
+  L.masteryRank = function (profile, charId) {
+    var ranks = L.data.meta.mastery.ranks, pts = (profile.mastery && profile.mastery[charId]) || 0, i = 0;
+    while (i + 1 < ranks.length && pts >= ranks[i + 1].at) i++;
+    return { index: i, rank: ranks[i], points: pts, next: ranks[i + 1] || null };
   };
 })(this.Lluvia = this.Lluvia || {});

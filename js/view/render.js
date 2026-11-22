@@ -363,6 +363,9 @@
       var st = p.stats, planted = (st.stillDamage || st.stillRegen) ? p.still || 0 : 0, rush = st.rushDamage ? p.rush || 0 : 0;
       if (planted > 0.05) { ctx.globalAlpha = 0.5 * planted; ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 10, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
       if (rush > 0.05) { ctx.globalAlpha = 0.45 * rush; ctx.strokeStyle = '#7ad0ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - (p.dirX || 0) * 40 * rush, p.y - (p.dirY || 0) * 40 * rush); ctx.stroke(); ctx.globalAlpha = 1; }
+      // Mastery aura: the rank's color, softly pulsing under you (only looks).
+      var aura = L.profile && L.masteryRank(L.profile, p.char.id).rank.color;
+      if (aura) { var a0 = ctx.globalAlpha; ctx.globalAlpha = a0 * (0.18 + 0.08 * Math.sin(t * 3)); ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 6, 0, TAU); ctx.fill(); ctx.globalAlpha = a0; }
       L.drawHero(ctx, p, t, p.hurt > 0);
       ctx.globalAlpha = 1;
     }
