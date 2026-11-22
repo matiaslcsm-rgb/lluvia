@@ -33,7 +33,8 @@
       { id: 'apostador', name: 'Ojo de halcón', desc: 'Acertá 3 apuestas en una partida.', coins: 25 },
       { id: 'todos', name: 'Todos los paraguas', desc: 'Jugá una partida con cada personaje.', coins: 50 },
       { id: 'invicto', name: 'Ni una gota', desc: 'Ganá sin perder ninguna vida.', coins: 150 },
-      { id: 'eterna', name: 'Sol en la tormenta', desc: 'Ganá una partida en Tormenta eterna.', coins: 200 }
+      { id: 'eterna', name: 'Sol en la tormenta', desc: 'Ganá una partida en Tormenta eterna.', coins: 200 },
+      { id: 'revancha', name: 'Revancha', desc: 'Ganale un duelo a tu rival.', coins: 30 }
     ],
 
     // Content you unlock: three Paraguas and the hard mode. Each opens with an achievement, or earlier with coins

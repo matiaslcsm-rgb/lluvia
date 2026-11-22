@@ -10,6 +10,7 @@
     hpMul: 3,            // duel health = max health × this × the enemy-health growth of the clock,
                          // so duels last about the same early and late
     prize: 30,           // gold for the winner, grows with the clock like gold per kill
+    rivalPrize: 2,       // beating your rival in a duel pays the prize this many times
     finalBreak: 5,       // seconds between duels when only two are left
     returnInvuln: 2      // seconds of invulnerability when you get back to your arena
   };

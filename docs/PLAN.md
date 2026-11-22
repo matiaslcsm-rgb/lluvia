@@ -55,7 +55,8 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 
 ### Tercera temporada
 18. **Pronóstico del día:** cada partida trae un clima que cambia la horda para las 8 arenas por igual. *(hecho)*
-19. **Rival:** el Paraguas que más vidas te sacó pasa a ser tu rival; ganarle en duelo paga el doble y tiene frase.
+19. **Rival:** el Paraguas que más duelos te ganó pasa a ser tu rival; ganarle en duelo paga el doble y tiene frase.
+    *(hecho)*
 20. **Maestría de personaje:** cada Paraguas sube de rango con las partidas y gana un título y un color.
 
 ## Hecho
@@ -304,3 +305,9 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - Se suma a la Tormenta eterna y a los Pactos. La partida diaria también tiene pronóstico (igual para todos).
   - Las pruebas ahora son más livianas para gastar menos (decisión del usuario): las automáticas en cada tanda, y
     30 partidas simuladas solo cuando cambian números del balance.
+- **2026-11-22: el rival.** El Paraguas que más duelos te ganó pasa a ser tu rival (si hay empate, el último que te
+  ganó). Lo marca ⚔ en la tabla de posiciones.
+  - Cuando te gana te provoca con una frase; cuando te toca contra él se anuncia la revancha, y si le ganás cobrás
+    el doble del premio del duelo.
+  - Logro nuevo: Revancha (ganale un duelo a tu rival, 30 monedas). Consejo nuevo la primera vez que tenés rival.
+  - Solo vos tenés rival, así que no cambia el balance entre los Paraguas de la IA; no hizo falta banco.

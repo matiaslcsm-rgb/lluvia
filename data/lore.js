@@ -31,6 +31,23 @@
       faro: 'Faro apaga su luz. Por un día entero, Aguaverde no necesita que nadie la ilumine.'
     },
     rivals: 'Nube, Trueno, Granizo, Bruma, Rocío, Relámpago y Llovizna: los otros siete Paraguas de esta temporada.',
+    // Your rival: the Paraguas who has beaten you the most in duels. {name} is replaced by theirs.
+    rival: {
+      start: [
+        '{name} te ganó y ya no te va a soltar. Ahora es tu rival.',
+        '{name} se ríe bajo su paraguas. Desde hoy, es tu rival.'
+      ],
+      taunt: [
+        '{name}: "¿Otra vez vos? Traé un paraguas más grande."',
+        '{name}: "En mi barrio esto se llama llovizna."',
+        '{name}: "El sol no es para cualquiera."'
+      ],
+      duel: '¡Revancha contra {name}! Si le ganás, el premio es doble.',
+      revenge: [
+        'Le ganaste a {name}, tu rival. Se va mojado y callado.',
+        '{name} tira el paraguas al piso. Revancha cumplida.'
+      ]
+    },
     winLines: [
       'Las nubes se abren sobre tu barrio. Por primera vez en cien años, sale el sol.',
       'La Torre del Trueno se calla. Tu barrio va a tener su día de sol.'

@@ -23,6 +23,7 @@
       final: false,                     // only two left: no more hordes, duels back to back
       storm: !!opts.storm,              // Tormenta eterna (hard mode)
       pacts: opts.pacts || [],          // Pactos del Cielo turned on
+      rival: null, grudge: {},          // your rival and how many duels each rival has won against you
       forecast: opts.forecast !== undefined ? opts.forecast : L.pickForecast(seed) // same weather in every arena
     };
     for (var i = 0; i < 8; i++) {
@@ -96,12 +97,31 @@
     m.duel = L.createDuel(m, pair[0], pair[1], b.rule);
     m.duel.betting = b;
     pair.forEach(function (pl) { pl.inDuel = true; pl.duels++; });
+    if (m.rival && pair.indexOf(m.human) >= 0 && pair.indexOf(m.rival) >= 0) tell(m, rivalLine(m, 'duel'), '#ff6b81');
+  }
+
+  // Your rival: the Paraguas who has beaten you the most in duels (the latest one wins a tie). Only you have one.
+  function rivalLine(m, kind) {
+    var lines = L.data.lore.rival[kind];
+    var text = typeof lines === 'string' ? lines : lines[m.rng.int(lines.length)];
+    return text.replace('{name}', m.rival.name);
+  }
+
+  function updateRival(m, w, l) {
+    if (!l.isHuman) return;
+    m.grudge[w.index] = (m.grudge[w.index] || 0) + 1;
+    if (m.rival === w) { tell(m, rivalLine(m, 'taunt'), '#ff6b81'); return; }
+    if (!m.rival || m.grudge[w.index] >= m.grudge[m.rival.index]) {
+      m.rival = w;
+      tell(m, rivalLine(m, 'start'), '#ff6b81');
+    }
   }
 
   // The loser loses a life, the winner takes the prize, and both go back to their arenas on the match clock.
   function endDuel(m) {
     var d = m.duel, w = d.winner, l = d.loser, step = Math.floor(m.time / 60);
-    var prize = Math.round(L.data.duels.prize * Math.pow(1 + L.data.horde.goldGrowth, step));
+    var revenge = w.isHuman && m.rival === l;
+    var prize = Math.round(L.data.duels.prize * Math.pow(1 + L.data.horde.goldGrowth, step) * (revenge ? L.data.duels.rivalPrize : 1));
     w.game.gold += prize;
     w.duelsWon = (w.duelsWon || 0) + 1;
     l.game.lives--;
@@ -122,7 +142,11 @@
     m.duel = null;
     m.nextDuel = m.time + (m.final ? L.data.duels.finalBreak : L.data.duels.every);
     tell(m, w.name + ' le ganó el duelo a ' + l.name + (d.timeout ? ' por tiempo' : '') + ' (+' + prize + ' oro)', '#ffd27a');
+    if (revenge) { m.human.revenges = (m.human.revenges || 0) + 1; tell(m, rivalLine(m, 'revenge'), '#6fdc6a'); }
+    updateRival(m, w, l);
   }
+
+  L.endDuelForTest = function (m, d) { m.duel = d; endDuel(m); return d; };
 
   // input: your movement. Returns nothing; read m.over / m.winner / players[i].place.
   L.updateMatch = function (m, dt, input) {

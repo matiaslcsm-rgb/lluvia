@@ -101,6 +101,7 @@
       ctx.fillText(pl.out ? '' : hearts(g.lives), x - 48, yy);
       ctx.fillStyle = pl.out ? '#5d6070' : g.player.char.color;
       ctx.fillText((i + 1) + '. ' + pl.name, x - 92, yy);
+      if (pl === m.rival && !pl.out) { ctx.fillStyle = '#ff6b81'; ctx.textAlign = 'left'; ctx.fillText('⚔', x - 192, yy); ctx.textAlign = 'right'; }
     });
   }
 

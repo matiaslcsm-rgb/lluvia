@@ -80,7 +80,7 @@
   L.settleMatch = function (profile, m) {
     var me = m.human, g = me.game, M = L.data.meta, place = me.place || 1;
     var track = { duelsWon: me.duelsWon || 0, betsWon: me.betsWon || 0, bossKills: g.bossKills || 0,
-      legendary: g.gotLegendary, livesLost: L.data.horde.lives - Math.max(0, g.lives) };
+      legendary: g.gotLegendary, revenges: me.revenges || 0, livesLost: L.data.horde.lives - Math.max(0, g.lives) };
     var duelsWon = track.duelsWon;
     var coins = M.placeCoins[place - 1] + duelsWon * M.perDuelWon + Math.floor(g.kills / 100) * M.per100Kills;
     var charId = g.player.char.id;
@@ -105,7 +105,8 @@
       apostador: (track.betsWon || 0) >= 3,
       todos: L.data.characters.every(function (c) { return profile.played[c.id]; }),
       invicto: place === 1 && !(track.livesLost || 0),
-      eterna: place === 1 && !!m.storm
+      eterna: place === 1 && !!m.storm,
+      revancha: track.revenges >= 1
     };
     if (m.storm) coins *= M.storm.coinMul;
     if (m.pacts && m.pacts.length) coins = Math.round(coins * (1 + M.pactCoinBonus * m.pacts.length));

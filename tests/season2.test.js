@@ -199,3 +199,20 @@ test('el pronóstico es el mismo en las 8 arenas y cambia la horda y a los jugad
   for (var s = 1; s <= 60; s++) seen[Lluvia.pickForecast(s)] = true;
   assert.ok(Object.keys(seen).length >= 5, 'casi siempre sale el mismo pronóstico');
 });
+
+test('el que más duelos te gana es tu rival, y ganarle paga el doble', function () {
+  var m = Lluvia.createMatch({ seed: 11, humanBot: true, forecast: null }), me = m.human, a = m.players[3];
+  function duel(w, l) {
+    m.duel = Lluvia.createDuel(m, w, l);
+    m.duel.betting = Lluvia.openBetting(m, [w, l], m.duel.rule, 1);
+    m.duel.winner = w; m.duel.loser = l; m.duel.over = true;
+    me.game.lives = 9;
+    return m.duel;
+  }
+  Lluvia.endDuelForTest(m, duel(a, me));
+  assert.strictEqual(m.rival, a);
+  var normal = Lluvia.endDuelForTest(m, duel(me, m.players[4])).prize;
+  var revenge = Lluvia.endDuelForTest(m, duel(me, a)).prize;
+  assert.strictEqual(revenge, normal * 2);
+  assert.strictEqual(me.revenges, 1);
+});
