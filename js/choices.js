@@ -68,6 +68,16 @@
     var o = g.choice && g.choice[index];
     if (!o) return false;
     var p = g.player;
+    if (o.shop) { // the Mercader errante: buying doesn't use up a level-up
+      if (o.type === 'buy') {
+        if (g.gold < o.price) { L.toast(g, 'No te alcanza: cuesta ' + o.price + ' de oro.', '#ff9a7a'); return false; }
+        g.gold -= o.price;
+        L.addItem(g, o.id);
+        L.toast(g, 'Compraste ' + o.name + '.', '#ffd27a');
+      }
+      g.choice = g.pendingLevels > 0 ? L.makeChoices(g) : null;
+      return true;
+    }
     if (o.type === 'newAbility') L.addAbility(g, o.id);
     else if (o.type === 'upAbility') L.levelUpAbility(g, o.id);
     else if (o.type === 'newPassive') L.addPassive(g, o.id);

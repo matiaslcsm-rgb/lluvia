@@ -198,10 +198,12 @@
       L.ui.current = 'howto';
     },
 
-    choice: function (options, onPick) {
+    choice: function (options, onPick, g) {
       var cards = el('div', 'cards');
       options.forEach(function (o, i) { cards.appendChild(card(String(i + 1), o, function () { onPick(i); })); });
-      var nodes = [el('h2', null, '¡Subiste de nivel!'), cards];
+      var shop = options[0] && options[0].shop;
+      var nodes = shop ? [el('h2', null, 'El Mercader errante'), el('p', 'tagline', 'Elegí uno. Tenés ' + Math.floor(g ? g.gold : 0) + ' de oro.'), cards]
+        : [el('h2', null, '¡Subiste de nivel!'), cards];
       if (options.some(function (o) { return o.type === 'fusion'; })) nodes.splice(1, 0, el('p', 'tagline', '¡Hay una fusión disponible! Convierte tu habilidad en una versión mucho más fuerte.'));
       show(nodes);
       L.ui.current = 'choice';

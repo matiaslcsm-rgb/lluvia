@@ -59,6 +59,11 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
     *(hecho)*
 20. **Maestría de personaje:** cada Paraguas sube de rango con las partidas y gana un título y un color. *(hecho)*
 
+### Cuarta temporada
+21. **Mercader errante:** aparece en tu barrio como los santuarios y te vende 1 de 3 ítems a elección. *(hecho)*
+22. **Lluvia de oro:** una nube dorada cruza el barrio; quedarte debajo da oro, pero la horda la sigue.
+23. **Jefe del Juicio final:** en el duelo final, a mitad de la pelea entra un jefe que ataca a los dos.
+
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
 - **2026-11-20: etapas 0 y 1.** Se juega abriendo `index.html` (o con un servidor local). Hay 3 personajes (Brasa,
@@ -318,3 +323,8 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - Se ve en la tarjeta del personaje (estrellas, título, puntos y borde del color del rango), en un aura suave del
     mismo color alrededor tuyo en la partida, y en la pantalla final cuando subís.
   - Es solo de adorno: no da poder, así que no cambia el balance.
+- **2026-11-22: el Mercader errante** (cuarta temporada). Ahora los santuarios rotan de a tres: Mercader, Trueno y
+  Pozo. El Mercader ofrece 3 ítems distintos y elegís uno (o seguís de largo); el juego espera mientras mirás.
+  - Precio: el costo del cofre del momento ×1,6 los comunes, ×3,2 los raros, ×9 los legendarios y ×2,5 los
+    malditos. Sale más caro que un cofre, pero elegís vos y salen más raros.
+  - Como los santuarios, solo está en tu arena: no cambia el balance de la IA.

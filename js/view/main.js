@@ -150,7 +150,7 @@
       matchSounds();
       L.tips.check(match);
       var g = game();
-      if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick);
+      if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick, g);
       if (match.over && L.ui.current !== 'over') {
         if (!reward) {
           reward = L.settleMatch(L.profile, match);

@@ -301,11 +301,11 @@
       if (!visible(s.x, s.y, 40)) return;
       ctx.fillStyle = '#3a3550'; ctx.fillRect(s.x - 18, s.y - 6, 36, 20);
       ctx.fillStyle = '#524a70'; ctx.fillRect(s.x - 14, s.y - 22, 28, 18);
-      var glow = s.kind === 'trueno' ? '#c9b8ff' : '#6fdcd0';
+      var glow = { trueno: '#c9b8ff', pozo: '#6fdcd0', mercader: '#ffd27a' }[s.kind];
       ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 4); circle(ctx, s.x, s.y - 26, 12, glow); ctx.globalAlpha = 1;
       circle(ctx, s.x, s.y - 26, 6, glow);
       ctx.fillStyle = glow;
-      ctx.fillText(s.active ? Math.ceil(s.timer) + ' s' : s.kind === 'trueno' ? 'DESAFÍO' : 'POZO', s.x, s.y - 44);
+      ctx.fillText(s.active ? Math.ceil(s.timer) + ' s' : { trueno: 'DESAFÍO', pozo: 'POZO', mercader: 'MERCADER' }[s.kind], s.x, s.y - 44);
     });
 
     // Experience gems.

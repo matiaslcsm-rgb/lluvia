@@ -228,3 +228,17 @@ test('jugar con un Paraguas le suma maestría y lo hace subir de rango', functio
   assert.strictEqual(r2.rankUp, null);
   assert.strictEqual(Lluvia.masteryRank(prof, 'brasa').next.at, 40);
 });
+
+test('el Mercader errante vende 3 ítems a elección, y sin oro no te deja comprar', function () {
+  var g = s2Game({ listen: true });
+  Lluvia.openShop(g);
+  var buy = g.choice.filter(function (o) { return o.type === 'buy'; });
+  assert.strictEqual(buy.length, 3);
+  g.gold = 0;
+  assert.strictEqual(Lluvia.choose(g, 0), false);
+  g.gold = buy[0].price + 5;
+  assert.ok(Lluvia.choose(g, 0));
+  assert.strictEqual(g.player.items[buy[0].id], 1);
+  assert.strictEqual(g.gold, 5);
+  assert.strictEqual(g.choice, null);
+});
