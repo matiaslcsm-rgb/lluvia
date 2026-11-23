@@ -62,7 +62,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 ### Cuarta temporada
 21. **Mercader errante:** aparece en tu barrio como los santuarios y te vende 1 de 3 ítems a elección. *(hecho)*
 22. **Lluvia de oro:** una nube dorada cruza el barrio; quedarte debajo da oro, pero la horda la sigue. *(hecho)*
-23. **Jefe del Juicio final:** en el duelo final, a mitad de la pelea entra un jefe que ataca a los dos.
+23. **Jefe del Juicio final:** en el duelo final, a mitad de la pelea entra un jefe que ataca a los dos. *(hecho)*
 
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
@@ -333,3 +333,9 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - Debajo de la nube ganás oro todo el tiempo (6 por segundo al principio, y crece con el reloj como el oro de
     cada bicho), pero mientras estás ahí la horda sale casi el doble de rápido.
   - Al irse te dice cuánto juntaste. Como los santuarios, solo está en tu arena.
+- **2026-11-22: el Juez del Trueno.** En la final (cuando quedan dos), a los 4 segundos de cada duelo entra el Juez
+  del Trueno: va contra el que tenga más cerca, y el que lo baja se cura la mitad de la vida. Aparece con un cartel
+  y muestra su barra de vida arriba.
+  - Banco de 30: la curva no cambió (mediana 27:18, duelos de 9,9 s, ganadores con 173 ítems).
+  - Pendiente: Faro ganó solo el 4% en los últimos tres bancos de 30 (puesto promedio 4,4-4,9, en el medio).
+    Con 30 partidas es ruido posible; mirar en el próximo banco largo antes de tocarlo.

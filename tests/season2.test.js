@@ -257,3 +257,20 @@ test('la lluvia de oro da oro mientras estás debajo, y la horda sale más rápi
   Lluvia.updateCloud(g, 0.1);
   assert.ok(!g.underCloud);
 });
+
+test('en la final entra el Juez del Trueno a cada duelo, y bajarlo cura', function () {
+  var m = Lluvia.createMatch({ seed: 13, humanBot: true, forecast: null });
+  var d0 = Lluvia.createDuel(m, m.players[1], m.players[2]);
+  Lluvia.updateDuel(d0, 5, null);
+  assert.ok(!d0.judge, 'entró fuera de la final');
+  m.final = true;
+  var d = Lluvia.createDuel(m, m.players[1], m.players[2], Lluvia.data.duelRules[0]);
+  d.fighters.forEach(function (f) { f.hp = f.maxHp = 1e6; });
+  Lluvia.updateDuel(d, 4.1, null);
+  assert.ok(d.judge && !d.judge.dead, 'no entró el Juez');
+  var f = d.fighters[0];
+  f.hp = f.maxHp * 0.2;
+  d.judge.hp = 0; d.judge.dead = true;
+  Lluvia.updateDuel(d, 0.05, null);
+  assert.ok(d.judge.credited);
+});

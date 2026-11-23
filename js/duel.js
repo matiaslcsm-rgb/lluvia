@@ -67,6 +67,7 @@
     d.creeps = [];
     d.nextCreep = rule.creeps ? 1.5 : Infinity;
     d.creepId = -10;
+    d.judgeAt = m.final ? L.data.duels.judge.at : Infinity; // the Juez del Trueno, only in the final
     d.bots = [a.bot ? L.makeBot(m.rng.int(1e9), a.bot.skill) : null, b.bot ? L.makeBot(m.rng.int(1e9), b.bot.skill) : null];
     [a, b].forEach(function (pl) { pl.game.player.abilities.forEach(function (ab) { ab.timer = 0; ab.hits.clear(); ab.turrets = []; }); });
     return d;
@@ -121,6 +122,15 @@
     }
   }
 
+  function spawnJudge(d) {
+    var J = L.data.duels.judge, F = d.fighters, pool = (F[0].maxHp + F[1].maxHp) / 2;
+    d.judge = { id: d.creepId--, type: { name: 'Juez del Trueno', color: '#ffd27a', shape: 'boss', gold: 0, goldChance: 0, boss: true },
+      speed: J.speed, x: d.size / 2, y: J.radius, r: J.radius, hp: pool * J.hp, maxHp: pool * J.hp, dps: pool * J.dps,
+      heal: J.heal, dead: false, flash: 0, burnDps: 0, burnTtl: 0, stun: 0, slow: 0, credited: false };
+    d.creeps.push(d.judge);
+    d.judgeBanner = 2.5;
+  }
+
   function moveCreeps(d, dt) {
     var F = d.fighters, V = d.views;
     for (var i = 0; i < d.creeps.length; i++) {
@@ -144,7 +154,7 @@
     var f = d.fighters[i], C = d.rule.creeps;
     for (var k = 0; k < d.creeps.length; k++) {
       var c = d.creeps[k];
-      if (c.dead && !c.credited) { c.credited = true; if (!f.dead) f.hp = Math.min(f.maxHp, f.hp + f.maxHp * C.heal); L.emit(d.views[i], 'kill', c.x, c.y, c); }
+      if (c.dead && !c.credited) { c.credited = true; if (!f.dead) f.hp = Math.min(f.maxHp, f.hp + f.maxHp * (c.heal !== undefined ? c.heal : C.heal)); L.emit(d.views[i], 'kill', c.x, c.y, c); }
     }
   }
 
@@ -159,8 +169,10 @@
     d.time += dt;
     var F = d.fighters, V = d.views, i;
     for (i = 0; i < 2; i++) move(d, F[i], inputs[i], dt);
-    if (d.rule.creeps) {
-      if (d.time >= d.nextCreep) { d.nextCreep += d.rule.creeps.every; spawnCreeps(d); }
+    if (d.time >= d.judgeAt) { d.judgeAt = Infinity; spawnJudge(d); }
+    if (d.judgeBanner > 0) d.judgeBanner -= dt;
+    if (d.rule.creeps || d.creeps.length) {
+      if (d.rule.creeps && d.time >= d.nextCreep) { d.nextCreep += d.rule.creeps.every; spawnCreeps(d); }
       moveCreeps(d, dt);
       creditCreeps(d, d.rng.int(2)); // burns that finished a creep: a coin flip, it doesn't matter much
     }
@@ -169,7 +181,7 @@
     for (i = 0; i < 2; i++) {
       var shots = V[i].projectiles.length;
       L.runAbilities(V[i], dt);
-      if (d.rule.creeps) creditCreeps(d, i);
+      if (d.creeps.length) creditCreeps(d, i);
       if (d.rule.bounce) for (var s = shots; s < V[i].projectiles.length; s++) if (!V[i].projectiles[s].long) { V[i].projectiles[s].life *= 3; V[i].projectiles[s].long = true; }
     }
     for (i = 0; i < 2; i++) {

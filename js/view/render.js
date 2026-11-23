@@ -260,6 +260,24 @@
     ctx.fillText(F[1].type.name, W - 20, 72);
     bar(ctx, W - 20 - bw, 78, bw, 10, F[1].hp / F[1].maxHp, '#e05060');
     if (me >= 0) ultiBadge(ctx, F[me], W, H, H - 16);
+    // Juez del Trueno (final only): a banner when it walks in, and its health bar while it stands.
+    if (d.judge && !d.judge.dead) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd27a';
+      ctx.font = '600 13px system-ui, sans-serif';
+      ctx.fillText('Juez del Trueno', W / 2, 104);
+      bar(ctx, W / 2 - 120, 110, 240, 8, d.judge.hp / d.judge.maxHp, '#ffd27a');
+    }
+    if (d.judgeBanner > 0) {
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = Math.min(1, d.judgeBanner);
+      ctx.fillStyle = '#ffd27a';
+      ctx.font = '800 28px system-ui, sans-serif';
+      ctx.fillText('¡Entró el Juez del Trueno!', W / 2, H / 2 - 80);
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillText('Ataca al que tenga más cerca. Bajarlo cura la mitad de tu vida.', W / 2, H / 2 - 56);
+      ctx.globalAlpha = 1;
+    }
   };
 
   L.render = function (g, ctx, W, H, m) {

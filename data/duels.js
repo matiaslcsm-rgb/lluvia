@@ -11,6 +11,9 @@
                          // so duels last about the same early and late
     prize: 30,           // gold for the winner, grows with the clock like gold per kill
     rivalPrize: 2,       // beating your rival in a duel pays the prize this many times
+    // Juez del Trueno: in the final, a boss walks into every duel and goes for whoever is closest.
+    // hp and dps are shares of the fighters' average pool; whoever brings it down heals `heal` of their health.
+    judge: { at: 4, hp: 0.5, dps: 0.07, heal: 0.5, radius: 40, speed: 75 },
     finalBreak: 5,       // seconds between duels when only two are left
     returnInvuln: 2      // seconds of invulnerability when you get back to your arena
   };
