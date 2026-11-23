@@ -68,7 +68,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 24. **Encargos del barrio:** misiones cortas que aparecen solas (cazar, que no te toquen, abrir cofres), con premio
     si las cumplís y sin castigo si no. *(hecho)*
 25. **Ajuste de Faro:** ganaba poco en tres bancos seguidos; se le dio una mano. *(hecho)*
-26. **Tormenta eterna sin fin:** al ganar la final, seguir aguantando oleadas por récord personal.
+26. **Aguante:** al ganar la final, seguir peleando contra tu horda con una sola vida, por récord personal. *(hecho)*
 
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
@@ -354,3 +354,9 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   105 a 115 de vida y su Haz giratorio arranca pegando 17 en vez de 14.
   - Banco de 30: Faro gana el 11%. La curva casi igual (mediana 28:30, duelos de 11,1 s, ganadores con 167 ítems).
     Brasa bajó a 6%, pero venía en 9%: se mira en el próximo banco antes de tocarlo.
+- **2026-11-23: Aguante.** Al ganar el Sol aparece el botón "Seguir aguantando". Volvés a tu barrio con la horda
+  donde estaba, la vida llena y una sola vida; el reloj y la dificultad siguen subiendo. Al caer se muestra cuánto
+  aguantaste, se guarda tu récord y pagás 5 Monedas del Sol por minuto entero. (Se llamó "Aguante" y no "Tormenta
+  eterna sin fin" para no confundirlo con el modo difícil.) No cambia el balance: solo pasa después de ganar.
+  - Pruebas: `ONLY=texto node tests/run.js` corre solo las que tengan ese texto en el nombre, para no esperar las
+    diez minutos de todas mientras se arma algo.

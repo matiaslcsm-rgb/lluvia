@@ -65,6 +65,7 @@
   }
 
   function menu() { match = null; L.ui.characterSelect(start); }
+  function endless() { if (L.startEndless(match)) { seen.over = false; L.ui.hide(); } }
 
   addEventListener('keydown', function (e) {
     var n = /^(Digit|Numpad)[1-8]$/.test(e.code) ? Number(e.code.slice(-1)) - 1 : undefined;
@@ -157,7 +158,8 @@
           if (daily) reward.dailyRecord = L.recordDaily(L.profile, L.dailyKey(new Date()), match.human.place || 1, game().kills);
           L.saveProfile();
         }
-        L.ui.result(match, menu, reward);
+        if (match.endless && !match.endless.settled) { L.settleEndless(L.profile, match); L.saveProfile(); }
+        L.ui.result(match, menu, reward, endless);
       }
     }
     if (match && match.duel && match.human.inDuel) L.renderDuel(match.duel, ctx, canvas.width, canvas.height, match.duel.players.indexOf(match.human));

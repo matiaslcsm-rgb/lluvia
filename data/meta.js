@@ -52,6 +52,9 @@
 
     // Tormenta eterna: the hard mode. Tougher horde in every arena, sharper rivals, double coins.
     storm: { hpMul: 1.5, dpsMul: 1.25, botSkill: 0.15, coinMul: 2 },
+    // Aguante: after winning the Sun you can keep fighting your horde with one life, for a record. Coins per
+    // whole minute held.
+    endless: { lives: 1, coinsPerMinute: 5 },
 
     // Pactos del Cielo: optional twists for a whole match (every arena). Each one you turn on adds coinBonus to
     // your coins. They open with achievements (see `unlocks`). Numbers multiply what they touch.

@@ -1,5 +1,5 @@
 // Runs every tests/*.test.js against the engine scripts listed in index.html (except the browser-only js/view/).
-// Usage: node tests/run.js
+// Usage: node tests/run.js   (ONLY=text node tests/run.js runs just the tests whose name has that text)
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +19,11 @@ for (const f of fs.readdirSync(__dirname).filter((f) => f.endsWith('.test.js')).
 }
 
 let failed = 0;
+const only = process.env.ONLY;
+let ran = 0;
 for (const [name, fn] of tests) {
+  if (only && !name.includes(only)) continue;
+  ran++;
   try {
     fn();
     console.log('ok    ' + name);
@@ -28,5 +32,5 @@ for (const [name, fn] of tests) {
     console.log('FALLA ' + name + '\n      ' + (e && e.message));
   }
 }
-console.log(`\n${tests.length - failed} de ${tests.length} pruebas pasaron`);
+console.log(`\n${ran - failed} de ${ran} pruebas pasaron`);
 process.exit(failed ? 1 : 0);

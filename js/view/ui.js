@@ -224,7 +224,7 @@
 
     // End of the match for you: you won, or you ran out of lives.
     // reward: what the Cuaderno gave you this match ({ coins, unlocked }), if any.
-    result: function (m, onRestart, reward) {
+    result: function (m, onRestart, reward, onEndless) {
       var me = m.human, g = me.game;
       var mm = Math.floor(g.time / 60), s = Math.floor(g.time % 60);
       var won = m.winner === me;
@@ -245,6 +245,13 @@
         reward.unlocked.forEach(function (a) { nodes.push(el('p', 'achnew', '¡Logro! ' + a.name + ' — ' + a.desc + ' (+' + a.coins + ' ☀)')); });
         if (reward.rankUp) nodes.push(el('p', 'achnew', g.player.char.name + ' subió de rango: ' + reward.rankUp.name + '.'));
         if (reward.dailyRecord) nodes.push(el('p', 'achnew', '¡Nuevo récord en la partida del día!'));
+      }
+      var en = m.endless, clockOf = function (t) { t = Math.floor(t); return Math.floor(t / 60) + ':' + (t % 60 < 10 ? '0' : '') + t % 60; };
+      if (en && en.settled) {
+        nodes.push(el('p', 'achnew', 'Aguante: ' + clockOf(en.survived) + (en.settled.record ? ' — ¡récord nuevo!' : ' (récord: ' + clockOf(en.settled.best) + ')') + (en.settled.coins ? ' · +' + en.settled.coins + ' ☀' : '')));
+      } else if (won && onEndless) {
+        var best = L.profile.endlessBest;
+        nodes.push(button('Seguir aguantando' + (best ? ' (récord ' + clockOf(best) + ')' : ''), onEndless, 'btn storm'));
       }
       nodes.push(button('Jugar de nuevo', onRestart), el('p', 'hint', 'Enter para volver a empezar · gastá tus monedas en el Cuaderno'));
       show(nodes);

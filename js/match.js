@@ -150,6 +150,7 @@
 
   // input: your movement. Returns nothing; read m.over / m.winner / players[i].place.
   L.updateMatch = function (m, dt, input) {
+    if (m.endless && !m.endless.done) return updateEndless(m, dt, input);
     if (m.over) return;
     var human = m.human, played = dt;
     var humanInHorde = !human.out && !human.inDuel && !m.final;
@@ -210,6 +211,43 @@
       if (!m.duel) m.nextDuel = Math.min(m.nextDuel, m.time + L.data.duels.finalBreak);
       tell(m, '¡Quedan dos! ' + left[0].name + ' y ' + left[1].name + ' se baten a duelo hasta el final', '#ffd27a');
     }
+  };
+
+  // ---- Aguante: after winning, keep fighting your own horde for a record ----
+  // Only the winner can; the horde picks up where it was, the clock keeps climbing and you get one life.
+  L.startEndless = function (m) {
+    if (!m.over || m.winner !== m.human || m.endless) return false;
+    var g = m.human.game, p = g.player;
+    m.endless = { start: g.time, survived: 0, done: false };
+    m.over = false;
+    m.final = false;
+    g.over = false;
+    g.lives = L.data.meta.endless.lives;
+    g.respawn = 0;
+    g.spawning = true;
+    p.hp = p.stats.maxHp;
+    p.invuln = L.data.horde.respawnInvuln;
+    L.toast(g, '¡Aguante! La tormenta no se rinde: una sola vida, cada minuto suma.', '#ffd27a');
+    return true;
+  };
+
+  function updateEndless(m, dt, input) {
+    var g = m.human.game, e = m.endless;
+    if (g.choice) return;
+    L.update(g, dt, input);
+    e.survived = g.time - e.start;
+    if (g.over) { e.done = true; m.over = true; }
+  }
+
+  // Keeps your best Aguante (seconds) in the profile and pays coins per whole minute. Call once when it ends.
+  L.settleEndless = function (profile, m) {
+    var e = m.endless, secs = Math.floor(e.survived);
+    var record = secs > (profile.endlessBest || 0);
+    if (record) profile.endlessBest = secs;
+    var coins = Math.floor(secs / 60) * L.data.meta.endless.coinsPerMinute;
+    profile.coins += coins;
+    e.settled = { record: record, coins: coins, best: profile.endlessBest };
+    return e.settled;
   };
 
   // Standings: players still in by lives, then level, then kills; those out by the place they got.

@@ -308,3 +308,24 @@ test('Encargos del barrio: cazar a tiempo deja un cofre, que te toquen lo pierde
   assert.strictEqual(g.errand, null);
   assert.strictEqual(g.gold, gold);
 });
+
+test('Aguante: solo el que gana sigue con una vida; al caer guarda el récord y paga por minuto', function () {
+  var L = Lluvia, m = L.createMatch({ seed: 9, characterId: 'roca' }), g = m.human.game, prof = L.newProfile();
+  m.over = true; m.winner = m.players[1];
+  assert.strictEqual(L.startEndless(m), false, 'arrancó sin ganar');
+  m.winner = m.human;
+  assert.ok(L.startEndless(m));
+  assert.strictEqual(m.over, false);
+  assert.strictEqual(g.lives, 1);
+  L.updateMatch(m, 1, {});
+  assert.ok(m.endless.survived > 0.9, 'el reloj no corrió');
+  // Pretend you held 2:30 and then fell.
+  m.endless.start = g.time - 150;
+  g.player.hp = -1; g.player.invuln = 0;
+  for (var i = 0; i < 5 && !m.over; i++) L.updateMatch(m, 0.1, {});
+  assert.ok(m.endless.done && m.over, 'no terminó al caer');
+  var s = L.settleEndless(prof, m);
+  assert.ok(s.record);
+  assert.strictEqual(s.coins, 2 * L.data.meta.endless.coinsPerMinute);
+  assert.strictEqual(prof.endlessBest, Math.floor(m.endless.survived));
+});
