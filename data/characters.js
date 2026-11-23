@@ -48,7 +48,7 @@
     {
       id: 'faro', name: 'Faro', color: '#ffe08a',
       desc: 'Ilumina todo. Arranca con Haz giratorio, que barre alrededor. Ulti: Destello, que aturde a todo lo que ve.',
-      stats: { maxHp: 105, speed: 200, regen: 0, pickup: 75 },
+      stats: { maxHp: 115, speed: 200, regen: 0, pickup: 75 },
       start: 'faro', ulti: 'destello'
     }
   ];

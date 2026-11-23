@@ -67,7 +67,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 ### Quinta temporada
 24. **Encargos del barrio:** misiones cortas que aparecen solas (cazar, que no te toquen, abrir cofres), con premio
     si las cumplís y sin castigo si no. *(hecho)*
-25. **Ajuste de Faro:** medir con un banco largo si de verdad gana poco y, si es así, darle una mano.
+25. **Ajuste de Faro:** ganaba poco en tres bancos seguidos; se le dio una mano. *(hecho)*
 26. **Tormenta eterna sin fin:** al ganar la final, seguir aguantando oleadas por récord personal.
 
 ## Hecho
@@ -350,3 +350,7 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   segundos (deja un cofre de jefe al lado), que no te toquen por 12 segundos (paga dos cofres de oro) y abrir 2 cofres
   en 45 segundos (devuelve un cofre y medio de oro). Si no llegás, no perdés nada. Solo en tu arena, como los
   santuarios, así que no cambia el balance de los rivales y no hizo falta banco.
+- **2026-11-23: ajuste de Faro.** Sumando los últimos tres bancos ganaba el 4% (lo justo es 13%), así que pasó de
+  105 a 115 de vida y su Haz giratorio arranca pegando 17 en vez de 14.
+  - Banco de 30: Faro gana el 11%. La curva casi igual (mediana 28:30, duelos de 11,1 s, ganadores con 167 ítems).
+    Brasa bajó a 6%, pero venía en 9%: se mira en el próximo banco antes de tocarlo.

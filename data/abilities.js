@@ -71,7 +71,7 @@
     {
       id: 'faro', name: 'Haz giratorio', kind: 'sweep', proc: 0.5, color: '#ffe08a',
       desc: 'Un haz de luz gira a tu alrededor y quema lo que barre.',
-      base: { damage: 14, length: 170, width: 14, spin: 2.2, hitEvery: 0.5, count: 1 },
+      base: { damage: 17, length: 170, width: 14, spin: 2.2, hitEvery: 0.5, count: 1 },
       perLevel: [{ length: 30 }, { damage: 6 }, { count: 1 }, { damage: 8, length: 30 }]
     },
 
