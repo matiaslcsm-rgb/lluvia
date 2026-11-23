@@ -64,6 +64,12 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 22. **Lluvia de oro:** una nube dorada cruza el barrio; quedarte debajo da oro, pero la horda la sigue. *(hecho)*
 23. **Jefe del Juicio final:** en el duelo final, a mitad de la pelea entra un jefe que ataca a los dos. *(hecho)*
 
+### Quinta temporada
+24. **Encargos del barrio:** misiones cortas que aparecen solas (cazar, que no te toquen, abrir cofres), con premio
+    si las cumplís y sin castigo si no. *(hecho)*
+25. **Ajuste de Faro:** medir con un banco largo si de verdad gana poco y, si es así, darle una mano.
+26. **Tormenta eterna sin fin:** al ganar la final, seguir aguantando oleadas por récord personal.
+
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
 - **2026-11-20: etapas 0 y 1.** Se juega abriendo `index.html` (o con un servidor local). Hay 3 personajes (Brasa,
@@ -339,3 +345,8 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   - Banco de 30: la curva no cambió (mediana 27:18, duelos de 9,9 s, ganadores con 173 ítems).
   - Pendiente: Faro ganó solo el 4% en los últimos tres bancos de 30 (puesto promedio 4,4-4,9, en el medio).
     Con 30 partidas es ruido posible; mirar en el próximo banco largo antes de tocarlo.
+- **2026-11-23: Encargos del barrio** (quinta temporada). A los 1:30 y después cada 2:30 (entre santuario y
+  santuario) aparece un encargo que se muestra bajo el reloj con su cuenta y su tiempo. Rotan: cazar enemigos en 30
+  segundos (deja un cofre de jefe al lado), que no te toquen por 12 segundos (paga dos cofres de oro) y abrir 2 cofres
+  en 45 segundos (devuelve un cofre y medio de oro). Si no llegás, no perdés nada. Solo en tu arena, como los
+  santuarios, así que no cambia el balance de los rivales y no hizo falta banco.

@@ -20,6 +20,7 @@
     elite: 'Los Anegados con brillo dorado son élites: más duros, pero dejan mucho oro y a veces un cofre.',
     final: 'Quedan dos: se terminan las hordas y el Juicio sigue hasta que uno se quede sin vidas.',
     rival: 'Tenés un rival: el Paraguas que más duelos te ganó (lo marca ⚔ en la tabla). Si te toca contra él y le ganás, el premio es doble.',
+    errand: 'Un encargo del barrio: arriba, bajo el reloj, dice qué hacer y cuánto tiempo te queda. Si lo cumplís hay premio; si no, no perdés nada.',
     send: 'Ya te alcanza para mandarle Anegados al que va primero: apretá R (o Y en el joystick, o tocá el cartel). Le cae una tanda con una élite. Los rivales también te pueden mandar.',
     shrine: 'Los santuarios son riesgos opcionales: el del Trueno te da un cofre si aguantás 20 s de élites; el Pozo te dobla o te saca un cuarto del oro.'
   };
@@ -49,6 +50,7 @@
       if (g.shrines && g.shrines.length) L.tips.show('shrine');
       if (!L.cantSend(m, me)) L.tips.show('send');
       if (m.rival) L.tips.show('rival');
+      if (g.errand) L.tips.show('errand');
       if (!seen.elite) {
         for (var i = 0; i < g.enemies.length; i++) {
           var e = g.enemies[i];

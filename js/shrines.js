@@ -4,6 +4,7 @@
 //  - Pozo de los deseos: costs a quarter of your gold; heads you get double back, tails you lose it.
 //  - Mercader errante: sells you one of 3 items for gold (a chest lets luck pick; he lets you choose).
 //  - Lluvia de oro: a golden cloud drifts across; under it you earn gold, but the horde comes faster.
+//  - Encargos del barrio: small timed tasks (hunt, stay untouched, open chests) with a reward if you make it.
 // Only the watched arena has them (the bots don't use them), so they don't change the rivals' balance.
 (function (L) {
   'use strict';
@@ -18,7 +19,15 @@
     cloud: { first: 300, every: 240, seconds: 18, speed: 60, radius: 120, gold: 6, spawnMul: 1.8 },
     // Prices are the current chest cost times this; the odds are better than a chest's.
     merchant: { offers: 3, weights: { comun: 55, raro: 38, legendario: 5, maldito: 2 },
-      price: { comun: 1.6, raro: 3.2, legendario: 9, maldito: 2.5 } }
+      price: { comun: 1.6, raro: 3.2, legendario: 9, maldito: 2.5 } },
+    // Errands start on their own between shrines; failing one costs nothing.
+    errand: { first: 90, every: 150,
+      kinds: {
+        caza: { seconds: 30, base: 20, perStep: 6, reward: 'chest' },
+        intacto: { seconds: 12, reward: 'gold', gold: 2 },
+        cofres: { seconds: 45, count: 2, reward: 'gold', gold: 1.5 }
+      },
+      order: ['caza', 'intacto', 'cofres'] }
   };
 
   L.updateShrines = function (g, dt) {
@@ -37,6 +46,7 @@
         mercader: 'Llegó el Mercader errante: tocalo para ver qué vende.' }[kind], '#c9b8ff');
     }
     updateCloud(g, dt);
+    updateErrand(g, dt);
     for (var i = g.shrines.length - 1; i >= 0; i--) {
       var s = g.shrines[i];
       if (s.active) {
@@ -120,6 +130,53 @@
     g.choice = offers;
   }
   L.openShop = openShop;
+
+  // ---- Encargos del barrio ----
+  function startErrand(g, kind) {
+    var E = L.data.shrines.errand, k = E.kinds[kind], step = L.difficulty(g) - 1;
+    var e = { kind: kind, timer: k.seconds, seconds: k.seconds };
+    if (kind === 'caza') { e.goal = Math.round(k.base + k.perStep * step); e.from = g.kills; e.text = 'Cazá ' + e.goal + ' enemigos'; }
+    else if (kind === 'intacto') e.text = 'Que no te toquen';
+    else { e.goal = k.count; e.from = g.chestsOpened || 0; e.text = 'Abrí ' + e.goal + ' cofres'; }
+    g.errand = e;
+    L.toast(g, 'Encargo del barrio: ' + e.text + ' en ' + k.seconds + ' segundos.', '#9fe0c0');
+    return e;
+  }
+  L.startErrand = startErrand;
+
+  function errandProgress(g, e) {
+    if (e.kind === 'caza') return g.kills - e.from;
+    if (e.kind === 'cofres') return (g.chestsOpened || 0) - e.from;
+    return 0;
+  }
+  L.errandProgress = errandProgress;
+
+  function updateErrand(g, dt) {
+    var E = L.data.shrines.errand;
+    if (g.nextErrand === undefined) g.nextErrand = E.first;
+    if (!g.errand && g.time >= g.nextErrand) {
+      g.nextErrand += E.every;
+      g.errandCount = (g.errandCount || 0) + 1;
+      startErrand(g, E.order[(g.errandCount - 1) % E.order.length]);
+    }
+    var e = g.errand;
+    if (!e) return;
+    e.timer -= dt;
+    var k = E.kinds[e.kind];
+    if (e.kind === 'intacto' && e.timer < e.seconds - 0.3 && g.player.hurt > 0) return failErrand(g, 'Te tocaron: encargo perdido.');
+    var done = e.kind === 'intacto' ? e.timer <= 0 : errandProgress(g, e) >= e.goal;
+    if (done) {
+      var p = g.player;
+      if (k.reward === 'chest') { L.dropChest(g, p.x + 40, p.y, 'boss'); L.toast(g, '¡Encargo cumplido! Te dejaron un cofre al lado.', '#ffd27a'); }
+      else { var gold = Math.round(L.chestCost(g) * k.gold); g.gold += gold; L.toast(g, '¡Encargo cumplido! +' + gold + ' oro', '#ffd27a'); }
+      L.emit(g, 'level', p.x, p.y);
+      g.errandsDone = (g.errandsDone || 0) + 1;
+      g.errand = null;
+    } else if (e.timer <= 0) failErrand(g, 'Se acabó el tiempo del encargo.');
+  }
+  L.updateErrand = updateErrand;
+
+  function failErrand(g, text) { g.errand = null; L.toast(g, text, '#9a9db0'); }
 
   function useWell(g, s) {
     var W = L.data.shrines.well, bet = Math.max(W.min, Math.floor(g.gold * W.share));

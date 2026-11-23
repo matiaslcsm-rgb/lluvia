@@ -274,3 +274,37 @@ test('en la final entra el Juez del Trueno a cada duelo, y bajarlo cura', functi
   Lluvia.updateDuel(d, 0.05, null);
   assert.ok(d.judge.credited);
 });
+
+test('Encargos del barrio: cazar a tiempo deja un cofre, que te toquen lo pierde, abrir cofres paga oro', function () {
+  var g = s2Game({ listen: true }), p = g.player, L = Lluvia;
+  g.time = L.data.shrines.errand.first;
+  L.updateErrand(g, 0.1);
+  var e = g.errand;
+  assert.strictEqual(e.kind, 'caza');
+  g.kills += e.goal;
+  L.updateErrand(g, 0.1);
+  assert.strictEqual(g.errand, null);
+  assert.ok(g.chests.some(function (c) { return c.kind === 'boss'; }), 'no dejó el cofre');
+  // Untouched: a hit right at the start is forgiven, a later one loses it.
+  p.hurt = 0.15;
+  L.startErrand(g, 'intacto');
+  L.updateErrand(g, 0.1);
+  assert.ok(g.errand, 'lo perdió por un golpe de antes');
+  p.hurt = 0;
+  L.updateErrand(g, 1);
+  p.hurt = 0.15;
+  L.updateErrand(g, 0.1);
+  assert.strictEqual(g.errand, null);
+  assert.strictEqual(g.errandsDone, 1);
+  // Chests: opening two pays gold; time running out costs nothing.
+  L.startErrand(g, 'cofres');
+  var gold = g.gold;
+  g.chestsOpened = (g.chestsOpened || 0) + 2;
+  L.updateErrand(g, 0.1);
+  assert.ok(g.gold > gold, 'no pagó');
+  L.startErrand(g, 'caza');
+  gold = g.gold;
+  L.updateErrand(g, 31);
+  assert.strictEqual(g.errand, null);
+  assert.strictEqual(g.gold, gold);
+});

@@ -81,6 +81,7 @@
       if (g.gold < cost) continue;
       g.gold -= cost;
       g.chests.splice(i, 1);
+      g.chestsOpened = (g.chestsOpened || 0) + 1;
       var item = L.rollItem(g, ch.kind === 'boss' ? L.data.chests.bossWeights : L.data.chests.weights);
       L.addItem(g, item.id);
       L.emit(g, 'chest', ch.x, ch.y, item);
