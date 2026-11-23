@@ -448,7 +448,7 @@
       var er = g.errand, have = L.errandProgress(g, er);
       ctx.font = '700 13px system-ui, sans-serif';
       ctx.fillStyle = '#9fe0c0';
-      ctx.fillText('Encargo: ' + er.text + (er.goal ? ' (' + Math.min(have, er.goal) + '/' + er.goal + ')' : '') + ' · ' + Math.ceil(Math.max(0, er.timer)) + ' s', W / 2, 99);
+      ctx.fillText('Encargo: ' + er.text + (er.goal ? ' (' + Math.min(have, er.goal) + '/' + er.goal + ')' : '') + ' · ' + Math.ceil(Math.max(0, er.timer)) + ' s', W / 2, g.boss && !g.boss.dead ? 122 : 99);
     }
     ctx.textAlign = 'right';
     ctx.font = '600 16px system-ui, sans-serif';

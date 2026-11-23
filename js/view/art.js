@@ -102,6 +102,20 @@
       ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(x, y, r + 4 + Math.sin(t * 5) * 1.5, 0, TAU); ctx.stroke();
     }
+    if (type.slam && e.mode === 'slam') {
+      // The ring fills up while the Golem winds up: get out before it closes.
+      var fill = 1 - Math.max(0, e.cd) / type.slam.windup;
+      ctx.strokeStyle = 'rgba(255,90,70,0.8)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, type.slam.radius, 0, TAU); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,90,70,0.18)';
+      ctx.beginPath(); ctx.arc(x, y, type.slam.radius * fill, 0, TAU); ctx.fill();
+    }
+    if (type.mini) {
+      // Golden horns: a champion of the Mad God.
+      ctx.fillStyle = '#ffd27a';
+      polygon(ctx, x - r * 0.55, y - r * 0.8, r * 0.6, -Math.PI / 2 - 0.4, [[0, 1], [2.5, 0.4], [3.8, 0.4]]); ctx.fill();
+      polygon(ctx, x + r * 0.55, y - r * 0.8, r * 0.6, -Math.PI / 2 + 0.4, [[0, 1], [2.5, 0.4], [3.8, 0.4]]); ctx.fill();
+    }
     switch (type.shape) {
       case 'tri':
         ctx.fillStyle = color; polygon(ctx, x, y, r * 1.3, ang, [[0, 1.2], [2.4, 0.9], [3.88, 0.9]]); ctx.fill();
@@ -119,6 +133,19 @@
         circle(ctx, x + Math.cos(ang) * r * 0.55, y + Math.sin(ang) * r * 0.55, r * 0.35, '#1d2a14'); // mouth
         eyes(ctx, x - Math.cos(ang) * r * 0.2, y - Math.sin(ang) * r * 0.2, r, ang, r * 0.2);
         break;
+      case 'swirl': {
+        // A spinning drain: dark mouth with arms curling in, and a faint ring where its pull reaches.
+        ctx.strokeStyle = 'rgba(120,170,230,0.12)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, type.pull.radius, 0, TAU); ctx.stroke();
+        circle(ctx, x, y, r, color);
+        ctx.strokeStyle = '#bcd6ff'; ctx.lineWidth = 2.5;
+        for (var s = 0; s < 3; s++) {
+          var a0 = t * 4 + s * TAU / 3;
+          ctx.beginPath(); ctx.arc(x, y, r * 0.75, a0, a0 + 1.6); ctx.stroke();
+        }
+        circle(ctx, x, y, r * 0.38, '#0d1424');
+        break;
+      }
       case 'bomber':
         circle(ctx, x, y, r, e.fuse > 0 && Math.floor(t * 12) % 2 ? '#ffffff' : color);
         ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 2;

@@ -48,6 +48,7 @@ alguien lo consiguió.
 | Charco madre | Al morir se parte en tres Gotitas. |
 | Tronador | Corre hacia vos, prende la mecha y explota. Si lo matás antes, explota sobre los suyos. |
 | Correntada | Rápida como una corriente: no se la deja atrás corriendo. |
+| Sumidero | Una boca de tormenta que camina: te chupa hacia ella y hacia la horda. Se sale caminando para afuera. |
 | Ahogón | Grande, lento y duro. |
 | Coloso del Diluvio | El jefe. Deja un cofre gratis. |
 | Élites | Cualquiera de los anteriores con brillo dorado: más duros, más oro, a veces un cofre. |

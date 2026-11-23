@@ -209,7 +209,7 @@
     if (g.respawn > 0) {
       // While you are down the clock and the horde keep going, but nothing touches you.
       g.respawn -= dt;
-      if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnWave(g); }
+      if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
       updateTimed(g.effects, dt);
       updateTimed(g.toasts, dt);
       if (g.respawn <= 0) { g.respawn = 0; revive(g); }
@@ -218,7 +218,7 @@
     if (p.invuln > 0) p.invuln -= dt;
     L.tickUlti(p, dt);
     movePlayer(g, dt, input);
-    if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnWave(g); }
+    if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
     moveEnemies(g, dt);
     updateEnemyShots(g, dt);
@@ -323,6 +323,21 @@
     L.toast(g, '¡Llegó ' + bt.article + ' ' + bt.name + '!', '#ff5a5a');
   }
 
+  // Champions of the Mad God: halfway between bosses. They take the health bar only if no boss has it.
+  function spawnMini(g) {
+    var h = L.data.horde;
+    if (g.nextMini === undefined) g.nextMini = h.miniFirst;
+    if (g.time < g.nextMini) return;
+    var pt = ringPoint(g);
+    g.nextMini += h.bossEvery;
+    g.miniCount = (g.miniCount || 0) + 1;
+    var e = L.spawnEnemy(g, h.minis[(g.miniCount - 1) % h.minis.length], pt.x, pt.y);
+    if (!g.boss || g.boss.dead) g.boss = e;
+    L.emit(g, 'boss', pt.x, pt.y);
+    L.toast(g, '¡El Dios Loco manda a su campeón: ' + e.type.article + ' ' + e.type.name + '!', '#ff8a5a');
+  }
+  L.spawnMini = spawnMini;
+
   function pickType(g, minute) {
     var list = L.data.enemies, total = 0, i;
     for (i = 0; i < list.length; i++) if (list[i].weight > 0 && list[i].from <= minute) total += list[i].weight;
@@ -351,7 +366,7 @@
       r: t.radius, speed: t.speed * (1 + Math.min(h.speedMax, h.speedPerLevel * step)), hp: hp, maxHp: hp,
       dps: t.dps * (1 + h.dpsPerLevel * step) * (g.hordeDps || 1), xp: t.xp, dead: false, flash: 0,
       burnDps: 0, burnTtl: 0, stun: 0, slow: 0,
-      cd: t.ranged ? t.ranged.every * (0.3 + g.rng() * 0.7) : t.charge ? t.charge.every : 0, // first attack at a random moment
+      cd: t.ranged ? t.ranged.every * (0.3 + g.rng() * 0.7) : t.charge ? t.charge.every : t.summon ? t.summon.every * 0.4 : t.slam ? t.slam.every * 0.5 : 0, // first attack at a random moment
       fuse: 0
     };
     g.enemies.push(e);
@@ -370,7 +385,7 @@
   }
 
   function moveEnemies(g, dt) {
-    var p = g.player, q = g._q;
+    var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0;
     for (var i = 0; i < g.enemies.length; i++) {
       var e = g.enemies[i];
       if (e.dead) continue;
@@ -381,6 +396,12 @@
       if (e.stun > 0) e.stun -= dt;
       if (e.slow > 0) e.slow -= dt;
       var t = e.type;
+      if (t.pull && e.stun <= 0 && d < t.pull.radius) {
+        // Stronger the closer you are; added up over every Sumidero and capped below.
+        var f = t.pull.strength * (1 - d / t.pull.radius);
+        pullX -= dx / d * f; pullY -= dy / d * f;
+        pullMax = Math.max(pullMax, t.pull.max);
+      }
       if (t.ranged && e.stun <= 0) {
         // Keeps its distance (backs off if you get close) and spits mud when you are in range.
         var rg = t.ranged;
@@ -410,6 +431,35 @@
           sp = 0;
           if (e.cd <= 0) { e.mode = null; e.cd = ch.every; }
         } else if (e.cd <= 0 && d < 600) { e.mode = 'wind'; e.cd = ch.windup; L.emit(g, 'boss', e.x, e.y); }
+      } else if (t.summon && e.stun <= 0) {
+        // Hangs back and calls a pack of creatures around itself.
+        var su = t.summon;
+        if (d < su.keep) sp = -sp * 0.6; else if (d < su.keep + 40) sp = 0;
+        e.cd -= dt;
+        if (e.cd <= 0) {
+          e.cd = su.every;
+          for (var k2 = 0; k2 < su.count; k2++) {
+            var a2 = k2 / su.count * Math.PI * 2;
+            L.spawnEnemy(g, su.type, e.x + Math.cos(a2) * (e.r + 20), e.y + Math.sin(a2) * (e.r + 20));
+          }
+          L.emit(g, 'split', e.x, e.y);
+        }
+      } else if (t.slam && e.stun <= 0) {
+        // Walks up, stops and shows a ring (windup), then hits the floor: everything inside the ring gets hurt.
+        var sl = t.slam;
+        e.cd -= dt;
+        if (e.mode === 'slam') {
+          sp = 0;
+          if (e.cd <= 0) {
+            e.mode = null; e.cd = sl.every;
+            var sx2 = p.x - e.x, sy2 = p.y - e.y;
+            if (sx2 * sx2 + sy2 * sy2 < (sl.radius + p.r) * (sl.radius + p.r) && p.invuln <= 0) {
+              p.hp -= sl.damage * (1 + L.data.horde.dpsPerLevel * (L.difficulty(g) - 1)) * (g.hordeDps || 1) * (1 - p.stats.armor);
+              p.hurt = 0.25;
+            }
+            L.emit(g, 'explode', e.x, e.y);
+          }
+        } else if (e.cd <= 0 && d < sl.reach) { e.mode = 'slam'; e.cd = sl.windup; }
       } else if (t.bomb) {
         // Runs at you; close enough, it stops and lights the fuse.
         if (e.fuse <= 0 && d < t.bomb.trigger) e.fuse = t.bomb.fuse;
@@ -445,6 +495,14 @@
         L.applyHit(g, e, e.burnDps * dt, 0, 0);
         if (e.burnTtl <= 0) e.burnDps = 0;
       }
+    }
+    // The Sumideros' pull moves you (not while you are invulnerable, so coming back is safe).
+    var pull = Math.sqrt(pullX * pullX + pullY * pullY);
+    g.pulled = pull > 1 && p.invuln <= 0 ? pull : 0;
+    if (g.pulled) {
+      var k = Math.min(1, pullMax / pull);
+      p.x = L.clamp(p.x + pullX * k * dt, p.r, g.arena - p.r);
+      p.y = L.clamp(p.y + pullY * k * dt, p.r, g.arena - p.r);
     }
   }
 

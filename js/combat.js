@@ -71,7 +71,11 @@
       L.emit(g, 'split', e.x, e.y);
     }
     if (t.bomb) L.explodeBomb(g, e, false);
-    if (t.boss) {
+    if (t.mini) {
+      if (g.boss === e) g.boss = null;
+      L.dropChest(g, e.x, e.y, 'elite');
+      L.toast(g, 'Cayó ' + t.article + ' ' + t.name + ': dejó un cofre', '#ffd27a');
+    } else if (t.boss) {
       g.bossKills = (g.bossKills || 0) + 1;
       if (g.boss === e) g.boss = null;
       L.dropChest(g, e.x, e.y, 'boss');

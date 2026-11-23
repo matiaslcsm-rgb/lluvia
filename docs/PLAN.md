@@ -70,6 +70,21 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
 25. **Ajuste de Faro:** ganaba poco en tres bancos seguidos; se le dio una mano. *(hecho)*
 26. **Aguante:** al ganar la final, seguir peleando contra tu horda con una sola vida, por récord personal. *(hecho)*
 
+### Sexta temporada — el Torneo del Dios Loco
+El usuario probó el juego (2026-11-23): faltan jefes y momentos divertidos, se vuelve repetitivo y el mundo de
+lluvias y paraguas no le gusta. **(decisión)** Elegido: el mundo pasa a ser el *Torneo del Dios Loco* (un dios del
+caos invoca héroes de otros reinos a su coliseo: monstruos de fantasía, jefes titanes, tono épico), y primero va la
+jugabilidad. Lo nuevo ya se arma con nombres del mundo nuevo; lo viejo se cambia en el punto 31.
+27. **Sumidero:** un bicho nuevo desde el minuto 9 que te chupa hacia él (y hacia la horda). *(hecho)*
+28. **Minijefes:** entre jefe y jefe, cada 90 segundos, un campeón del Dios con un truco propio (embiste, invoca,
+    golpea el piso). Deja un cofre. *(hecho)*
+29. **Jefes con fases y jefes nuevos:** a mitad de vida cada jefe cambia (se enfurece, invoca, ataque nuevo), y se
+    suman jefes titanes hasta llegar al Avatar del Dios Loco.
+30. **Momentos sorpresa:** el Duende del tesoro (escapa con tu oro; si lo bajás, llueven cofres), el Frenesí (30
+    segundos de horda doble y botín doble) y los Caprichos del Dios (el Dios cambia las reglas un rato).
+31. **El mundo nuevo:** historia, nombres de personajes, enemigos, jefes, textos, pantalla de inicio y arte.
+32. **Racha de bajas** y **récords en el Cuaderno** (quedan para después).
+
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
 - **2026-11-20: etapas 0 y 1.** Se juega abriendo `index.html` (o con un servidor local). Hay 3 personajes (Brasa,
@@ -360,3 +375,15 @@ La 1.0 ya se juega entera. Lo que sigue, en orden de lo que más suma a la diver
   eterna sin fin" para no confundirlo con el modo difícil.) No cambia el balance: solo pasa después de ganar.
   - Pruebas: `ONLY=texto node tests/run.js` corre solo las que tengan ese texto en el nombre, para no esperar las
     diez minutos de todas mientras se arma algo.
+- **2026-11-23: Sumidero y campeones del Dios Loco** (sexta temporada). El usuario pidió más jefes y momentos, y
+  cambiar el mundo (ver la sexta temporada arriba).
+  - Sumidero, desde el minuto 9: una boca que camina y te chupa hacia ella. Se nota por un anillo tenue que marca
+    hasta dónde llega. El tirón tiene tope aunque haya varios, y no te mueve mientras sos invulnerable.
+  - Campeones del Dios (minijefes), con cuernos dorados y barra de vida; aparecen a los 4:00 y después cada 3
+    minutos, justo a mitad entre jefe y jefe, y dejan un cofre de élite:
+    - el Verdugo embiste;
+    - el Nigromante se queda lejos e invoca tandas de 5 bichos;
+    - el Gólem frena, muestra un anillo rojo que se llena y golpea el piso: hay que salir antes de que se cierre.
+  - Banco de 30: la curva igual (mediana 27:06, horda 3,3 vidas en el minuto 5-10, duelos de 9,8 s, ganadores
+    con 175 ítems). Marea y Roca dieron 0% de victorias y en el banco anterior 16% y 14%: con 30 partidas puede
+    ser ruido; mirarlos en el próximo banco antes de tocarlos.

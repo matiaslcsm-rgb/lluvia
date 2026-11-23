@@ -329,3 +329,46 @@ test('Aguante: solo el que gana sigue con una vida; al caer guarda el récord y 
   assert.strictEqual(s.coins, 2 * L.data.meta.endless.coinsPerMinute);
   assert.strictEqual(prof.endlessBest, Math.floor(m.endless.survived));
 });
+
+test('el Sumidero te chupa hacia él, con tope, y no mientras sos invulnerable', function () {
+  var g = s2Game(), p = g.player, P = Lluvia.findById(Lluvia.data.enemies, 'sumidero').pull;
+  var e = Lluvia.spawnEnemy(g, 'sumidero', p.x + 150, p.y);
+  e.hp = e.maxHp = 1e9;
+  p.invuln = 5;
+  var x0 = p.x;
+  Lluvia.update(g, 0.1, {});
+  assert.strictEqual(p.x, x0, 'te movió siendo invulnerable');
+  p.invuln = 0; p.hp = p.stats.maxHp = 1e9;
+  x0 = p.x;
+  Lluvia.update(g, 0.5, {});
+  assert.ok(p.x > x0 + 5, 'no te chupó: ' + (p.x - x0));
+  assert.ok(p.x - x0 <= P.max * 0.5 + 1, 'pasó el tope');
+});
+
+test('campeones del Dios: salen a mitad entre jefes, el Nigromante invoca, el Gólem golpea el piso y dejan cofre', function () {
+  var L = Lluvia, g = s2Game(), p = g.player;
+  g.time = L.data.horde.miniFirst;
+  L.spawnMini(g);
+  var v = g.boss;
+  assert.ok(v && v.type.id === 'verdugo', 'no salió el Verdugo');
+  L.hit(g, v, 1e9, 0);
+  L.update(g, 1 / 60, {});
+  assert.strictEqual(g.boss, null);
+  assert.ok(g.chests.some(function (c) { return c.kind === 'elite'; }), 'no dejó cofre');
+  assert.ok(!g.bossKills, 'contó como jefe');
+  // Nigromante: calls its pack.
+  var n = L.spawnEnemy(g, 'nigromante', p.x + 500, p.y);
+  n.hp = n.maxHp = 1e9;
+  var before = g.enemies.length;
+  for (var i = 0; i < 40; i++) L.update(g, 0.1, {});
+  assert.ok(g.enemies.length >= before + 5, 'no invocó');
+  // Golem: winds up, then hurts you if you stay inside the ring.
+  g.enemies.length = 0;
+  var gol = L.spawnEnemy(g, 'golem', p.x + 120, p.y);
+  gol.hp = gol.maxHp = 1e9; gol.cd = 0;
+  p.invuln = 0; p.hp = p.stats.maxHp = 1e6;
+  L.update(g, 0.05, {});
+  assert.strictEqual(gol.mode, 'slam');
+  for (i = 0; i < 25; i++) L.update(g, 0.05, {});
+  assert.ok(p.hp < 1e6 - 20, 'el golpe no pegó');
+});
