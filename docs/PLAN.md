@@ -527,3 +527,15 @@ Etapas (cada una se puede jugar al terminarla):
   - La ciudad se arma en alrededor de 1 segundo (pantalla "Armando San Miguel...") y se guarda para las
     partidas siguientes.
   - Banco solo (`tools/solo.js`): mediana 9:41, igual que antes.
+- **2026-11-24: el mapa real de San Miguel** (pedido: "una copia lo más similar a mi ciudad, edificios a los que
+  se pueda subir, escaleras, terrazas, sótanos y altura del terreno; primero el mapa"). Todo en `docs/MAPA.md`.
+  - Edificios reales: 54.745 contornos de Overture (Google, Microsoft y OpenStreetMap), contra los 1702 de
+    antes. Para bajarlos se instaló DuckDB, con el OK del usuario.
+  - Además: 2642 lugares con nombre, uso del suelo, agua, tren, y la altura del terreno cada 60 m (SRTM, de 18
+    a 41 m).
+  - `node tools/bake-map.js` junta todo en `data/map-sanmiguel.js` (3,8 MB). A cada edificio le da tipo, pisos,
+    techo (terraza, tejas o chapa) y sótano: del dato si existe, estimado si no.
+  - Visor aparte del juego, en `mapa/`: terreno con curvas de nivel, capas, colores por tipo, pisos, techo o
+    fuente, un selector de nivel (sótano, planta baja, pisos, terraza) y la ficha de cada edificio al hacer clic.
+  - Todavía no está en el juego. Primero lo revisa el usuario; después vienen los interiores y escaleras y el
+    paso al juego.

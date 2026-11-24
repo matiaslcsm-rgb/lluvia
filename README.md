@@ -27,6 +27,13 @@ la marca `lluvia-clasico`.
 - Cuánto aguanta un bot en el modo solo: `node tools/solo.js [partidas] [minutos]`.
 - Hornear otra ciudad desde OpenStreetMap: `node tools/bake-city.js` (las instrucciones están en el archivo).
 
+## El mapa
+El visor del mapa está en `mapa/index.html` (en la web: `/lluvia/mapa/`). Sirve para recorrer San Miguel con sus
+54.745 edificios, el terreno y los lugares, y para ver cada edificio piso por piso. Cómo se arma está en
+[`docs/MAPA.md`](docs/MAPA.md).
+
 ## Datos del mapa
-Calles, plazas y edificios: © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright),
-disponibles bajo la licencia ODbL.
+- Calles, plazas y edificios: © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL).
+- Edificios, lugares, uso del suelo y agua: [Overture Maps Foundation](https://overturemaps.org) (ODbL). Los
+  contornos vienen de Google Open Buildings (CC BY 4.0) y de Microsoft ML Building Footprints (ODbL).
+- Altura del terreno: SRTM (NASA), a través de [OpenTopoData](https://www.opentopodata.org).
