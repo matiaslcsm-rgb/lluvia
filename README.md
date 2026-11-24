@@ -13,8 +13,9 @@ Abrí `index.html` en el navegador de la PC. No hace falta instalar nada ni tene
 - **Esc**: pausa
 
 ## Qué hay
-- La ciudad de San Miguel completa: calles, plazas, parques y edificios reales, y casas, patios, autos y árboles
-  que completan cada manzana.
+- La ciudad de San Miguel completa, con el mapa real: sus 54.745 edificios y casas tal como están, calles con
+  su ancho de verdad, veredas, sendas peatonales, plazas, el tren, árboles, autos estacionados y el relieve del
+  terreno.
 - Zombis de distintos tipos y jefes que se enfurecen a mitad de vida.
 - Cofres con ítems, mejoras al subir de nivel y un minimapa con el nombre de la calle donde estás.
 

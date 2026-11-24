@@ -31,7 +31,12 @@
     var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
     if (homeCity) { begin(characterId, seed, homeCity, null); return; }
     L.ui.loading('Armando San Miguel...');
-    setTimeout(function () { homeCity = L.cityHome(seed); begin(characterId, seed, homeCity, null); }, 30);
+    setTimeout(function () {
+      homeCity = L.cityHome(seed);
+      // The real map's trees, crosswalks and terrain are worked out here too, not on the first frame.
+      if (homeCity.map) { L.mapdraw.prepare(homeCity.map); L.mapdraw.terrain(homeCity.map); }
+      begin(characterId, seed, homeCity, null);
+    }, 30);
   }
 
   // Movement plus the gun: aim at the mouse (the camera keeps you in the middle), hold the button to shoot.

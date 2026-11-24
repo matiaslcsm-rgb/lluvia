@@ -73,3 +73,17 @@ test('San Miguel viene adentro del juego: arranca en la plaza y se camina', func
   assert.ok(L.cityWalkable(c, g.player.x, g.player.y));
   assert.ok(g.enemies.every(function (e) { return L.cityWalkable(c, e.x, e.y); }), 'un bicho en una pared');
 });
+
+test('San Miguel es el mapa real: sus edificios son paredes y no se inventan casas', function () {
+  var L = Lluvia, c = L.cityHome(1);
+  assert.ok(c.map, 'no usa el mapa real (data/map-sanmiguel.js)');
+  assert.ok(c.buildings.length > 50000, 'pocos edificios: ' + c.buildings.length);
+  assert.strictEqual(c.houses.length, 0, 'inventó casas');
+  // The middle of a big real building is a wall; the middle of a main street is walkable.
+  var big = c.buildings.reduce(function (a, b) { return b.length > 4 && area(b) > area(a) ? b : a; }, c.buildings[0]);
+  var mx = 0, my = 0; big.forEach(function (p) { mx += p[0]; my += p[1]; }); mx /= big.length; my /= big.length;
+  if (L.inPolygon(big, mx, my)) assert.ok(!L.cityWalkable(c, mx, my), 'se camina adentro de un edificio');
+  var avenue = c.roads.filter(function (r) { return r.kind === 'primary'; })[0], q = avenue.pts[0], q2 = avenue.pts[1];
+  assert.ok(L.cityWalkable(c, (q[0] + q2[0]) / 2, (q[1] + q2[1]) / 2), 'la avenida no se camina');
+  function area(p) { var a = 0; for (var i = 0, j = p.length - 1; i < p.length; j = i++) a += (p[j][0] + p[i][0]) * (p[j][1] - p[i][1]); return Math.abs(a / 2); }
+});

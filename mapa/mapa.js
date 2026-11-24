@@ -32,29 +32,9 @@
         (chunks[cy * cols + cx] = chunks[cy * cols + cx] || []).push(bd);
   });
 
-  // Terrain image: heights → colors (low green, high ochre) with hillshade (light from the north-west).
-  var T = M.terrain, N = T.n, zmin = Infinity, zmax = -Infinity;
-  T.dm.forEach(function (v) { zmin = Math.min(zmin, v); zmax = Math.max(zmax, v); });
-  var RES = 600, timg = document.createElement('canvas'); timg.width = timg.height = RES;
-  (function () {
-    var tc = timg.getContext('2d'), img = tc.createImageData(RES, RES);
-    var zAt = function (x, y) { // bilinear, in decimeters; x, y in grid units
-      x = Math.max(0, Math.min(N - 1.001, x)); y = Math.max(0, Math.min(N - 1.001, y));
-      var i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, a = T.dm[j * N + i], b = T.dm[j * N + i + 1], c = T.dm[(j + 1) * N + i], d = T.dm[(j + 1) * N + i + 1];
-      return a * (1 - fx) * (1 - fy) + b * fx * (1 - fy) + c * (1 - fx) * fy + d * fx * fy;
-    };
-    for (var y = 0; y < RES; y++) for (var x = 0; x < RES; x++) {
-      var gx = x / RES * N - 0.5, gy = y / RES * N - 0.5, z = zAt(gx, gy), t = (z - zmin) / (zmax - zmin || 1);
-      var dzx = (zAt(gx + 0.3, gy) - zAt(gx - 0.3, gy)) / 10, dzy = (zAt(gx, gy + 0.3) - zAt(gx, gy - 0.3)) / 10;
-      var shade = Math.max(0.6, Math.min(1, 1 - (dzx + dzy) * 0.3)) * (0.88 + t * 0.12);
-      var r = 255 * shade, g = 255 * shade, b = 250 * shade, k = (y * RES + x) * 4;
-      // Contour lines every 2 m.
-      var band = Math.floor(z / 20), bandR = Math.floor(zAt(gx + N / RES, gy) / 20), bandD = Math.floor(zAt(gx, gy + N / RES) / 20);
-      if (band !== bandR || band !== bandD) { r *= 0.86; g *= 0.86; b *= 0.86; }
-      img.data[k] = r; img.data[k + 1] = g; img.data[k + 2] = b; img.data[k + 3] = 255;
-    }
-    tc.putImageData(img, 0, 0);
-  })();
+  // Terrain image (shared with the game, js/view/mapdraw.js).
+  var T = M.terrain, N = T.n, timg = Lluvia.mapdraw.terrain(M);
+  var zmin = Math.min.apply(null, T.dm), zmax = Math.max.apply(null, T.dm);
   var heightAt = function (x, y) { // meters above sea level at a map point
     var gx = Math.max(0, Math.min(N - 1, Math.floor(x / T.step))), gy = Math.max(0, Math.min(N - 1, Math.floor(y / T.step)));
     return T.dm[gy * N + gx] / 10;

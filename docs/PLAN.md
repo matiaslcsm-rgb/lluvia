@@ -553,3 +553,28 @@ Etapas (cada una se puede jugar al terminarla):
   - Árboles en las veredas y en los parques (unos 30.000), y vías del tren con balasto y durmientes.
   - El terreno ahora es un relieve suave encima de todo, no un color propio, y nada se dibuja fuera del cuadrado
     del mapa.
+- **2026-11-24: el mapa real, adentro del juego** (pedido: "llevar el mapa al juego").
+  - El juego ya no usa la ciudad vieja (1702 edificios y casas inventadas en cada manzana): arma San Miguel con
+    `data/map-sanmiguel.js`. Los 54.745 edificios reales son paredes, y no se inventa ninguna casa.
+  - Las calles tienen el mismo ancho para caminar que el que se ve (la tabla vive en `js/city.js`; el visor la
+    usa también). Los patios entre las casas se caminan, como antes.
+  - Se dibuja con el mismo dibujante del visor (`js/view/mapdraw.js`): veredas, sendas peatonales, techos con
+    textura, sombras, árboles, tren y el relieve suave. Los autos estacionados siguen siendo del juego y van
+    debajo de los árboles.
+  - Se arma en 0,7 s; dibujar la pantalla tarda menos de 1 ms. Se comprobó que las paredes coinciden con los
+    techos: ninguna celda bajo un techo se camina.
+  - Todavía no se entra a los edificios: son paredes. Eso viene con los interiores y escaleras (pasos 3 y 4 de
+    `docs/MAPA.md`). Los arroyos todavía no frenan el paso.
+  - `data/city-sanmiguel.js` queda en el repo, pero el juego ya no lo carga.
+  - Banco solo (`node tools/solo.js 8 25`, mismas partidas): mediana **7:22**, antes 9:41. La ciudad real es
+    más cerrada (más paredes y esquinas que la vieja) y el bot aguanta un 24% menos. No se tocaron números:
+    (decisión) dejarlo así porque el mapa cambia otra vez con los bordes y Darkwood (recomendada), aflojar la
+    horda ahora, o enseñarle al bot a moverse mejor entre las casas.
+- **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
+  - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
+    la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
+    arriba con campo de visión, oscuridad, sonido, armado de defensas, día y noche...) y qué no, con la regla de
+    la casa: mecánicas sí, contenido no.
+  - **Afinar el mapa: agrandarlo y que sea solo San Miguel**: "el mapa actual es un cuadrado que abarca San
+    Miguel en parte y de manera dispar". Usar el límite real del partido (OpenStreetMap lo tiene) para recortar,
+    agrandar el cuadrado hasta cubrirlo entero y hacer de ese borde el límite del juego. Ver `docs/MAPA.md`.

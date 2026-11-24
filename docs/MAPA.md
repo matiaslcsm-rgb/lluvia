@@ -69,5 +69,10 @@ La idea es como Project Zomboid y el SAS: el mapa tiene **niveles** y se ve uno 
 2. **Revisar con el usuario:** recorrer el visor y marcar qué no coincide con la ciudad real (un edificio que
    falta, un tipo equivocado, una calle mal).
 3. Generar los interiores, escaleras, terrazas y sótanos de cada edificio, y verlos en el visor piso por piso.
-4. Pasar el mapa al juego: niveles, escaleras, entrar a los edificios, terreno.
+4. Pasar el mapa al juego. *(hecho, la planta baja)*: el juego usa el mapa real, los edificios son paredes y se
+   dibuja igual que en el visor. Falta: niveles, escaleras y entrar a los edificios (después del paso 3).
 5. Alturas reales con Google Open Buildings 2.5D.
+6. **Agrandar el mapa y recortarlo a San Miguel** (pedido del usuario, 2026-11-24): hoy es un cuadrado de 4,75 km
+   que toma parte de San Miguel y parte de los partidos vecinos, de manera dispar. Bajar el límite del partido
+   de OpenStreetMap, agrandar el área hasta cubrirlo entero, dejar afuera lo que no es San Miguel y hacer de ese
+   borde el límite del juego.

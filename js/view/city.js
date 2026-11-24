@@ -41,6 +41,28 @@
     var on = function (b, pad) { return b[2] + pad > x0 && b[0] - pad < x1 && b[3] + pad > y0 && b[1] - pad < y1; };
     ctx.fillStyle = '#0b0c10';
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    // Chunks on screen.
+    var S = L.data.city.chunk, cols = city.chunkCols, seen = [];
+    if (city.chunks) {
+      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(cols - 1, Math.floor(y1 / S)); cy++) {
+        for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
+          var c = city.chunks[cy * cols + cx];
+          if (c) seen.push(c);
+        }
+      }
+    }
+    var drawn = new Set();
+    var each = function (kind, fn) { seen.forEach(function (c) { c[kind].forEach(function (it) { if (!drawn.has(it)) { drawn.add(it); fn(it); } }); }); };
+    // The real map is drawn like the viewer (js/view/mapdraw.js, in meters), with the parked cars under the roofs
+    // and the trees.
+    if (city.map) {
+      ctx.save(); ctx.scale(s, s);
+      L.mapdraw.draw(ctx, city.map, { view: [x0 / s, y0 / s, x1 / s, y1 / s], scale: s, terrain: L.mapdraw.terrain(city.map),
+        under: function () { ctx.save(); ctx.scale(1 / s, 1 / s); drawCars(ctx, each, s); ctx.restore(); } });
+      ctx.restore();
+      sunGlare(ctx, x0, y0, x1, y1, t);
+      return;
+    }
     ctx.fillStyle = '#3c4630'; // back yards: grass and dirt
     ctx.fillRect(Math.max(0, x0), Math.max(0, y0), Math.min(city.size, x1) - Math.max(0, x0), Math.min(city.size, y1) - Math.max(0, y0));
     city.parks.forEach(function (p) {
@@ -57,28 +79,7 @@
     ctx.setLineDash([3 * s, 3 * s]); ctx.lineWidth = 0.25 * s; ctx.strokeStyle = 'rgba(240,230,200,0.45)';
     visible.forEach(function (r) { if (r.w >= 12 * s) { path(ctx, r.pts); ctx.stroke(); } });
     ctx.setLineDash([]);
-    // Chunks on screen.
-    var S = L.data.city.chunk, cols = city.chunkCols, seen = [];
-    if (city.chunks) {
-      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(cols - 1, Math.floor(y1 / S)); cy++) {
-        for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
-          var c = city.chunks[cy * cols + cx];
-          if (c) seen.push(c);
-        }
-      }
-    }
-    var drawn = new Set();
-    var each = function (kind, fn) { seen.forEach(function (c) { c[kind].forEach(function (it) { if (!drawn.has(it)) { drawn.add(it); fn(it); } }); }); };
-    // Parked cars: body, roof and windshields.
-    each('cars', function (c) {
-      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.ang);
-      var hl = L.data.city.cars.length * s / 2, hw = L.data.city.cars.width * s / 2;
-      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-hl + 3, -hw + 4, hl * 2, hw * 2);
-      ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl, -hw, hl * 2, hw * 2);
-      ctx.fillStyle = 'rgba(20,28,36,0.85)'; ctx.fillRect(-hl * 0.45, -hw * 0.8, hl * 1.05, hw * 1.6);
-      ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl * 0.25, -hw * 0.8, hl * 0.6, hw * 1.6);
-      ctx.restore();
-    });
+    drawCars(ctx, each, s);
     // Buildings: a shadow to the south-east, the roof, its edge, and a ridge on houses.
     var sh = 1.2 * s;
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -101,10 +102,27 @@
       circle(ctx, tr.x, tr.y, tr.r, tr.shade < 0.5 ? '#2f5527' : '#3a6a2c');
       circle(ctx, tr.x - tr.r * 0.3, tr.y - tr.r * 0.3, tr.r * 0.45, 'rgba(140,190,90,0.35)');
     });
-    // The yellow sun's glare over everything.
+    sunGlare(ctx, x0, y0, x1, y1, t);
+  };
+
+  // Parked cars: body, roof and windshields.
+  function drawCars(ctx, each, s) {
+    each('cars', function (c) {
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.ang);
+      var hl = L.data.city.cars.length * s / 2, hw = L.data.city.cars.width * s / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-hl + 3, -hw + 4, hl * 2, hw * 2);
+      ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl, -hw, hl * 2, hw * 2);
+      ctx.fillStyle = 'rgba(20,28,36,0.85)'; ctx.fillRect(-hl * 0.45, -hw * 0.8, hl * 1.05, hw * 1.6);
+      ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl * 0.25, -hw * 0.8, hl * 0.6, hw * 1.6);
+      ctx.restore();
+    });
+  }
+
+  // The yellow sun's glare over everything.
+  function sunGlare(ctx, x0, y0, x1, y1, t) {
     ctx.fillStyle = 'rgba(255,214,60,' + (0.05 + Math.sin(t * 0.4) * 0.015) + ')';
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-  };
+  }
 
   function circle(ctx, x, y, r, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
 

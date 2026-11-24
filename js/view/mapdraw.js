@@ -1,17 +1,11 @@
 // Draws the real city (data/map-*.js, from tools/bake-map.js) so it looks like a city: asphalt, sidewalks with
 // their curb, grass in the yards, textured roofs with shadows by height, water tanks, trees, crosswalks, railway.
-// Shared by the map viewer (mapa/) and, later, the game. Works in meters: the caller sets the transform.
+// Shared by the map viewer (mapa/) and the game. Works in meters: the caller sets the transform.
+// Street widths come from js/city.js (L.cityStreet), the same ones the game walks on.
 (function (L) {
   'use strict';
   L.mapdraw = {};
 
-  // Street widths in meters: carriageway and each sidewalk.
-  var STREET = {
-    motorway: [24, 0], trunk: [20, 4.5], primary: [18, 4.5], secondary: [15, 4], tertiary: [13, 3.5],
-    residential: [11, 3.5], unclassified: [11, 3.5], living_street: [9, 3], service: [6, 1.5], pedestrian: [0, 7],
-    footway: [0, 2.5], path: [0, 2], cycleway: [0, 2.5], steps: [0, 2.5], track: [5, 0],
-    motorway_link: [10, 0], trunk_link: [10, 2], primary_link: [10, 3], secondary_link: [10, 3], tertiary_link: [9, 3]
-  };
   var TERRACE_TINTS = [null, 'rgba(255,255,255,0.25)', 'rgba(90,90,95,0.25)', 'rgba(170,80,60,0.28)', null, 'rgba(40,40,45,0.3)', 'rgba(255,255,255,0.12)', 'rgba(120,130,110,0.2)'];
   var ROOF = {
     terraza: ['#c9c2b4', '#b3ab9c'], tejas: ['#b4553a', '#9a4430'], chapa: ['#9aa6ae', '#7f8b93']
@@ -73,7 +67,7 @@
     var P = {
       meters: M.meters,
       buildings: M.buildings.map(function (r, i) { var p = pts(r[0]); return { i: i, p: p, b: box(p), kind: M.kinds[r[1]], floors: r[2], roof: M.roofs[r[3]], basement: r[4], est: r[5], src: r[6], place: r[7] }; }),
-      roads: M.roads.map(function (r) { var p = pts(r[2]), w = STREET[r[0]] || [6, 1.5]; return { kind: r[0], name: r[1], p: p, b: box(p), road: w[0], walk: w[1] }; }),
+      roads: M.roads.map(function (r) { var p = pts(r[2]), w = L.cityStreet(r[0]); return { kind: r[0], name: r[1], p: p, b: box(p), road: w[0], walk: w[1] }; }),
       parks: M.parks.map(function (r) { var p = pts(r[2]); return { kind: r[0], name: r[1], p: p, b: box(p) }; }),
       land: M.landuse.map(function (r) { var p = pts(r[2]); return { cls: r[0], p: p, b: box(p) }; }),
       water: M.water.map(function (r) { var p = pts(r[2]); return { cls: r[0], p: p, b: box(p), closed: p.length > 3 && p[0][0] === p[p.length - 1][0] && p[0][1] === p[p.length - 1][1] }; }),
@@ -152,11 +146,39 @@
     return P;
   };
 
+  // Terrain image: heights → hillshade (light from the north-west), a bit lighter up high, contour lines every
+  // 2 m. Drawn over the map with multiply, so it is a soft relief, not a color. Made once per map.
+  L.mapdraw.terrain = function (M) {
+    if (M._terrain) return M._terrain;
+    var T = M.terrain, N = T.n, zmin = Infinity, zmax = -Infinity;
+    T.dm.forEach(function (v) { zmin = Math.min(zmin, v); zmax = Math.max(zmax, v); });
+    var RES = 600, timg = document.createElement('canvas'); timg.width = timg.height = RES;
+    var tc = timg.getContext('2d'), img = tc.createImageData(RES, RES);
+    var zAt = function (x, y) { // bilinear, in decimeters; x, y in grid units
+      x = Math.max(0, Math.min(N - 1.001, x)); y = Math.max(0, Math.min(N - 1.001, y));
+      var i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, a = T.dm[j * N + i], b = T.dm[j * N + i + 1], c = T.dm[(j + 1) * N + i], d = T.dm[(j + 1) * N + i + 1];
+      return a * (1 - fx) * (1 - fy) + b * fx * (1 - fy) + c * (1 - fx) * fy + d * fx * fy;
+    };
+    for (var y = 0; y < RES; y++) for (var x = 0; x < RES; x++) {
+      var gx = x / RES * N - 0.5, gy = y / RES * N - 0.5, z = zAt(gx, gy), t = (z - zmin) / (zmax - zmin || 1);
+      var dzx = (zAt(gx + 0.3, gy) - zAt(gx - 0.3, gy)) / 10, dzy = (zAt(gx, gy + 0.3) - zAt(gx, gy - 0.3)) / 10;
+      var shade = Math.max(0.6, Math.min(1, 1 - (dzx + dzy) * 0.3)) * (0.88 + t * 0.12);
+      var r = 255 * shade, g = 255 * shade, bl = 250 * shade, k = (y * RES + x) * 4;
+      var band = Math.floor(z / 20), bandR = Math.floor(zAt(gx + N / RES, gy) / 20), bandD = Math.floor(zAt(gx, gy + N / RES) / 20);
+      if (band !== bandR || band !== bandD) { r *= 0.86; g *= 0.86; bl *= 0.86; }
+      img.data[k] = r; img.data[k + 1] = g; img.data[k + 2] = bl; img.data[k + 3] = 255;
+    }
+    tc.putImageData(img, 0, 0);
+    M._terrain = timg;
+    return timg;
+  };
+
   // ---- Drawing ----
   function path(ctx, p, close) { ctx.beginPath(); for (var i = 0; i < p.length; i++) { if (i) ctx.lineTo(p[i][0], p[i][1]); else ctx.moveTo(p[i][0], p[i][1]); } if (close) ctx.closePath(); }
 
   // opt: { view: [x0, y0, x1, y1] in meters, scale: px per meter, terrain: canvas or null, buildings: true,
-  //        color: fn(building) → fill (optional, replaces the roof), dim: fn(building) → true to fade it }
+  //        color: fn(building) → fill (optional, replaces the roof), dim: fn(building) → true to fade it,
+  //        under: fn() called after the streets and before the buildings (the game draws its parked cars there) }
   L.mapdraw.draw = function (ctx, M, opt) {
     var P = L.mapdraw.prepare(M), T = textures(), vb = opt.view, s = opt.scale, detail = s > 0.7;
     var on = function (b, pad) { return b[2] + pad > vb[0] && b[0] - pad < vb[2] && b[3] + pad > vb[1] && b[1] - pad < vb[3]; };
@@ -217,6 +239,7 @@
         ctx.strokeStyle = '#4a3a2c'; ctx.lineWidth = 1.3; path(ctx, r.p); ctx.stroke();
       }
     });
+    if (opt.under) opt.under();
     // Chunks on screen.
     var seen = [], x0 = Math.max(0, Math.floor(vb[0] / P.CH)), x1 = Math.min(P.cols - 1, Math.floor(vb[2] / P.CH));
     var y0 = Math.max(0, Math.floor(vb[1] / P.CH)), y1 = Math.min(P.cols - 1, Math.floor(vb[3] / P.CH));
@@ -272,7 +295,9 @@
     // Terrain as a soft relief on top (multiply), not a color of its own.
     if (opt.terrain) {
       ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.35;
-      ctx.drawImage(opt.terrain, 0, 0, P.meters, P.meters);
+      // Only the part on screen: the image covers the whole map.
+      var R = opt.terrain.width / P.meters, ax = Math.max(0, vb[0]), ay = Math.max(0, vb[1]), bx = Math.min(P.meters, vb[2]), by = Math.min(P.meters, vb[3]);
+      if (bx > ax && by > ay) ctx.drawImage(opt.terrain, ax * R, ay * R, (bx - ax) * R, (by - ay) * R, ax, ay, bx - ax, by - ay);
       ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     }
     ctx.restore();

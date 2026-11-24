@@ -13,6 +13,14 @@
     scale: 10,           // pixels per meter: to scale with the characters (a 10 m street is 100 px, ~3-4 people)
     cell: 16,            // walk grid cell, in pixels (1.6 m)
     // Street width in meters by OpenStreetMap highway type. Types not listed are left out (footpaths, stairs...).
+    // Real map (data/map-*.js): carriageway and each sidewalk in meters, by OpenStreetMap type. Shared with the
+    // drawing (js/view/mapdraw.js), so what you see is what you walk.
+    streets: {
+      motorway: [24, 0], trunk: [20, 4.5], primary: [18, 4.5], secondary: [15, 4], tertiary: [13, 3.5],
+      residential: [11, 3.5], unclassified: [11, 3.5], living_street: [9, 3], service: [6, 1.5], pedestrian: [0, 7],
+      footway: [0, 2.5], path: [0, 2], cycleway: [0, 2.5], steps: [0, 2.5], track: [5, 0],
+      motorway_link: [10, 0], trunk_link: [10, 2], primary_link: [10, 3], secondary_link: [10, 3], tertiary_link: [9, 3]
+    },
     widths: { motorway: 22, trunk: 20, primary: 16, secondary: 14, tertiary: 12, residential: 10, unclassified: 10,
       living_street: 9, pedestrian: 9, service: 7, motorway_link: 12, trunk_link: 12, primary_link: 12, secondary_link: 10, tertiary_link: 10 },
     // Open areas you can walk across, by tag.
@@ -20,7 +28,7 @@
       landuse: ['grass', 'recreation_ground', 'village_green'], highway: ['pedestrian'] },
     flowEvery: 0.4,      // seconds between flow field updates
     flowRange: 120,      // the flow field covers a square this many cells around you (a whole city is too big)
-    home: 'sanmiguel',   // the city you start in (data/city-*.js)
+    home: 'sanmiguel',   // the city you start in (data/map-*.js, else data/city-*.js)
     // Houses along every street where OpenStreetMap has none (meters). Commercial streets get wider, deeper lots.
     lots: { kinds: ['residential', 'living_street', 'unclassified', 'tertiary', 'secondary', 'primary', 'trunk'],
       sidewalk: 2.5, front: [8, 12], depth: [10, 18], wideFront: [10, 16], wideDepth: [14, 22], gap: 0.8,
@@ -139,10 +147,34 @@
     return city;
   };
 
-  // The home city if it is baked in, else an invented one.
+  // Carriageway and sidewalk widths of a street type, in meters.
+  L.cityStreet = function (kind) { return L.data.city.streets[kind] || [6, 1.5]; };
+
+  // ---- The real map (data/map-*.js, made with tools/bake-map.js; see docs/MAPA.md) ----
+  // Every real building footprint is a wall (no houses are invented) and the city is drawn by js/view/mapdraw.js.
+  // Streets keep their real width: `w` is the carriageway, where cars park.
+  L.cityFromMap = function (M) {
+    var C = L.data.city, s = C.scale, k = M.unit * s, city = makeCity(M.meters * s);
+    var pts = function (f) { var out = []; for (var i = 0; i + 1 < f.length; i += 2) out.push([f[i] * k, f[i + 1] * k]); return out; };
+    M.parks.forEach(function (pk) { var p = pts(pk[2]); paintPolygon(city, p); city.parks.push({ pts: p, kind: pk[0], name: pk[1] }); });
+    M.roads.forEach(function (r) {
+      var w = L.cityStreet(r[0]), p = pts(r[2]), half = (w[0] + w[1] * 2) * s / 2;
+      for (var i = 1; i < p.length; i++) paintSegment(city, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], half);
+      city.roads.push({ pts: p, w: w[0] * s, kind: r[0], name: r[1] });
+    });
+    city.buildings = M.buildings.map(function (b) { return pts(b[0]); });
+    city.map = M;
+    city.name = M.name;
+    city.real = true;
+    city.start = { x: M.start[0] * k, y: M.start[1] * k };
+    L.cityBuild(city, 0x5a17, { lots: false, trees: false });
+    return city;
+  };
+
+  // The home city: the real map if it is baked in, else the older baked streets, else an invented one.
   L.cityHome = function (seed) {
-    var d = L.data.cities && L.data.cities[L.data.city.home];
-    return d ? L.cityFromBaked(d) : L.cityProcedural(seed);
+    var home = L.data.city.home, m = L.data.maps && L.data.maps[home], d = L.data.cities && L.data.cities[home];
+    return m ? L.cityFromMap(m) : d ? L.cityFromBaked(d) : L.cityProcedural(seed);
   };
 
   // ---- Invented city (no internet, or a place without streets) ----
@@ -182,14 +214,15 @@
     }
     city.name = 'Ciudad sin nombre';
     city.real = false;
-    L.cityBuild(city, seed, true);
+    L.cityBuild(city, seed, { lots: false });
     return city;
   };
 
   // ---- Filling the blocks ----
   // Up to here `walk` marks streets, plazas and parks. This turns it around: that becomes `street` (where houses
   // can't go), every other spot is a yard you can walk, and buildings, houses and parked cars are solid.
-  L.cityBuild = function (city, seed, noLots) {
+  // opt.lots / opt.trees: false to skip the invented houses or the street trees (the real map draws its own).
+  L.cityBuild = function (city, seed, opt) {
     var C = L.data.city, s = C.scale, n = city.walk.length, rng = L.makeRng((seed >>> 0) || 1);
     var street = city.walk, solid = new Uint8Array(n);
     var count = new Uint8Array(n); count.stamp = new Uint16Array(n);
@@ -203,7 +236,7 @@
       return cx < 0 || cy < 0 || cx >= city.cols || cy >= city.rows ? 1 : grid[cy * city.cols + cx];
     };
     var range = function (a) { return (a[0] + rng() * (a[1] - a[0])) * s; };
-    if (!noLots) {
+    if (!opt || opt.lots !== false) {
       var LT = C.lots;
       city.roads.forEach(function (r) {
         if (LT.kinds.indexOf(r.kind) < 0) return;
@@ -243,7 +276,7 @@
     // Parked cars along the curb (solid: they block bullets too) and trees on the sidewalks (only drawn).
     var CR = C.cars, TR = C.trees;
     city.roads.forEach(function (r) {
-      var parks = CR.kinds.indexOf(r.kind) >= 0 && r.w >= 8 * s, lined = LT_has(r.kind);
+      var parks = CR.kinds.indexOf(r.kind) >= 0 && r.w >= 8 * s, lined = (!opt || opt.trees !== false) && LT_has(r.kind);
       if (!parks && !lined) return;
       for (var k = 1; k < r.pts.length; k++) {
         var ax = r.pts[k - 1][0], ay = r.pts[k - 1][1], dx = r.pts[k][0] - ax, dy = r.pts[k][1] - ay, len = Math.sqrt(dx * dx + dy * dy);
