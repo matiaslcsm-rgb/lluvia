@@ -139,6 +139,46 @@
     return p;
   }
 
+  // Layouts for buildings that aren't houses (data/houses.js, `special`). `sp` is that kind's entry.
+  var SPECIAL = {
+    // One open room: a shed in the yard, a garage.
+    shed: function (W, D, rng, sp) {
+      var p = new Plan('shed');
+      p.entry = p.back = p.add(sp.room || 'galpon', 0, 0, W, D);
+      return p;
+    },
+    // A shop: the sales floor at the front, a storeroom and a bath at the back.
+    shop: function (W, D, rng) {
+      if (D < cells(6) || W < cells(3)) return SPECIAL.shed(W, D, rng, { room: 'local' });
+      var bd = L.clamp(Math.round(D * 0.28), cells(2.4), cells(5)), p = new Plan('shop'), loc = p.add('local', 0, 0, W, D - bd), dep;
+      var bw = cells(MIN_SIDE + 0.2), left = rng() < 0.5;
+      if (W - bw >= cells(2.4)) {
+        dep = p.add('deposito', left ? bw : 0, D - bd, left ? W : W - bw, D);
+        p.link(p.add('bano', left ? 0 : W - bw, D - bd, left ? bw : W, D), dep);
+      } else dep = p.add('deposito', 0, D - bd, W, D);
+      p.link(dep, loc);
+      p.entry = loc; p.back = dep;
+      return p;
+    },
+    // A big hall: a factory floor with an office and a bath in a front corner, or a church with its sacristy at the
+    // back.
+    nave: function (W, D, rng, sp) {
+      var p = new Plan('nave'), n = p.add(sp.room || 'nave', 0, 0, W, D), left = rng() < 0.5;
+      p.entry = p.back = n;
+      if (W >= cells(10) && D >= cells(10)) {
+        if (sp.back) {
+          var sw = Math.min(cells(5), W >> 1), sx = left ? 0 : W - sw;
+          p.link(p.add(sp.back, sx, D - cells(3.5), sx + sw, D), n);
+        } else {
+          var ow = cells(4), bw = cells(2.4), od = cells(3.5), ox = left ? 0 : W - ow;
+          p.link(p.add('oficina', ox, 0, ox + ow, od), n);
+          p.link(p.add('bano', left ? ow : W - ow - bw, 0, left ? ow + bw : W - ow, od), n);
+        }
+      }
+      return p;
+    }
+  };
+
   function bedroomsFor(area, rng) {
     var n = 0, table = H().bedrooms;
     for (var i = 0; i < table.length; i++) if (area <= table[i][0]) { n = table[i][1]; break; }
@@ -237,6 +277,7 @@
 
   // pts: the footprint in meters; toStreet: unit vector toward its street; seed: the same seed, the same house;
   // opts.canExit(x, y): optional, false where a door can't lead (a point in cells of the plan's frame);
+  // opts.layout and opts.spec: a building that isn't a house (a key of SPECIAL and its entry in data/houses.js);
   // opts.floors: how many floors the house has (with 2 or more it gets a stair and an upper floor); opts.roof
   // ('terraza': a flat roof you can go up to) and opts.basement (true: a stair down to a cellar).
   // Returns { frame, W, D, cell, lab (room index per cell, or OUT), rooms [{ type, cells, cx, cy }], walls,
@@ -248,7 +289,8 @@
   L.housePlan = function (pts, toStreet, seed, opts) {
     opts = opts || {};
     var cs = H().cell, fr = L.houseFrame(pts, toStreet), W = Math.max(2, Math.round(fr.w / cs)), D = Math.max(2, Math.round(fr.d / cs));
-    var rng = L.makeRng((seed * 2654435761) >>> 0 || 1), n = bedroomsFor(areaOf(pts), rng), p = layoutFor(W, D, n, rng);
+    var rng = L.makeRng((seed * 2654435761) >>> 0 || 1), n = bedroomsFor(areaOf(pts), rng);
+    var p = opts.layout ? SPECIAL[opts.layout](W, D, rng, opts.spec || {}) : layoutFor(W, D, n, rng);
     if (rng() < 0.5) p.rooms.forEach(function (r) { var x0 = r.x0; r.x0 = W - r.x1; r.x1 = W - x0; }); // mirrored
     var plan = finish(pts, fr, W, D, p, opts.canExit, true), floors = opts.floors || 1;
     if (floors >= 2) {
@@ -277,11 +319,37 @@
   // `withExits`) the front and back doors.
   function finish(pts, fr, W, D, p, canExit, withExits) {
     var cs = H().cell, lab = new Int16Array(W * D).fill(-1), x, y, i;
-    p.rooms.forEach(function (r, k) { var id = r.as >= 0 ? r.as : k; for (y = r.y0; y < r.y1; y++) for (x = r.x0; x < r.x1; x++) lab[y * W + x] = id; });
+    while (p.rooms.length && p.rooms[p.rooms.length - 1].piece) p.rooms.pop(); // pieces from an earlier run
+    p.rooms.forEach(function (r, k) { if (r.piece) return; var id = r.as >= 0 ? r.as : k; for (y = r.y0; y < r.y1; y++) for (x = r.x0; x < r.x1; x++) lab[y * W + x] = id; });
     for (y = 0; y < D; y++) for (x = 0; x < W; x++) {
       var mx = (x + 0.5) * cs, my = (y + 0.5) * cs;
       if (!inside(pts, fr.ox + fr.ux * mx + fr.vx * my, fr.oy + fr.uy * mx + fr.vy * my)) lab[y * W + x] = OUT;
     }
+    // A room the footprint cut in separate pieces (a U-shaped school, an L-shaped house) keeps its biggest piece; each
+    // other piece becomes a room of its own, which gets its door below.
+    var comp = new Int32Array(W * D).fill(-1), comps = [];
+    for (var c0 = 0; c0 < W * D; c0++) {
+      if (lab[c0] < 0 || comp[c0] >= 0) continue;
+      var stack = [c0], cellsOf = [];
+      comp[c0] = comps.length;
+      while (stack.length) {
+        var cc = stack.pop(), ccx = cc % W, ccy = (cc - ccx) / W;
+        cellsOf.push(cc);
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+          var nx2 = ccx + d[0], ny2 = ccy + d[1], m = ny2 * W + nx2;
+          if (nx2 >= 0 && ny2 >= 0 && nx2 < W && ny2 < D && comp[m] < 0 && lab[m] === lab[c0]) { comp[m] = comps.length; stack.push(m); }
+        });
+      }
+      comps.push({ room: lab[c0], cells: cellsOf });
+    }
+    var biggest = {};
+    comps.forEach(function (q, k) { if (!(q.room in biggest) || q.cells.length > comps[biggest[q.room]].cells.length) biggest[q.room] = k; });
+    comps.forEach(function (q, k) {
+      if (biggest[q.room] === k) return;
+      var src = p.rooms[q.room], id = p.rooms.length;
+      p.rooms.push({ type: src.type, x0: src.x0, y0: src.y0, x1: src.x1, y1: src.y1, piece: true });
+      q.cells.forEach(function (c) { lab[c] = id; });
+    });
     // Rooms joined into another one (a bedroom given to the stair).
     (p.merges || []).forEach(function (m) {
       for (var c = 0; c < lab.length; c++) if (lab[c] === m[0]) lab[c] = m[1];
@@ -453,7 +521,7 @@
   // opts.types: which rooms may hold it (a pattern of room types); opts.taken: cells already used by another stair.
   function placeStair(plan, rng, opts) {
     opts = opts || {};
-    var types = opts.types || /living|ambiente|cocina/;
+    var types = opts.types || /living|ambiente|cocina|local|deposito|nave|templo|galpon/;
     var rank = function (k) { var r = plan.rooms[k]; return r.grown || r.type === 'pasillo' ? 0 : r.type === 'cocina' ? 2 : 1; };
     var order = plan.rooms.map(function (r, k) { return k; }).filter(function (k) { return plan.rooms[k].cells && (plan.rooms[k].grown || types.test(plan.rooms[k].type)); });
     order.sort(function (a, b) { return rank(a) - rank(b) || plan.rooms[b].cells - plan.rooms[a].cells; });
@@ -688,9 +756,23 @@
     rects = rects.concat(units >= 4 ? [[0, cy1, xm, D, 'n'], [xm, cy1, W, D, 'n']] : [[0, cy1, W, D, 'n']]);
     if (cx0 >= cells(B.strip)) rects.push([0, cy0, cx0, cy1, 'e']); else pal0 = 0;
     if (W - cx1 >= cells(B.strip)) rects.push([cx1, cy0, W, cy1, 'w']); else pal1 = W;
+    var fill = opts.fill;
     var floorLayout = function (ground) {
       var r2 = L.makeRng(((seed + 7) * 2654435761) >>> 0 || 1), p = new Plan(ground ? 'edificio-pb' : 'edificio'), entries = [];
-      rects.forEach(function (rc) {
+      // A school, a clinic, offices: instead of apartments, a row of rooms of one kind along the palier (classrooms,
+      // consulting rooms, offices), one of them a bath.
+      if (fill) rects.forEach(function (rc, ri) {
+        var side = rc[4] === 'e' || rc[4] === 'w', uw = side ? rc[3] - rc[1] : rc[2] - rc[0], ud = side ? rc[2] - rc[0] : rc[3] - rc[1];
+        if (uw < cells(MIN_SIDE) || ud < cells(MIN_SIDE)) return;
+        var k = Math.max(1, Math.round(uw * cs / fill.size)), cut = cuts(uw, wobble(new Array(k).fill(1), r2), cells(MIN_SIDE)) || [0, uw];
+        for (var j = 0; j + 1 < cut.length; j++) {
+          var a0 = cut[j], a1 = cut[j + 1], t = ri === 0 && j === 0 && cut.length > 2 ? 'bano' : fill.room;
+          if (rc[4] === 's') entries.push(p.add(t, rc[0] + a0, rc[1], rc[0] + a1, rc[3]));
+          else if (rc[4] === 'n') entries.push(p.add(t, rc[0] + a0, rc[1], rc[0] + a1, rc[3]));
+          else entries.push(p.add(t, rc[0], rc[1] + a0, rc[2], rc[1] + a1));
+        }
+      });
+      else rects.forEach(function (rc) {
         // Laid out like a house whose front faces the core: uw along its door's side, ud away from it.
         var side = rc[4] === 'e' || rc[4] === 'w', uw = side ? rc[3] - rc[1] : rc[2] - rc[0], ud = side ? rc[2] - rc[0] : rc[3] - rc[1];
         if (uw < cells(MIN_SIDE) || ud < cells(MIN_SIDE)) return;
@@ -796,12 +878,13 @@
     if (!city.map) return null;
     var cache = city._houses || (city._houses = new Map());
     if (cache.has(i)) return cache.get(i);
-    var M = city.map, b = M.buildings[i], Hd = H(), plan = null, kind = M.kinds[b[1]], isBuilding = Hd.building.kinds.indexOf(kind) >= 0;
-    if (Hd.kinds.indexOf(kind) >= 0 || isBuilding) {
+    var M = city.map, b = M.buildings[i], Hd = H(), plan = null, kind = M.kinds[b[1]];
+    var isBuilding = Object.prototype.hasOwnProperty.call(Hd.building.kinds, kind), sp = Hd.special[kind];
+    if (Hd.kinds.indexOf(kind) >= 0 || isBuilding || sp) {
       var f = b[0], pts = [];
       for (var j = 0; j + 1 < f.length; j += 2) pts.push([f[j] * M.unit, f[j + 1] * M.unit]);
       var area = areaOf(pts);
-      var range = isBuilding ? Hd.building.area : Hd.area;
+      var range = isBuilding ? Hd.building.area : sp ? sp.area : Hd.area;
       if (pts.length >= 3 && area >= range[0] && area <= range[1]) {
         var s = city.scale, cx = 0, cy = 0, frameOf = null;
         pts.forEach(function (q) { cx += q[0]; cy += q[1]; });
@@ -816,7 +899,15 @@
         var street = toStreet(city, cx / pts.length * s, cy / pts.length * s);
         frameOf = { frame: L.houseFrame(pts, street), cell: Hd.cell };
         var o = { canExit: canExit, floors: b[2], roof: M.roofs ? M.roofs[b[3]] : null, basement: !!b[4] };
-        plan = isBuilding ? L.buildingPlan(pts, street, i, o) : L.housePlan(pts, street, i, o);
+        if (isBuilding) {
+          o.fill = Hd.building.kinds[kind];
+          plan = L.buildingPlan(pts, street, i, o);
+          // A school or a clinic too small for a core: one hall with its rooms' kind.
+          if (!plan && o.fill) { o.layout = 'nave'; o.spec = { room: o.fill.room }; plan = L.housePlan(pts, street, i, o); }
+        } else {
+          if (sp) { o.layout = sp.layout; o.spec = sp; }
+          plan = L.housePlan(pts, street, i, o);
+        }
       }
       if (plan) {
         var px = function (q) { return [q[0] * s, q[1] * s]; }, f = plan.frame;

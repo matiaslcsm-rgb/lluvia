@@ -756,6 +756,28 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Revisado en el navegador: el hall con la escalera, un piso con los dos tramos y la terraza con la sala de
     máquinas.
   - Sigue: muebles, puertas y ventanas dibujadas; galpones, negocios, escuelas y los demás tipos de edificio.
+  - Arreglos después de las pruebas completas: la escalera solo va donde queda lugar para pasar alrededor y se
+    sigue llegando a cada puerta del cuarto (una escalera a la terraza dejaba un dormitorio a medio metro de la
+    baranda), y un cuarto que el contorno deja más angosto que 1,5 m se suma al de al lado.
+- **2026-11-24: se entra a los demás edificios** (paso 42, cuarta parte).
+  - **Galpones** (los 29.000 del fondo de los terrenos) y **garages**: un ambiente con su puerta.
+  - **Negocios**: el local adelante, el depósito y un baño atrás. Si tienen dos pisos, arriba está la vivienda,
+    con su escalera desde el depósito o el local; también pueden tener terraza y sótano.
+  - **Fábricas**: una nave grande con una oficina y un baño en una esquina del frente. **Iglesias**: el templo y
+    la sacristía al fondo.
+  - **Escuelas, salas de salud, oficinas y edificios públicos**: el mismo núcleo que los edificios de
+    departamentos (hall, palier, escalera en "U", terraza), pero en cada piso, en vez de departamentos, una fila
+    de aulas, consultorios u oficinas con su puerta al palier, y un baño. Si son muy chicos para el núcleo, son
+    una nave con su nombre.
+  - Las estaciones siguen macizas.
+  - Un cuarto que el contorno parte en pedazos separados (una escuela en "U", una casa en L) queda con el pedazo
+    más grande, y cada otro pedazo pasa a ser un cuarto propio con su puerta: antes había pedazos a los que no se
+    llegaba.
+  - Pruebas nuevas: cada tipo con sus cuartos (galpón, negocio con vivienda arriba, fábrica, iglesia, escuela con
+    al menos 6 aulas por piso); y en San Miguel, en 3 de cada tipo (galpón, negocio, fábrica, iglesia, escuela,
+    salud, oficina) se entra por la puerta y se llega caminando a cada cuarto.
+  - Revisado en el navegador: un negocio, una escuela y una fábrica.
+  - Sigue: muebles, puertas y ventanas dibujadas; mirar los pisos en el visor del mapa.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

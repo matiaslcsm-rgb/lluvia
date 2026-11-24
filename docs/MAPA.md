@@ -73,7 +73,8 @@ La idea es como Project Zomboid y el SAS: el mapa tiene **niveles** y se ve uno 
    *(casi hecho, en el juego)*: las casas tienen su planta, generada de su contorno con cinco maneras de repartir
    los cuartos, escalera y piso de arriba si son de dos pisos, terraza y sótano donde el mapa dice. Los edificios de
    departamentos tienen palier con escalera en "U", departamentos en cada piso, hall, terraza y sótano
-   (`js/interiors.js`). Faltan galpones, negocios, escuelas y los demás tipos, y verlos en el visor.
+   (`js/interiors.js`). También se entra a galpones, garages, negocios, fábricas, iglesias, escuelas, salas de salud,
+   oficinas y edificios públicos; solo las estaciones siguen macizas. Falta verlos en el visor.
 4. Pasar el mapa al juego. *(hecho)*: el juego usa el mapa real y se dibuja igual que en el visor; se entra a las
    casas y a los edificios, y se sube y se baja caminando por las escaleras, piso por piso.
 5. Alturas reales con Google Open Buildings 2.5D.

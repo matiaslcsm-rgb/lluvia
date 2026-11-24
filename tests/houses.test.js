@@ -362,3 +362,53 @@ test('edificios de San Miguel: desde la vereda se sube caminando hasta la terraz
   }
   assert.ok(found >= 4, 'pocos edificios con interior: ' + found);
 });
+
+test('otros edificios: galpón, negocio con depósito y baño, fábrica con oficina, iglesia con sacristía, escuela con aulas', function () {
+  var L = Lluvia, H = L.data.houses, types = function (p) { return p.rooms.filter(function (r) { return r.cells; }).map(function (r) { return r.type; }); };
+  var shed = L.housePlan(rectHouse(4, 5), [0, -1], 3, { layout: 'shed', spec: H.special.galpon });
+  assert.deepStrictEqual(types(shed), ['galpon']);
+  assert.ok(shed.exits.length && shed.reachable, 'el galpón sin puerta');
+  for (var seed = 1; seed <= 10; seed++) {
+    var shop = L.housePlan(rectHouse(8, 18), [0, -1], seed, { layout: 'shop', spec: H.special.negocio });
+    ['local', 'deposito', 'bano'].forEach(function (t) { assert.ok(types(shop).indexOf(t) >= 0, 'el negocio sin ' + t); });
+    assert.ok(shop.reachable && shop.exits.some(function (e) { return e.side < 0 && shop.rooms[e.room].type === 'local'; }), 'al negocio no se entra por el local');
+    var shop2 = L.housePlan(rectHouse(9, 18), [0, -1], seed, { layout: 'shop', spec: H.special.negocio, floors: 2 });
+    if (shop2.upper) assert.ok(types(shop2.upper).indexOf('dormitorio') >= 0, 'arriba del negocio no hay vivienda');
+  }
+  var fab = L.housePlan(rectHouse(30, 50), [0, -1], 5, { layout: 'nave', spec: H.special.industria });
+  ['nave', 'oficina', 'bano'].forEach(function (t) { assert.ok(types(fab).indexOf(t) >= 0, 'la fábrica sin ' + t); });
+  var church = L.housePlan(rectHouse(14, 30), [0, -1], 5, { layout: 'nave', spec: H.special.iglesia });
+  assert.deepStrictEqual(types(church).sort(), ['sacristia', 'templo']);
+  assert.ok(fab.reachable && church.reachable);
+  var school = L.buildingPlan(rectHouse(30, 40), [0, -1], 4, { floors: 3, roof: 'terraza', fill: H.building.kinds.escuela });
+  var aulas = school.levels[1].rooms.filter(function (r) { return r.type === 'aula' && r.cells; }).length;
+  assert.ok(aulas >= 6, 'la escuela tiene ' + aulas + ' aulas por piso');
+  for (var f = 0; f <= school.top; f++) assert.ok(L.planLevel(school, f).reachable, 'en la escuela un aula sin puerta en el piso ' + f);
+});
+
+test('otros edificios de San Miguel: se entra y se llega a cada cuarto en galpones, negocios, fábricas, iglesias, escuelas, salud y oficinas', function () {
+  var L = Lluvia, city = L.cityHome(1), M = city.map, s = city.scale, kinds = ['galpon', 'negocio', 'industria', 'iglesia', 'escuela', 'salud', 'oficina'];
+  kinds.forEach(function (kind) {
+    var found = 0, seen = 0;
+    for (var i = 0; i < M.buildings.length && found < 3; i++) {
+      if (M.kinds[M.buildings[i][1]] !== kind) continue;
+      seen++;
+      var p = L.cityHouse(city, i);
+      if (!p || !p.exitsPx.length) continue;
+      found++;
+      var door = p.exitsPx[0], start = { x: door.x + door.nx * 0.8 * s, y: door.y + door.ny * 0.8 * s, floor: 0, z: 0 };
+      p.rooms.forEach(function (r, ri) {
+        if (r.cells < 16) return;
+        var m = null;
+        for (var k = 0; k < p.lab.length && !m; k++) if (p.lab[k] === ri) {
+          var w = L.housePoint(p, k % p.W + 0.5, Math.floor(k / p.W) + 0.5);
+          if (L.cityFits(city, w[0] * s, w[1] * s, L.data.city.body)) m = w;
+        }
+        if (!m) return;
+        var ent = { x: start.x, y: start.y, floor: 0, z: 0 };
+        assert.ok(walkTo(L, city, p, ent, m[0] * s, m[1] * s), 'en ' + kind + ' ' + i + ' no se llega al ' + r.type);
+      });
+    }
+    assert.ok(found >= Math.min(3, seen) - 1, 'pocos ' + kind + ' con interior: ' + found + ' de ' + seen + ' mirados');
+  });
+});
