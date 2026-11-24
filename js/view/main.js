@@ -22,12 +22,26 @@
   }
 
   var daily = false;
+  // After picking a character: pick where you start on the map, download the streets, then play.
+  // The daily match plays an invented city from the day's seed, so it is the same for everyone.
   function start(characterId, isDaily) {
-    L.fx.clear();
     daily = !!isDaily;
     var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
+    if (daily) { begin(characterId, seed, L.cityProcedural(seed), null); return; }
+    L.ui.mapPick(function (place) {
+      L.ui.loading(place ? 'Bajando las calles de ' + (place.name || 'ese lugar') + '...' : 'Inventando una ciudad...');
+      L.loadCity(place, seed, function (city, msg) { begin(characterId, seed, city, msg); });
+    }, menu);
+  }
+
+  function begin(characterId, seed, city, msg) {
+    L.fx.clear();
     match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta'),
-      pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }) });
+      pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }), city: city });
+    var g = game(), fr = L.cityFree(city, city.size / 2, city.size / 2);
+    g.player.x = fr.x; g.player.y = fr.y;
+    if (msg) L.toast(g, msg, '#ff9a7a');
+    if (city.name) L.toast(g, 'Arrancás en ' + city.name + '. El Sol Amarillo volvió loca a la gente: no te dejes agarrar.', '#ffd23f');
     reward = null;
     paused = false;
     L.ui.hide();

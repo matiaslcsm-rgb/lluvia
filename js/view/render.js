@@ -292,7 +292,8 @@
     ctx.save();
     ctx.translate(-camX, -camY);
 
-    L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
+    if (g.city) L.drawCity(ctx, g.city, camX, camY, W, H, t);
+    else L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
 
     // Auras under everything.
     p.abilities.forEach(function (a) {

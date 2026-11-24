@@ -53,6 +53,7 @@
       var to = aimPoint(p, x, y, s.distance);
       to.x = L.clamp(to.x, p.r, g.arena - p.r);
       to.y = L.clamp(to.y, p.r, g.arena - p.r);
+      if (g.city && !L.cityFits(g.city, to.x, to.y, L.data.city.body)) { var fr = L.cityFree(g.city, to.x, to.y); to.x = fr.x; to.y = fr.y; }
       alongSegment(g, p.x, p.y, to.x, to.y, s.width).forEach(function (e) { L.hit(g, e, s.damage, 1); });
       g.effects.push({ kind: 'line', x: p.x, y: p.y, x2: to.x, y2: to.y, w: s.width, ttl: 0.3, max: 0.3, color: def.color });
       p.x = to.x; p.y = to.y;

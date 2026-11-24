@@ -40,7 +40,9 @@
       g.shrineCount = (g.shrineCount || 0) + 1;
       var kind = ['mercader', 'trueno', 'pozo'][g.shrineCount % 3];
       var a = g.rng() * Math.PI * 2, d = 380 + g.rng() * 200;
-      g.shrines.push({ kind: kind, x: L.clamp(p.x + Math.cos(a) * d, 60, g.arena - 60), y: L.clamp(p.y + Math.sin(a) * d, 60, g.arena - 60), r: 22, life: S.life, active: false });
+      var sh = { kind: kind, x: L.clamp(p.x + Math.cos(a) * d, 60, g.arena - 60), y: L.clamp(p.y + Math.sin(a) * d, 60, g.arena - 60), r: 22, life: S.life, active: false };
+      if (g.city && !L.cityWalkable(g.city, sh.x, sh.y)) { var fr = L.cityFree(g.city, sh.x, sh.y); sh.x = fr.x; sh.y = fr.y; }
+      g.shrines.push(sh);
       L.toast(g, { trueno: 'Apareció un Santuario del Trueno: tocalo si te animás a un desafío.',
         pozo: 'Apareció un Pozo de los deseos: tocalo para jugarte un cuarto de tu oro.',
         mercader: 'Llegó el Mercader errante: tocalo para ver qué vende.' }[kind], '#c9b8ff');

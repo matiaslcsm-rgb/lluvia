@@ -55,6 +55,7 @@
 
   L.dropChest = function (g, x, y, kind) {
     var chest = { x: L.clamp(x, 30, g.arena - 30), y: L.clamp(y, 30, g.arena - 30), r: 16, kind: kind || 'normal' };
+    if (g.city && !L.cityWalkable(g.city, chest.x, chest.y)) { var fr = L.cityFree(g.city, chest.x, chest.y); chest.x = fr.x; chest.y = fr.y; }
     g.chests.push(chest);
     return chest;
   };

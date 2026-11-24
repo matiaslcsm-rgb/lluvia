@@ -57,7 +57,8 @@
       lastWave: null,
       surge: 0,              // seconds left of a "marea" storm event (more spawns)
       enemyShots: [],        // mud the Escupelodos spit at you
-      arena: h.arena,
+      arena: opts.city ? opts.city.size : h.arena,
+      city: opts.city || null,  // the streets you play in (js/city.js), or null for the open square
       view: { w: opts.viewW || 1280, h: opts.viewH || 720 },
       player: {
         x: h.arena / 2, y: h.arena / 2, r: 14, char: ch,
@@ -244,14 +245,22 @@
     else { p.still = Math.min(1, (p.still || 0) + dt / 1.5); p.rush = 0; }
   };
 
+  // Moves the player by (dx, dy), against the city walls if there is a city.
+  function stepPlayer(g, dx, dy) {
+    var p = g.player;
+    if (g.city) { var o = L.cityMove(g.city, p.x, p.y, p.x + dx, p.y + dy, p.r, g._mv || (g._mv = {})); p.x = o.x; p.y = o.y; return; }
+    p.x = L.clamp(p.x + dx, p.r, g.arena - p.r);
+    p.y = L.clamp(p.y + dy, p.r, g.arena - p.r);
+  }
+  L.stepPlayer = stepPlayer;
+
   function movePlayer(g, dt, input) {
     var p = g.player, x = input.x || 0, y = input.y || 0;
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
     if (x || y) { p.dirX = x; p.dirY = y; } // the way you face, for drawing
     L.updateStance(p, len > 0.2, dt);
-    p.x = L.clamp(p.x + x * p.stats.speed * dt, p.r, g.arena - p.r);
-    p.y = L.clamp(p.y + y * p.stats.speed * dt, p.r, g.arena - p.r);
+    stepPlayer(g, x * p.stats.speed * dt, y * p.stats.speed * dt);
   }
 
   // ---- Horde ----
@@ -369,6 +378,7 @@
       cd: t.ranged ? t.ranged.every * (0.3 + g.rng() * 0.7) : t.charge ? t.charge.every : t.summon ? t.summon.every * 0.4 : t.slam ? t.slam.every * 0.5 : 0, // first attack at a random moment
       fuse: 0
     };
+    if (g.city && !L.cityWalkable(g.city, e.x, e.y)) { var fr = L.cityFree(g.city, e.x, e.y); e.x = fr.x; e.y = fr.y; }
     g.enemies.push(e);
     return e;
   };
@@ -401,7 +411,9 @@
   }
 
   function moveEnemies(g, dt) {
-    var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0;
+    var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0, city = g.city, dir = g._dir || (g._dir = {}), mv = g._emv || (g._emv = {});
+    if (city && !(g.flowT > 0)) { L.cityFlow(city, p.x, p.y); g.flowT = L.data.city.flowEvery; }
+    if (city) g.flowT -= dt;
     for (var i = 0; i < g.enemies.length; i++) {
       var e = g.enemies[i];
       if (e.dead) continue;
@@ -444,8 +456,9 @@
           sp = 0;
           if (e.cd <= 0) { e.mode = 'dash'; e.cd = ch.dash; e.dashX = dx / d; e.dashY = dy / d; }
         } else if (e.mode === 'dash') {
-          e.x = L.clamp(e.x + e.dashX * ch.speed * dt, e.r, g.arena - e.r);
-          e.y = L.clamp(e.y + e.dashY * ch.speed * dt, e.r, g.arena - e.r);
+          var nx2 = L.clamp(e.x + e.dashX * ch.speed * dt, e.r, g.arena - e.r), ny2 = L.clamp(e.y + e.dashY * ch.speed * dt, e.r, g.arena - e.r);
+          if (city && !L.cityWalkable(city, nx2, ny2)) e.cd = 0; // hit a wall: the charge ends
+          else { e.x = nx2; e.y = ny2; }
           sp = 0;
           if (e.cd <= 0) { e.mode = null; e.cd = ch.every * (ph && ph.every || 1); }
         } else if (e.cd <= 0 && d < 600) { e.mode = 'wind'; e.cd = ch.windup; L.emit(g, 'boss', e.x, e.y); }
@@ -488,6 +501,8 @@
         }
       }
       var vx = dx / d * sp, vy = dy / d * sp;
+      // In the city they go around the blocks, along the streets, until they are close.
+      if (city && d > 60 && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
       g.grid.query(e.x, e.y, e.r + g.maxR, q);
@@ -504,8 +519,9 @@
         }
       }
       var push = Math.abs(sp) * 1.5;
-      e.x = L.clamp(e.x + (vx + sx * push) * dt, e.r, g.arena - e.r);
-      e.y = L.clamp(e.y + (vy + sy * push) * dt, e.r, g.arena - e.r);
+      var ex = L.clamp(e.x + (vx + sx * push) * dt, e.r, g.arena - e.r), ey = L.clamp(e.y + (vy + sy * push) * dt, e.r, g.arena - e.r);
+      if (city) { L.cityMove(city, e.x, e.y, ex, ey, 4, mv); ex = mv.x; ey = mv.y; }
+      e.x = ex; e.y = ey;
       if (e.flash > 0) e.flash -= dt;
       if (d < e.r + p.r && p.invuln <= 0) { p.hp -= e.dps * dt * (1 - p.stats.armor); p.hurt = 0.15; }
       if (e.burnTtl > 0) {
@@ -519,8 +535,7 @@
     g.pulled = pull > 1 && p.invuln <= 0 ? pull : 0;
     if (g.pulled) {
       var k = Math.min(1, pullMax / pull);
-      p.x = L.clamp(p.x + pullX * k * dt, p.r, g.arena - p.r);
-      p.y = L.clamp(p.y + pullY * k * dt, p.r, g.arena - p.r);
+      stepPlayer(g, pullX * k * dt, pullY * k * dt);
     }
   }
 

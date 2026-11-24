@@ -108,7 +108,7 @@ Cómo se juega (estilo Risk of Rain):
 Etapas (cada una se puede jugar al terminarla):
 33. **La ciudad:** elegir el punto en el mapa, bajar las calles y edificios de OpenStreetMap (o inventar una ciudad
     sin internet), dibujarla desde arriba y caminar por las calles chocando con los edificios. Los bichos te
-    persiguen por las calles, no a través de las paredes.
+    persiguen por las calles, no a través de las paredes. *(hecho)*
 34. **Mundo abierto con reloj:** la horda arranca de a poco y crece con el reloj; cofres, ítems y puntos con
     historia repartidos por calles, parques y plazas.
 35. **Edificios por dentro:** puertas que llevan a interiores simulados (casa, negocio, galpón) con cofres y algún
@@ -433,3 +433,27 @@ Etapas (cada una se puede jugar al terminarla):
       Verdugo.
   - Banco de 30: la curva igual (mediana 27:42, duelos de 9,4 s, ganadores con 195 ítems; una partida pasó de
     45 minutos). Marea y Roca volvieron a 10% y 14%: lo del banco anterior era ruido. Oxido dio 3% (venía en 13-19%).
+- **2026-11-23: la ciudad** (séptima temporada, etapa 33). Después de elegir personaje elegís dónde arrancás:
+  - en un mapa del mundo (Leaflet + OpenStreetMap);
+  - en una lista de lugares (San Miguel primero, a pedido del usuario; Obelisco, Córdoba, Rosario, Mendoza,
+    Montevideo, Ciudad de México, Madrid);
+  - con "Donde estoy";
+  - o eligiendo "Ciudad inventada".
+
+  Cómo se arma el mapa:
+  - El juego baja de OpenStreetMap un cuadrado de 1 km alrededor del punto. Primero las calles, plazas y parques;
+    después los edificios, que son solo para dibujar.
+  - Prueba tres servidores, porque a veces están saturados. Si no llegan las calles, arma una ciudad inventada y
+    lo avisa.
+  - Se camina por las calles (ancho según el tipo de calle), las plazas y los parques; las manzanas son paredes.
+    Así anda aunque no estén cargados todos los edificios.
+  - Los bichos te buscan por las calles con un "campo de flujo" (un mapa de distancias que se recalcula cada
+    0,4 s); los cofres, santuarios y saltos caen en la calle.
+  - Los rivales siguen jugando en sus arenas de siempre hasta la etapa 37. La partida del día usa una ciudad
+    inventada con la semilla del día, igual para todos.
+
+  Probado:
+  - San Miguel bajó 148 calles y 15 plazas (Belgrano, Sarmiento, España, Italia...); el Obelisco, 355 calles.
+  - Se ve bien en pantalla.
+  - El navegador interno de la app no puede salir a internet, así que la descarga desde el juego no se probó
+    ahí. Hay que mirar si la versión de claude.ai lo permite; en la página de GitHub tendría que andar.
