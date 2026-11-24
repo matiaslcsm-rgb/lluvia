@@ -91,7 +91,37 @@
     eyes(ctx, x, y, r, ang, r * 0.2);
     ctx.strokeStyle = '#0b0c10'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(x, y, r + 1, 0, TAU); ctx.stroke();
+    if (f.gun) {
+      // The gun in your hand, pointing where you aim; a flash right after a shot.
+      var gx = x + Math.cos(ang) * r * 0.9, gy = y + Math.sin(ang) * r * 0.9;
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(ang) * r * 0.9, gy + Math.sin(ang) * r * 0.9); ctx.stroke();
+      if (f.gun.cd > 1 / f.gun.def.rate - 0.05) circle(ctx, gx + Math.cos(ang) * r * 1.9, gy + Math.sin(ang) * r * 1.9, 5, '#fff3b0');
+    }
   };
+
+  // A zombie seen from above: shoulders, arms reaching for you, a head. `kind` changes the build.
+  function zombie(ctx, e, x, y, r, ang, shirt, t) {
+    var skin = e.flash > 0 ? '#ffffff' : e.burnTtl > 0 ? '#ff8a3d' : e.slow > 0 ? '#9fd8ff' : '#7f9a6a', id = e.type.id;
+    var sway = Math.sin(t * 5 + e.id) * 0.25, fat = id === 'divisor' ? 1.35 : id === 'bruto' ? 1.25 : id === 'cazador' || id === 'veloz' ? 0.85 : 1;
+    ctx.globalAlpha = 0.3; circle(ctx, x + 2, y + 4, r, '#000'); ctx.globalAlpha = 1;
+    // Arms.
+    ctx.strokeStyle = skin; ctx.lineWidth = r * 0.32; ctx.lineCap = 'round';
+    for (var s = -1; s <= 1; s += 2) {
+      var sx = x + Math.cos(ang + s * 1.3) * r * 0.75 * fat, sy = y + Math.sin(ang + s * 1.3) * r * 0.75 * fat;
+      var reach = r * (1.1 + (s > 0 ? sway : -sway) * 0.4);
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.cos(ang + s * 0.15) * reach, sy + Math.sin(ang + s * 0.15) * reach); ctx.stroke();
+    }
+    // Shoulders (torn clothes) and head.
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : shirt;
+    ctx.beginPath(); ctx.ellipse(x, y, r * 0.62 * fat, r * 0.95 * fat, ang, 0, TAU); ctx.fill();
+    if (id === 'tronador') circle(ctx, x - Math.cos(ang) * r * 0.2, y - Math.sin(ang) * r * 0.2, r * 0.45, e.fuse > 0 && Math.floor(t * 12) % 2 ? '#ffffff' : '#ff5a2a');
+    if (id === 'divisor') circle(ctx, x, y, r * 0.5, '#b8a35a');
+    circle(ctx, x + Math.cos(ang) * r * 0.25, y + Math.sin(ang) * r * 0.25, r * 0.48, skin);
+    circle(ctx, x + Math.cos(ang) * r * 0.3 + Math.cos(ang + 1.57) * r * 0.16, y + Math.sin(ang) * r * 0.3 + Math.sin(ang + 1.57) * r * 0.16, r * 0.08, '#c8262b');
+    circle(ctx, x + Math.cos(ang) * r * 0.3 - Math.cos(ang + 1.57) * r * 0.16, y + Math.sin(ang) * r * 0.3 - Math.sin(ang + 1.57) * r * 0.16, r * 0.08, '#c8262b');
+    if (id === 'escupidor') circle(ctx, x + Math.cos(ang) * r * 0.6, y + Math.sin(ang) * r * 0.6, r * 0.18, '#9be05a');
+  }
 
   // ---- Anegados (the horde) ----
   L.drawCreature = function (ctx, e, tx, ty, t) {
@@ -121,6 +151,7 @@
       polygon(ctx, x - r * 0.55, y - r * 0.8, r * 0.6, -Math.PI / 2 - 0.4, [[0, 1], [2.5, 0.4], [3.8, 0.4]]); ctx.fill();
       polygon(ctx, x + r * 0.55, y - r * 0.8, r * 0.6, -Math.PI / 2 + 0.4, [[0, 1], [2.5, 0.4], [3.8, 0.4]]); ctx.fill();
     }
+    if (!type.boss && type.shape !== 'swirl' && !type.mini) { zombie(ctx, e, x, y, r, ang, color, t); return; }
     switch (type.shape) {
       case 'tri':
         ctx.fillStyle = color; polygon(ctx, x, y, r * 1.3, ang, [[0, 1.2], [2.4, 0.9], [3.88, 0.9]]); ctx.fill();

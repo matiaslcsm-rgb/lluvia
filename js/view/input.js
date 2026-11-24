@@ -5,8 +5,12 @@
   addEventListener('keydown', function (e) { keys[e.code] = true; });
   addEventListener('keyup', function (e) { keys[e.code] = false; });
   addEventListener('blur', function () { keys = {}; });
-  var mouse = { x: 0, y: 0 };
+  var mouse = { x: 0, y: 0, down: false };
   addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+  addEventListener('mousedown', function (e) { if (e.button === 0 && e.target && e.target.id === 'game') mouse.down = true; });
+  addEventListener('mouseup', function (e) { if (e.button === 0) mouse.down = false; });
+  addEventListener('blur', function () { mouse.down = false; });
+  addEventListener('contextmenu', function (e) { if (e.target && e.target.id === 'game') e.preventDefault(); });
 
   function down(a, b) { return keys[a] || keys[b] ? 1 : 0; }
 
@@ -55,6 +59,7 @@
   L.input = {
     mouse: mouse,
     stick: function () { return stick; },
+    key: function (code) { return !!keys[code]; },
     onTap: null,
     vector: function () {
       var x = down('KeyD', 'ArrowRight') - down('KeyA', 'ArrowLeft');

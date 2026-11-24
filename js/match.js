@@ -24,9 +24,10 @@
       storm: !!opts.storm,              // Tormenta eterna (hard mode)
       pacts: opts.pacts || [],          // Pactos del Cielo turned on
       rival: null, grudge: {},          // your rival and how many duels each rival has won against you
+      solo: !!opts.solo,                // just you: no rivals, duels or bets
       forecast: opts.forecast !== undefined ? opts.forecast : L.pickForecast(seed) // same weather in every arena
     };
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0; i < (m.solo ? 1 : 8); i++) {
       var isHuman = i === 0;
       var charId = isHuman && opts.characterId ? opts.characterId : rng.pick(chars).id;
       var pl = {
@@ -36,7 +37,8 @@
         game: L.createGame({
           seed: (seed + i * 7919) >>> 0, characterId: charId, listen: isHuman && !opts.humanBot,
           viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720, storm: m.storm, pacts: m.pacts, forecast: m.forecast,
-          city: isHuman ? opts.city : null
+          city: isHuman ? opts.city : null,
+          gunsOnly: isHuman && !!opts.gunsOnly, gun: isHuman ? opts.gun : null
         }),
         // Rivals get a spread of skills so some fall early and some go far.
         bot: (!isHuman || opts.humanBot) ? L.makeBot((seed * 31 + i) >>> 0, isHuman ? 0.7 : Math.min(1, 0.35 + 0.6 * ((i - 1) / 6) + (m.storm ? L.data.meta.storm.botSkill : 0))) : null,
@@ -153,6 +155,7 @@
   L.updateMatch = function (m, dt, input) {
     if (m.endless && !m.endless.done) return updateEndless(m, dt, input);
     if (m.over) return;
+    if (m.solo) return updateSolo(m, dt, input);
     var human = m.human, played = dt;
     var humanInHorde = !human.out && !human.inDuel && !m.final;
     if (humanInHorde) {
@@ -213,6 +216,18 @@
       tell(m, '¡Quedan dos! ' + left[0].name + ' y ' + left[1].name + ' se baten a duelo hasta el final', '#ffd27a');
     }
   };
+
+  // Just you against the city: the match ends when your last life is gone.
+  function updateSolo(m, dt, input) {
+    var me = m.human, g = me.game;
+    if (me.bot) playBot(me, dt);
+    else {
+      if (g.choice) return;
+      L.update(g, dt, input);
+    }
+    m.time = g.time;
+    if (g.over) { me.out = true; me.place = 1; m.over = true; }
+  }
 
   // ---- Aguante: after winning, keep fighting your own horde for a record ----
   // Only the winner can; the horde picks up where it was, the clock keeps climbing and you get one life.

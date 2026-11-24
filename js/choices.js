@@ -32,7 +32,12 @@
           tag: 'Nivel ' + (a.level + 1), desc: deltaText(a.def.perLevel[a.level - 1]) });
       }
     });
-    if (p.abilities.length < L.ABILITY_SLOTS) {
+    if (p.gun && p.gun.level < L.data.gunScaling.maxUpgrade) {
+      out.push({ type: 'upGun', id: p.gun.def.id, name: 'Mejorar ' + p.gun.def.name, color: p.gun.def.color,
+        tag: 'Arma, nivel ' + (p.gun.level + 2), desc: '+30% de daño y +15% de balas por cargador.' });
+      if (g.gunsOnly) out.push(out[out.length - 1]); // with only a gun it comes up twice as often
+    }
+    if (p.abilities.length < L.ABILITY_SLOTS && !g.gunsOnly) {
       L.data.abilities.forEach(function (def) {
         if (!def.fused && !L.findById(p.abilities, def.id)) {
           out.push({ type: 'newAbility', id: def.id, name: def.name, color: def.color, tag: 'Habilidad nueva', desc: def.desc });
@@ -58,7 +63,10 @@
   L.makeChoices = function (g) {
     var count = 3 + (g.player.stats.extraChoices || 0);
     var picked = L.fusionsReady(g).slice(0, count), pool = candidates(g);
-    while (picked.length < count && pool.length) picked.push(pool.splice(g.rng.int(pool.length), 1)[0]);
+    while (picked.length < count && pool.length) {
+      var o = pool.splice(g.rng.int(pool.length), 1)[0];
+      if (picked.indexOf(o) < 0) picked.push(o);
+    }
     if (!picked.length) picked.push({ type: 'heal', id: 'heal', name: 'Curación', color: '#ff6b81', tag: 'Todo al máximo', desc: 'Recuperás 30 de vida.' });
     return picked;
   };
@@ -78,7 +86,8 @@
       g.choice = g.pendingLevels > 0 ? L.makeChoices(g) : null;
       return true;
     }
-    if (o.type === 'newAbility') L.addAbility(g, o.id);
+    if (o.type === 'upGun') { p.gun.level++; p.gun.ammo = L.gunMag(p.gun); }
+    else if (o.type === 'newAbility') L.addAbility(g, o.id);
     else if (o.type === 'upAbility') L.levelUpAbility(g, o.id);
     else if (o.type === 'newPassive') L.addPassive(g, o.id);
     else if (o.type === 'upPassive') L.levelUpPassive(g, o.id);

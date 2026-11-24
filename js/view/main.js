@@ -30,10 +30,24 @@
     begin(characterId, seed, L.cityHome(seed), null);
   }
 
+  // Movement plus the gun: aim at the mouse (the camera keeps you in the middle), hold the button to shoot.
+  function playerInput() {
+    var v = L.input.vector(), g = game(), mouse = L.input.mouse;
+    if (g && g.player.gun) {
+      v.aimX = g.player.x - canvas.width / 2 + mouse.x;
+      v.aimY = g.player.y - canvas.height / 2 + mouse.y;
+      v.fire = mouse.down;
+      v.reload = L.input.key('KeyR');
+    }
+    return v;
+  }
+
   function begin(characterId, seed, city, msg) {
     L.fx.clear();
+    var mode = L.data.mode || {};
     match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta'),
-      pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }), city: city });
+      pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }), city: city,
+      solo: mode.solo, gunsOnly: mode.gunsOnly, gun: mode.startGun });
     var g = game(), sp = city.start || { x: city.size / 2, y: city.size / 2 }, fr = L.cityFree(city, sp.x, sp.y);
     g.player.x = fr.x; g.player.y = fr.y;
     if (msg) L.toast(g, msg, '#ff9a7a');
@@ -62,7 +76,7 @@
       return;
     }
     var g = game();
-    if (g.choice || match.final) return;
+    if (g.choice || match.final || !g.player.ulti) return;
     // The camera keeps you in the middle of the screen.
     L.castUlti(g, g.player.x - canvas.width / 2 + mouse.x, g.player.y - canvas.height / 2 + mouse.y);
   }
@@ -85,7 +99,7 @@
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
-    else if (e.code === 'KeyR' && match && !paused) send();
+    else if (e.code === 'KeyR' && match && !paused && !match.solo) send();
     else if (e.code === 'Space' && match && !paused && !match.over) { e.preventDefault(); ulti(); }
     else if (e.code === 'KeyM') L.ui.flash(L.sound.toggle() ? 'Sonido apagado (M)' : 'Sonido prendido (M)');
   });
@@ -155,7 +169,7 @@
     gamepad();
     L.frameDt = paused ? 0 : dt;
     if (match && !paused) {
-      L.updateMatch(match, dt, L.input.vector());
+      L.updateMatch(match, dt, playerInput());
       L.fx.consume(game().events);
       if (match.duel && match.duel.events) L.fx.consume(match.duel.events);
       matchSounds();

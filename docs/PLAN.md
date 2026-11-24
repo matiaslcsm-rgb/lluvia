@@ -487,3 +487,24 @@ Etapas (cada una se puede jugar al terminarla):
     - el campo de flujo cubre solo un cuadrado de 120 celdas alrededor tuyo (unos 190 m) y tarda 0,5 ms;
     - los cofres aparecen alrededor tuyo, entre 50 y 180 m.
   - Las velocidades no se tocaron: la ciudad es más grande para el personaje, pero el juego se siente igual.
+- **2026-11-24: un jugador, zombis y una Glock** (decisión del usuario: "por ahora un solo jugador, zombies y una
+  sola arma, una Glock"). Todo se maneja desde `L.data.mode` en `data/guns.js`.
+  - Jugás solo: no hay rivales, duelos, apuestas ni envíos. La partida termina cuando perdés la última vida.
+  - La Glock 17 tiene 17 balas: apuntás con el mouse, mantenés el clic para disparar, y recarga con R o sola
+    cuando se vacía. En pantalla hay una mira y el contador de balas.
+  - Al subir de nivel no hay habilidades ni ulti: salen pasivas y "Mejorar Glock" (+30% daño, +15% balas).
+  - Las balas chocan contra las paredes de la ciudad. No llueve más.
+  - Los bichos son zombis: hombros, brazos estirados hacia vos y cabeza.
+    - Nombres: Zombi, Corredor, Vomitador, Hinchado, Arrastrado, Explosivo, Sprinter, Mole y Atrapador.
+    - Jefes: Gigante podrido, Reina de la Colmena, Carnicero, Hidra de carne y Primer Mutado.
+    - Campeones: Verdugo, Llamador y Aplastador.
+  - La horda de este modo crece más despacio, a lo Risk of Rain:
+    - el reloj de dificultad va a la mitad;
+    - vida ×0,65, daño ×0,5 y la mitad de bichos;
+    - primer jefe a las 5:00.
+  - Zombis siempre fuera de pantalla: antes, si un zombi nacía dentro de una manzana, lo corría a la calle más
+    cercana, a veces al lado tuyo.
+  - `node tools/solo.js 8 25`: un bot juega el modo solo en San Miguel. Se le enseñó a esquivar paredes.
+    - Antes del ajuste duraba 3 minutos; ahora la mediana es 9:32.
+    - Alguien que apunta con el mouse tendría que durar más; falta medirlo jugando.
+  - El juego de 8 jugadores con habilidades sigue intacto (el banco de 30 partidas lo usa).

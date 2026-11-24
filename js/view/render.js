@@ -85,6 +85,27 @@
   function hearts(n) { var s = ''; for (var i = 0; i < n; i++) s += '♥'; return s; }
 
   // Everyone's position: name, lives and level. Highlights you; those out show their place.
+  // Bottom right: the gun, bullets left and the reload bar. Plus the crosshair at the mouse.
+  function gunHud(ctx, g, W, H) {
+    var gun = g.player.gun, mag = L.gunMag(gun), x = W - 20, y = H - 26;
+    ctx.textAlign = 'right';
+    ctx.font = '700 22px system-ui, sans-serif';
+    ctx.fillStyle = gun.reload > 0 ? '#9a9db0' : gun.ammo <= mag * 0.25 ? '#ff9a7a' : '#ffe9a8';
+    ctx.fillText(gun.reload > 0 ? 'Recargando...' : gun.ammo + ' / ' + mag, x, y);
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillStyle = '#c4c6d2';
+    ctx.fillText(gun.def.name + (gun.level ? ' +' + gun.level : '') + ' · R recarga', x, y - 26);
+    if (gun.reload > 0) bar(ctx, x - 160, y + 8, 160, 5, 1 - gun.reload / (gun.def.reload * Math.max(0.4, g.player.stats.cooldownMul)), '#ffe9a8');
+    var ms = L.input && L.input.mouse;
+    if (ms && !L.ui.current) {
+      ctx.strokeStyle = 'rgba(255,233,168,0.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(ms.x, ms.y, 9, 0, Math.PI * 2);
+      ctx.moveTo(ms.x - 15, ms.y); ctx.lineTo(ms.x - 5, ms.y); ctx.moveTo(ms.x + 5, ms.y); ctx.lineTo(ms.x + 15, ms.y);
+      ctx.moveTo(ms.x, ms.y - 15); ctx.lineTo(ms.x, ms.y - 5); ctx.moveTo(ms.x, ms.y + 5); ctx.lineTo(ms.x, ms.y + 15);
+      ctx.stroke();
+    }
+  }
+
   function standings(ctx, m, W) {
     var rows = L.standings(m), x = W - 16, y = 84;
     ctx.fillStyle = 'rgba(14, 15, 20, 0.7)';
@@ -406,7 +427,7 @@
     }
     L.fx.draw(ctx, dt);
     ctx.restore();
-    L.drawRain(ctx, W, H, dt, !!g.surge);
+    if (!g.city) L.drawRain(ctx, W, H, dt, !!g.surge);
 
     if (g.respawn > 0) {
       ctx.fillStyle = 'rgba(10, 11, 15, 0.55)';
@@ -458,7 +479,8 @@
     ctx.fillStyle = '#ffd27a';
     ctx.fillText('Oro: ' + g.gold, W - 16, 58);
 
-    if (m) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
+    if (m && !m.solo) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
+    if (p.gun) gunHud(ctx, g, W, H);
 
     // Boss health bar.
     if (g.boss && !g.boss.dead) {
@@ -486,7 +508,7 @@
     });
 
     ultiBadge(ctx, p, W, H, H - 16);
-    sendBadge(ctx, m, W, H - 44);
+    if (!m.solo) sendBadge(ctx, m, W, H - 44);
 
     // The touch stick, where your finger is.
     var st = L.input && L.input.stick && L.input.stick();

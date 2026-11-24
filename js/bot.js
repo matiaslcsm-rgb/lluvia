@@ -56,7 +56,19 @@
       var na = bot.rng() * TAU;
       fx += Math.cos(na) * bot.noise; fy += Math.sin(na) * bot.noise;
     }
-    return { x: fx, y: fy };
+    if (g.city && (fx || fy)) {
+      // In the streets: of 16 directions, take the open one closest to where it wants to go.
+      var want = Math.atan2(fy, fx), bestA = want, bestS = -Infinity, look = 60;
+      for (var k = 0; k < 16; k++) {
+        var a2 = want + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * TAU / 16;
+        if (!L.cityFits(g.city, p.x + Math.cos(a2) * look, p.y + Math.sin(a2) * look, L.data.city.body)) continue;
+        var score = Math.cos(a2 - want);
+        if (score > bestS) { bestS = score; bestA = a2; }
+      }
+      var len = Math.sqrt(fx * fx + fy * fy);
+      fx = Math.cos(bestA) * len; fy = Math.sin(bestA) * len;
+    }
+    return { x: fx, y: fy, autoAim: true };
   };
 
   // Ulti in the horde: when a crowd (or the boss) is close, aimed at the middle of it.

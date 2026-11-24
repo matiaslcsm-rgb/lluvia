@@ -32,7 +32,7 @@
   };
 
   // The difficulty clock: one step every minute, the same for everyone. Starts at 1.
-  L.difficulty = function (g) { return 1 + Math.floor(g.time / 60); };
+  L.difficulty = function (g) { return 1 + Math.floor(g.time * (g.pace || 1) / 60); };
 
   // opts: { seed, characterId, viewW, viewH, noSpawn, lives, listen } — listen: keep events for screen and sound
   L.createGame = function (opts) {
@@ -85,10 +85,20 @@
       g.spawnMul *= fc.spawnMul || 1; g.chestMul *= fc.chestMul || 1;
       g.toasts.push({ text: 'Pronóstico: ' + fc.name + '. ' + fc.desc, color: fc.color, ttl: 8 });
     }
-    L.addAbility(g, ch.start);
-    var ulti = L.findUlti(ch.ulti);
-    g.player.ulti = { def: ulti, cd: ulti.cooldown / 2 }; // the first one is ready halfway through its cooldown
+    g.gunsOnly = !!opts.gunsOnly;
+    if (g.gunsOnly) {
+      // Only a gun: no automatic ability, no ulti, and a horde that builds up slowly (data/guns.js, L.data.mode).
+      g.player.ulti = null;
+      var mh = L.data.mode.horde;
+      g.pace = mh.pace; g.hordeHp *= mh.hpMul; g.hordeDps *= mh.dpsMul; g.spawnMul *= mh.spawnMul;
+      g.nextBoss = mh.bossFirst; g.nextMini = mh.miniFirst; g.nextWave = mh.waveFirst;
+    } else {
+      L.addAbility(g, ch.start);
+      var ulti = L.findUlti(ch.ulti);
+      g.player.ulti = { def: ulti, cd: ulti.cooldown / 2 }; // the first one is ready halfway through its cooldown
+    }
     recalcStats(g);
+    if (opts.gun) L.giveGun(g, opts.gun);
     g.player.hp = g.player.stats.maxHp;
     if (g.spawning) L.fillChests(g);
     return g;
@@ -225,6 +235,7 @@
     updateEnemyShots(g, dt);
     if (p.hp <= 0) { loseLife(g); return; }
     updateAbilities(g, dt);
+    if (p.gun) L.updateGun(g, dt, input);
     updateProjectiles(g, dt);
     removeDead(g);
     updateGems(g, dt);
@@ -268,7 +279,18 @@
   function ringPoint(g) {
     var a = g.rng() * TAU;
     var ring = Math.sqrt(g.view.w * g.view.w + g.view.h * g.view.h) / 2 + 40;
-    return { x: g.player.x + Math.cos(a) * ring, y: g.player.y + Math.sin(a) * ring };
+    var pt = { x: g.player.x + Math.cos(a) * ring, y: g.player.y + Math.sin(a) * ring };
+    if (g.city) {
+      // In a city the point is moved onto a street; try a few angles until that street is still off screen.
+      for (var k = 0; k < 8; k++) {
+        var fr = L.cityWalkable(g.city, pt.x, pt.y) ? pt : L.cityFree(g.city, pt.x, pt.y);
+        var dx = fr.x - g.player.x, dy = fr.y - g.player.y;
+        if (dx * dx + dy * dy > ring * ring * 0.7) return fr;
+        a = g.rng() * TAU; ring *= 1.1;
+        pt = { x: g.player.x + Math.cos(a) * ring, y: g.player.y + Math.sin(a) * ring };
+      }
+    }
+    return pt;
   }
 
   function spawn(g, dt) {
@@ -343,7 +365,7 @@
     var e = L.spawnEnemy(g, h.minis[(g.miniCount - 1) % h.minis.length], pt.x, pt.y);
     if (!g.boss || g.boss.dead) g.boss = e;
     L.emit(g, 'boss', pt.x, pt.y);
-    L.toast(g, '¡El Dios Loco manda a su campeón: ' + e.type.article + ' ' + e.type.name + '!', '#ff8a5a');
+    L.toast(g, '¡Cuidado! Se acerca ' + e.type.article + ' ' + e.type.name + '.', '#ff8a5a');
   }
   L.spawnMini = spawnMini;
 
@@ -781,6 +803,7 @@
         if (pr.y < 0 || pr.y > g.arena) { pr.vy = -pr.vy; pr.y = L.clamp(pr.y, 0, g.arena); pr.hit.length = 0; }
       }
       if (pr.life <= 0 || pr.x < 0 || pr.y < 0 || pr.x > g.arena || pr.y > g.arena) pr.dead = true;
+      else if (g.city && !L.cityWalkable(g.city, pr.x, pr.y)) pr.dead = true; // walls stop bullets
       if (!pr.dead) {
         q.length = 0;
         g.grid.query(pr.x, pr.y, pr.r + g.maxR, q);
