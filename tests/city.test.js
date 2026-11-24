@@ -53,3 +53,16 @@ test('en la ciudad no atravesás paredes y los bichos te buscan por las calles',
   var ch = L.dropChest(g, 5, 5, 'normal');
   assert.ok(L.cityWalkable(c, ch.x, ch.y), 'el cofre cayó en una pared');
 });
+
+test('San Miguel viene adentro del juego: arranca en la plaza y se camina', function () {
+  var L = Lluvia, c = L.cityHome(1);
+  assert.strictEqual(c.name, 'San Miguel');
+  assert.ok(c.roads.length > 1000, 'pocas calles: ' + c.roads.length);
+  var fr = L.cityFree(c, c.start.x, c.start.y);
+  assert.ok(Math.hypot(fr.x - c.start.x, fr.y - c.start.y) < 120, 'la plaza quedó lejos de una calle');
+  var g = L.createGame({ seed: 2, characterId: 'brasa', city: c });
+  g.player.x = fr.x; g.player.y = fr.y;
+  for (var i = 0; i < 120; i++) L.update(g, 1 / 30, { x: 0.5, y: -1 });
+  assert.ok(L.cityWalkable(c, g.player.x, g.player.y));
+  assert.ok(g.enemies.every(function (e) { return L.cityWalkable(c, e.x, e.y); }), 'un bicho en una pared');
+});

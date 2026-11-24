@@ -66,6 +66,7 @@
     g.chests.forEach(function (ch) { if (ch.kind === 'normal') normal++; });
     for (var tries = 0; normal < c.count && tries < 50; tries++) {
       var x = 100 + g.rng() * (g.arena - 200), y = 100 + g.rng() * (g.arena - 200);
+      if (g.city) { var ca = g.rng() * Math.PI * 2, cd = 500 + g.rng() * 1300; x = p.x + Math.cos(ca) * cd; y = p.y + Math.sin(ca) * cd; }
       if ((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y) < 300 * 300) continue;
       L.dropChest(g, x, y, 'normal');
       normal++;

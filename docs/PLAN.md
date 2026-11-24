@@ -105,12 +105,25 @@ Cómo se juega (estilo Risk of Rain):
 - Jefes repartidos por la ciudad de forma procedural.
 - Ítems, poderes y todo lo que ya existe, más muchos desbloqueos nuevos.
 
+Más decisiones del usuario (2026-11-23):
+- **Es para PC** (teclado y mouse).
+- **En San Miguel, la ciudad entera** (unos 4,75 × 4,75 km), que viene adentro del juego y anda sin internet. El
+  mapa del mundo para elegir otro lugar queda armado, pero fuera del menú.
+- **Tipo SAS: Zombie Assault:** te movés con WASD y apuntás y disparás con el mouse. Hay armas (pistola,
+  escopeta, ametralladora, lanzallamas...), recarga, granadas y armadura, que se compran o se mejoran.
+  - **(decisión)** Elegido: armas + poderes. Las habilidades que pegan solas quedan como poderes que se suben de
+    nivel, y los ítems de cofre siguen sumando.
+- **Los personajes se conservan:** Brasa, Roca, Filo y los demás se convierten al juego nuevo.
+- **El juego de la lluvia se guarda** tal como estaba: marca `lluvia-clasico` en git.
+
 Etapas (cada una se puede jugar al terminarla):
 33. **La ciudad:** elegir el punto en el mapa, bajar las calles y edificios de OpenStreetMap (o inventar una ciudad
     sin internet), dibujarla desde arriba y caminar por las calles chocando con los edificios. Los bichos te
     persiguen por las calles, no a través de las paredes. *(hecho)*
 34. **Mundo abierto con reloj:** la horda arranca de a poco y crece con el reloj; cofres, ítems y puntos con
     historia repartidos por calles, parques y plazas.
+34b. **Armas tipo SAS:** apuntar y disparar con el mouse; cada personaje arranca con su arma; recarga; armería para
+    comprar y mejorar armas; granadas. Las habilidades pasan a ser poderes.
 35. **Edificios por dentro:** puertas que llevan a interiores simulados (casa, negocio, galpón) con cofres y algún
     bicho.
 36. **Jefes por la ciudad:** jefes procedurales que esperan en lugares marcados (plazas, parques) y monstruos
@@ -457,3 +470,20 @@ Etapas (cada una se puede jugar al terminarla):
   - Se ve bien en pantalla.
   - El navegador interno de la app no puede salir a internet, así que la descarga desde el juego no se probó
     ahí. Hay que mirar si la versión de claude.ai lo permite; en la página de GitHub tendría que andar.
+- **2026-11-23: San Miguel entera, adentro del juego.**
+  - `tools/bake-city.js` toma lo que se bajó de OpenStreetMap y lo guarda en `data/city-sanmiguel.js` (286 KB):
+    1842 calles, 169 plazas y parques, y 1702 edificios, en un cuadrado de 4,75 km.
+  - Se arranca directo en la plaza principal, sobre la Avenida Ricardo Balbín. Arma la ciudad en 0,08 s.
+  - El campo de flujo solo se extiende 300 celdas alrededor tuyo (2,4 km): con la ciudad entera no hace falta
+    más, y así tarda 6 ms.
+  - Escala: 2,5 píxeles por metro.
+  - El juego de la lluvia quedó guardado con la marca `lluvia-clasico`.
+- **2026-11-23: todo a escala.** El usuario pidió que el personaje esté a escala con la ciudad. Antes medía como
+  11 m.
+  - Ahora la ciudad va a 10 píxeles por metro: una calle común (10 m) mide 100 px, unos 3-4 personajes, y en
+    pantalla se ve una cuadra y media, como en el SAS. San Miguel mide 47.500 px de lado.
+  - Para que siga liviana:
+    - la grilla de paso es de 1,6 m (8,8 millones de celdas, 1 byte cada una) y se arma en 0,25 s;
+    - el campo de flujo cubre solo un cuadrado de 120 celdas alrededor tuyo (unos 190 m) y tarda 0,5 ms;
+    - los cofres aparecen alrededor tuyo, entre 50 y 180 m.
+  - Las velocidades no se tocaron: la ciudad es más grande para el personaje, pero el juego se siente igual.

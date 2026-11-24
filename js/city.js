@@ -8,9 +8,9 @@
 
   L.data = L.data || {};
   L.data.city = {
-    meters: 1000,        // side of the playable square, in meters
-    scale: 3,            // pixels per meter (a 10 m street is 30 px)
-    cell: 8,             // walk grid cell, in pixels
+    meters: 1000,        // side of the playable square when downloading a place, in meters
+    scale: 10,           // pixels per meter: to scale with the characters (a 10 m street is 100 px, ~3-4 people)
+    cell: 16,            // walk grid cell, in pixels (1.6 m)
     // Street width in meters by OpenStreetMap highway type. Types not listed are left out (footpaths, stairs...).
     widths: { motorway: 22, trunk: 20, primary: 16, secondary: 14, tertiary: 12, residential: 10, unclassified: 10,
       living_street: 9, pedestrian: 9, service: 7, motorway_link: 12, trunk_link: 12, primary_link: 12, secondary_link: 10, tertiary_link: 10 },
@@ -18,7 +18,9 @@
     open: { leisure: ['park', 'garden', 'playground', 'pitch', 'common', 'recreation_ground'], place: ['square'],
       landuse: ['grass', 'recreation_ground', 'village_green'], highway: ['pedestrian'] },
     flowEvery: 0.4,      // seconds between flow field updates
-    body: 8              // radius used against walls (smaller than the drawing, which also covers the sidewalk)
+    flowRange: 120,      // the flow field covers a square this many cells around you (a whole city is too big)
+    home: 'sanmiguel',   // the city you start in (data/city-*.js)
+    body: 9              // radius used against walls (smaller than the drawing, which also covers the sidewalk)
   };
 
   function makeCity(size) {
@@ -83,8 +85,8 @@
   };
 
   // osm: the JSON Overpass answers. Returns a city, or null if there are almost no streets there.
-  L.cityFromOSM = function (osm, lat, lon, name) {
-    var C = L.data.city, size = C.meters * C.scale, city = makeCity(size);
+  L.cityFromOSM = function (osm, lat, lon, name, meters) {
+    var C = L.data.city, size = (meters || C.meters) * C.scale, city = makeCity(size);
     var kx = 111320 * Math.cos(lat * Math.PI / 180) * C.scale, ky = 110540 * C.scale;
     var project = function (g) { return [(g.lon - lon) * kx + size / 2, (lat - g.lat) * ky + size / 2]; };
     var isOpen = function (tags) {
@@ -104,6 +106,30 @@
     city.real = true;
     keepLargestArea(city);
     return city;
+  };
+
+  // ---- Baked into the game (data/city-*.js, made with tools/bake-city.js): no internet needed ----
+  L.cityFromBaked = function (data) {
+    var C = L.data.city, s = C.scale, city = makeCity(data.meters * s);
+    var pts = function (f) { var out = []; for (var i = 0; i + 1 < f.length; i += 2) out.push([f[i] * s, f[i + 1] * s]); return out; };
+    data.parks.forEach(function (pk) { var p = pts(pk[2]); paintPolygon(city, p); city.parks.push({ pts: p, kind: pk[0], name: pk[1] }); });
+    data.roads.forEach(function (r) {
+      var w = C.widths[r[0]];
+      if (r[0] === 'pedestrian' || r[0] === 'footway') w = w || 6; // walkways inside plazas join them to the streets
+      if (w) addRoad(city, pts(r[2]), w, r[0], r[1]);
+    });
+    city.buildings = data.buildings.map(pts);
+    city.name = data.name;
+    city.real = true;
+    city.start = { x: data.start[0] * s, y: data.start[1] * s };
+    keepLargestArea(city);
+    return city;
+  };
+
+  // The home city if it is baked in, else an invented one.
+  L.cityHome = function (seed) {
+    var d = L.data.cities && L.data.cities[L.data.city.home];
+    return d ? L.cityFromBaked(d) : L.cityProcedural(seed);
   };
 
   // ---- Invented city (no internet, or a place without streets) ----
@@ -150,21 +176,29 @@
   // Streets that don't connect to the rest (a dead end cut by the square's edge) become walls, so nothing spawns
   // where it can never reach you.
   function keepLargestArea(city) {
-    var n = city.walk.length, label = new Int32Array(n), best = 0, bestSize = 0, id = 0, stack = [];
-    for (var s = 0; s < n; s++) {
-      if (!city.walk[s] || label[s]) continue;
-      id++; var size = 0; stack.push(s); label[s] = id;
+    var n = city.walk.length, seen = new Uint8Array(n), best = -1, bestSize = 0;
+    var flood = function (s, mark) {
+      var stack = [s], size = 0, cols = city.cols;
+      mark[s] = 1;
       while (stack.length) {
         var c = stack.pop(); size++;
-        var cx = c % city.cols, cy = (c - cx) / city.cols;
-        if (cx > 0 && city.walk[c - 1] && !label[c - 1]) { label[c - 1] = id; stack.push(c - 1); }
-        if (cx < city.cols - 1 && city.walk[c + 1] && !label[c + 1]) { label[c + 1] = id; stack.push(c + 1); }
-        if (cy > 0 && city.walk[c - city.cols] && !label[c - city.cols]) { label[c - city.cols] = id; stack.push(c - city.cols); }
-        if (cy < city.rows - 1 && city.walk[c + city.cols] && !label[c + city.cols]) { label[c + city.cols] = id; stack.push(c + city.cols); }
+        var cx = c % cols;
+        if (cx > 0 && city.walk[c - 1] && !mark[c - 1]) { mark[c - 1] = 1; stack.push(c - 1); }
+        if (cx < cols - 1 && city.walk[c + 1] && !mark[c + 1]) { mark[c + 1] = 1; stack.push(c + 1); }
+        if (c >= cols && city.walk[c - cols] && !mark[c - cols]) { mark[c - cols] = 1; stack.push(c - cols); }
+        if (c + cols < n && city.walk[c + cols] && !mark[c + cols]) { mark[c + cols] = 1; stack.push(c + cols); }
       }
-      if (size > bestSize) { bestSize = size; best = id; }
+      return size;
+    };
+    for (var s = 0; s < n; s++) {
+      if (!city.walk[s] || seen[s]) continue;
+      var size = flood(s, seen);
+      if (size > bestSize) { bestSize = size; best = s; }
     }
-    for (var k = 0; k < n; k++) if (label[k] !== best) city.walk[k] = 0;
+    if (best < 0) return;
+    var keep = new Uint8Array(n);
+    flood(best, keep);
+    for (var k = 0; k < n; k++) if (!keep[k]) city.walk[k] = 0;
   }
 
   // ---- Using it ----
@@ -206,39 +240,51 @@
 
   // The nearest walkable cell center to (x, y), searching outward in rings.
   L.cityFree = function (city, x, y) {
+    return free(city, x, y, true, 400) || free(city, x, y, false, Math.max(city.cols, city.rows)) || { x: x, y: y };
+  };
+
+  // needFit: only spots where a body fits (the middle of a street); searches up to maxRing cells away.
+  function free(city, x, y, needFit, maxRing) {
     var c = city.cell, cx0 = L.clamp(Math.floor(x / c), 0, city.cols - 1), cy0 = L.clamp(Math.floor(y / c), 0, city.rows - 1);
-    for (var ring = 0; ring < Math.max(city.cols, city.rows); ring++) {
+    for (var ring = 0; ring < maxRing; ring++) {
       for (var dy = -ring; dy <= ring; dy++) {
         for (var dx = -ring; dx <= ring; dx++) {
           if (Math.abs(dx) !== ring && Math.abs(dy) !== ring) continue;
           var cx = cx0 + dx, cy = cy0 + dy;
           if (cx < 0 || cy < 0 || cx >= city.cols || cy >= city.rows || !city.walk[cy * city.cols + cx]) continue;
-          // Prefer a spot where a body fits (the middle of the street); far away, any walkable cell.
-          if (ring < 12 && !fits(city, (cx + 0.5) * c, (cy + 0.5) * c, L.data.city.body)) continue;
+          if (needFit && !fits(city, (cx + 0.5) * c, (cy + 0.5) * c, L.data.city.body)) continue;
           return { x: (cx + 0.5) * c, y: (cy + 0.5) * c };
         }
       }
     }
-    return { x: x, y: y };
-  };
+    return null;
+  }
 
   // Flow field: steps from every walkable cell to the target cell (a breadth-first search over the grid).
+  // It only covers a square window of flowRange cells around the target (you), so a whole city stays cheap.
   L.cityFlow = function (city, tx, ty) {
-    var cols = city.cols, n = city.walk.length;
-    var t = L.clamp(Math.floor(ty / city.cell), 0, city.rows - 1) * cols + L.clamp(Math.floor(tx / city.cell), 0, cols - 1);
-    if (!city.flow) { city.flow = new Uint16Array(n); city._queue = new Int32Array(n); }
-    var flow = city.flow, q = city._queue, head = 0, tail = 0;
+    var R = L.data.city.flowRange, W = 2 * R + 1, cols = city.cols;
+    var tcx = L.clamp(Math.floor(tx / city.cell), 0, cols - 1), tcy = L.clamp(Math.floor(ty / city.cell), 0, city.rows - 1);
+    if (!city.flow) { city.flow = new Uint16Array(W * W); city._queue = new Int32Array(W * W); city.flowW = W; }
+    var flow = city.flow, q = city._queue, head = 0, tail = 0, ox = tcx - R, oy = tcy - R;
+    city.flowX = ox; city.flowY = oy;
     flow.fill(65535);
-    flow[t] = 0; q[tail++] = t;
+    flow[R * W + R] = 0; q[tail++] = R * W + R;
     while (head < tail) {
-      var c = q[head++], cx = c % cols, d = flow[c] + 1;
-      if (cx > 0 && city.walk[c - 1] && flow[c - 1] > d) { flow[c - 1] = d; q[tail++] = c - 1; }
-      if (cx < cols - 1 && city.walk[c + 1] && flow[c + 1] > d) { flow[c + 1] = d; q[tail++] = c + 1; }
-      if (c >= cols && city.walk[c - cols] && flow[c - cols] > d) { flow[c - cols] = d; q[tail++] = c - cols; }
-      if (c + cols < n && city.walk[c + cols] && flow[c + cols] > d) { flow[c + cols] = d; q[tail++] = c + cols; }
+      var c = q[head++], lx = c % W, ly = (c - lx) / W, d = flow[c] + 1, gx = ox + lx, gy = oy + ly, gi = gy * cols + gx;
+      if (lx > 0 && gx > 0 && city.walk[gi - 1] && flow[c - 1] > d) { flow[c - 1] = d; q[tail++] = c - 1; }
+      if (lx < W - 1 && gx < cols - 1 && city.walk[gi + 1] && flow[c + 1] > d) { flow[c + 1] = d; q[tail++] = c + 1; }
+      if (ly > 0 && gy > 0 && city.walk[gi - cols] && flow[c - W] > d) { flow[c - W] = d; q[tail++] = c - W; }
+      if (ly < W - 1 && gy < city.rows - 1 && city.walk[gi + cols] && flow[c + W] > d) { flow[c + W] = d; q[tail++] = c + W; }
     }
-    city.flowCell = t;
+    city.flowCell = tcy * cols + tcx;
   };
+
+  // Steps to you from cell (cx, cy); 65535 if it's outside the window or there's no way.
+  function flowAt(city, cx, cy) {
+    var lx = cx - city.flowX, ly = cy - city.flowY, W = city.flowW;
+    return lx < 0 || ly < 0 || lx >= W || ly >= W ? 65535 : city.flow[ly * W + lx];
+  }
 
   // Direction (unit vector in `out`) to walk from (x, y) toward the flow target along the streets.
   // Returns false when there is no way (then the caller walks straight).
@@ -246,8 +292,8 @@
     if (!city.flow) return false;
     var c = city.cell, cols = city.cols, cx = Math.floor(x / c), cy = Math.floor(y / c);
     if (cx < 0 || cy < 0 || cx >= cols || cy >= city.rows) return false;
-    var here = cy * cols + cx, best = city.flow[here], bx = 0, by = 0;
-    if (best === 0) return false;
+    var best = flowAt(city, cx, cy), bx = 0, by = 0;
+    if (best === 0 || best === 65535) return false;
     for (var dy = -1; dy <= 1; dy++) {
       for (var dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
@@ -255,7 +301,7 @@
         if (nx < 0 || ny < 0 || nx >= cols || ny >= city.rows) continue;
         // Diagonals only when both sides are open, so creatures don't cut wall corners.
         if (dx && dy && (!city.walk[cy * cols + nx] || !city.walk[ny * cols + cx])) continue;
-        var f = city.flow[ny * cols + nx];
+        var f = flowAt(city, nx, ny);
         if (f < best) { best = f; bx = dx; by = dy; }
       }
     }

@@ -36,7 +36,7 @@
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     city.roads.forEach(function (r) {
       if (!on(r.box, r.w)) return;
-      ctx.strokeStyle = '#5b574f'; ctx.lineWidth = r.w + 6; path(ctx, r.pts); ctx.stroke();
+      ctx.strokeStyle = '#5b574f'; ctx.lineWidth = r.w + 5 * L.data.city.scale; path(ctx, r.pts); ctx.stroke();
     });
     city.parks.forEach(function (p) {
       if (!on(p.box, 0)) return;
@@ -46,8 +46,8 @@
     city.roads.forEach(function (r) {
       if (!on(r.box, r.w)) return;
       ctx.strokeStyle = ROAD[r.kind] || '#3a3d45'; ctx.lineWidth = r.w; path(ctx, r.pts); ctx.stroke();
-      if (r.w >= 36) { // center line on the big avenues
-        ctx.strokeStyle = 'rgba(255,214,90,0.35)'; ctx.lineWidth = 2; ctx.setLineDash([14, 16]); path(ctx, r.pts); ctx.stroke(); ctx.setLineDash([]);
+      if (r.w >= 12 * L.data.city.scale) { // center line on the big avenues
+        ctx.strokeStyle = 'rgba(255,214,90,0.35)'; ctx.lineWidth = 3; ctx.setLineDash([30, 30]); path(ctx, r.pts); ctx.stroke(); ctx.setLineDash([]);
       }
     });
     // Buildings: rooftops a little lighter than the block, with an edge.
@@ -63,9 +63,9 @@
 
   // Street names under you, for the HUD.
   L.cityStreetAt = function (city, x, y) {
-    var best = null, bd = 60 * 60;
+    var best = null, bd = 200 * 200;
     city.roads.forEach(function (r) {
-      if (!r.name || !r.box || x < r.box[0] - 60 || x > r.box[2] + 60 || y < r.box[1] - 60 || y > r.box[3] + 60) return;
+      if (!r.name || !r.box || x < r.box[0] - 200 || x > r.box[2] + 200 || y < r.box[1] - 200 || y > r.box[3] + 200) return;
       for (var i = 1; i < r.pts.length; i++) {
         var a = r.pts[i - 1], b = r.pts[i], dx = b[0] - a[0], dy = b[1] - a[1], len2 = dx * dx + dy * dy || 1;
         var k = L.clamp(((x - a[0]) * dx + (y - a[1]) * dy) / len2, 0, 1), qx = a[0] + dx * k - x, qy = a[1] + dy * k - y;
