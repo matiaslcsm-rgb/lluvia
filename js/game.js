@@ -384,6 +384,22 @@
     g.maxR = maxR;
   }
 
+  // Half health: the boss changes for the rest of the fight (faster, more shots, calls help).
+  function enterPhase(g, e) {
+    var ph = e.type.phase;
+    e.phased = true;
+    if (ph.speed) e.speed *= ph.speed;
+    if (ph.summon) {
+      for (var i = 0; i < ph.summon.count; i++) {
+        var a = i / ph.summon.count * Math.PI * 2;
+        L.spawnEnemy(g, ph.summon.type, e.x + Math.cos(a) * (e.r + 30), e.y + Math.sin(a) * (e.r + 30));
+      }
+    }
+    L.emit(g, 'boss', e.x, e.y);
+    var art = e.type.article || '';
+    L.toast(g, '¡' + art.charAt(0).toUpperCase() + art.slice(1) + ' ' + e.type.name + ' ' + ph.text + '!', '#ff5a5a');
+  }
+
   function moveEnemies(g, dt) {
     var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0;
     for (var i = 0; i < g.enemies.length; i++) {
@@ -396,6 +412,8 @@
       if (e.stun > 0) e.stun -= dt;
       if (e.slow > 0) e.slow -= dt;
       var t = e.type;
+      if (t.phase && !e.phased && e.hp < e.maxHp * t.phase.at) enterPhase(g, e);
+      var ph = e.phased ? t.phase : null;
       if (t.pull && e.stun <= 0 && d < t.pull.radius) {
         // Stronger the closer you are; added up over every Sumidero and capped below.
         var f = t.pull.strength * (1 - d / t.pull.radius);
@@ -408,10 +426,10 @@
         if (d < rg.keep) sp = -sp * 0.6; else if (d < rg.keep + 40) sp = 0;
         e.cd -= dt;
         if (e.cd <= 0 && d < rg.range) {
-          e.cd = rg.every;
+          e.cd = rg.every * (ph && ph.every || 1);
           var dmg = rg.damage * (1 + L.data.horde.dpsPerLevel * (L.difficulty(g) - 1)) * (g.hordeDps || 1) * (e.elite ? L.data.horde.elite.dps : 1);
           // One shot, or a fan of `count` spread over `spread` radians (the Reina del Granizo).
-          var n = rg.count || 1, base = Math.atan2(dy, dx), hail = !!rg.count;
+          var n = (ph && ph.count) || rg.count || 1, base = Math.atan2(dy, dx), hail = !!rg.count;
           for (var k = 0; k < n; k++) {
             var a = base + (n > 1 ? (k / (n - 1) - 0.5) * rg.spread : 0);
             g.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(a) * rg.speed, vy: Math.sin(a) * rg.speed, r: hail ? 7 : 6, damage: dmg, life: rg.range / rg.speed + 0.5, hail: hail });
@@ -429,7 +447,7 @@
           e.x = L.clamp(e.x + e.dashX * ch.speed * dt, e.r, g.arena - e.r);
           e.y = L.clamp(e.y + e.dashY * ch.speed * dt, e.r, g.arena - e.r);
           sp = 0;
-          if (e.cd <= 0) { e.mode = null; e.cd = ch.every; }
+          if (e.cd <= 0) { e.mode = null; e.cd = ch.every * (ph && ph.every || 1); }
         } else if (e.cd <= 0 && d < 600) { e.mode = 'wind'; e.cd = ch.windup; L.emit(g, 'boss', e.x, e.y); }
       } else if (t.summon && e.stun <= 0) {
         // Hangs back and calls a pack of creatures around itself.

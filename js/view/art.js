@@ -110,6 +110,11 @@
       ctx.fillStyle = 'rgba(255,90,70,0.18)';
       ctx.beginPath(); ctx.arc(x, y, type.slam.radius * fill, 0, TAU); ctx.fill();
     }
+    if (e.phased) {
+      // Enraged: a pulsing red halo.
+      ctx.strokeStyle = 'rgba(255,60,60,' + (0.45 + Math.sin(t * 8) * 0.25) + ')'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(x, y, r + 9, 0, TAU); ctx.stroke();
+    }
     if (type.mini) {
       // Golden horns: a champion of the Mad God.
       ctx.fillStyle = '#ffd27a';
@@ -158,6 +163,26 @@
         ctx.fillStyle = '#ffffff';
         for (var q = 0; q < 5; q++) { polygon(ctx, x + (q - 2) * r * 0.3, y - r * 0.85, r * 0.45, -Math.PI / 2, [[0, 1], [2.6, 0.5], [3.68, 0.5]]); ctx.fill(); }
         eyes(ctx, x, y, r, ang, r * 0.15);
+        break;
+      case 'hydra':
+        // A body with three necks and heads swaying.
+        circle(ctx, x, y, r, color);
+        for (var hh = -1; hh <= 1; hh++) {
+          var na = ang + hh * 0.7 + Math.sin(t * 3 + hh) * 0.15, hx = x + Math.cos(na) * r * 1.1, hy = y + Math.sin(na) * r * 1.1;
+          ctx.strokeStyle = color; ctx.lineWidth = r * 0.35;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(hx, hy); ctx.stroke();
+          circle(ctx, hx, hy, r * 0.38, '#5fc07a');
+          eyes(ctx, hx, hy, r * 0.38, na, r * 0.09);
+        }
+        break;
+      case 'avatar':
+        // A burning star with one eye: the Mad God looking at you.
+        ctx.fillStyle = color;
+        var rays = [];
+        for (var ry = 0; ry < 12; ry++) rays.push([ry / 12 * TAU, ry % 2 ? 0.8 : 1.3 + Math.sin(t * 6 + ry) * 0.08]);
+        polygon(ctx, x, y, r, t * 0.6, rays); ctx.fill();
+        circle(ctx, x, y, r * 0.55, '#ffe2a0');
+        circle(ctx, x + Math.cos(ang) * r * 0.18, y + Math.sin(ang) * r * 0.18, r * 0.25, '#2a0c00');
         break;
       case 'leviathan':
         var la = e.mode === 'dash' ? Math.atan2(e.dashY, e.dashX) : ang;

@@ -79,11 +79,46 @@ jugabilidad. Lo nuevo ya se arma con nombres del mundo nuevo; lo viejo se cambia
 28. **Minijefes:** entre jefe y jefe, cada 90 segundos, un campeón del Dios con un truco propio (embiste, invoca,
     golpea el piso). Deja un cofre. *(hecho)*
 29. **Jefes con fases y jefes nuevos:** a mitad de vida cada jefe cambia (se enfurece, invoca, ataque nuevo), y se
-    suman jefes titanes hasta llegar al Avatar del Dios Loco.
+    suman jefes titanes hasta llegar al Avatar del Dios Loco. *(hecho)*
 30. **Momentos sorpresa:** el Duende del tesoro (escapa con tu oro; si lo bajás, llueven cofres), el Frenesí (30
     segundos de horda doble y botín doble) y los Caprichos del Dios (el Dios cambia las reglas un rato).
 31. **El mundo nuevo:** historia, nombres de personajes, enemigos, jefes, textos, pantalla de inicio y arte.
 32. **Racha de bajas** y **récords en el Cuaderno** (quedan para después).
+
+### Séptima temporada — Sol Amarillo (rediseño)
+El usuario replanteó el juego (2026-11-23): "mucho survivor, poco Risk of Rain", y le faltan cosas para
+desbloquear. **(decisión)** Elegido, en vez del Dios Loco:
+- **Lluvia se transforma** en este juego (no es un proyecto aparte). Se aprovechan los ítems, habilidades, ultis,
+  jefes y el Cuaderno.
+- **Mundo:** un día el sol empezó a brillar amarillo y todo se volvió loco: la gente mutó o enloqueció, y los
+  objetos se volvieron raros.
+- **Mapa:** elegís un punto en un mapa del mundo y jugás en las calles reales de esa zona (OpenStreetMap: calles,
+  edificios, parques, plazas). Sin internet, una ciudad inventada.
+- **Rivales:** los 7 de la IA pasan a ser **otros supervivientes** en la misma ciudad: te los cruzás, los podés
+  desafiar a duelo o apostar, y compiten por los cofres.
+
+Cómo se juega (estilo Risk of Rain):
+- Mundo abierto: cofres, puntos con historia, mapas y cosas raras por la ciudad.
+- Se puede entrar a los edificios (interiores simulados, no idénticos).
+- Al principio hay pocos monstruos, pero uno solo puede ser muy fuerte o tener habilidades; las oleadas grandes
+  tardan en llegar y las criaturas se hacen más fuertes con el tiempo.
+- Jefes repartidos por la ciudad de forma procedural.
+- Ítems, poderes y todo lo que ya existe, más muchos desbloqueos nuevos.
+
+Etapas (cada una se puede jugar al terminarla):
+33. **La ciudad:** elegir el punto en el mapa, bajar las calles y edificios de OpenStreetMap (o inventar una ciudad
+    sin internet), dibujarla desde arriba y caminar por las calles chocando con los edificios. Los bichos te
+    persiguen por las calles, no a través de las paredes.
+34. **Mundo abierto con reloj:** la horda arranca de a poco y crece con el reloj; cofres, ítems y puntos con
+    historia repartidos por calles, parques y plazas.
+35. **Edificios por dentro:** puertas que llevan a interiores simulados (casa, negocio, galpón) con cofres y algún
+    bicho.
+36. **Jefes por la ciudad:** jefes procedurales que esperan en lugares marcados (plazas, parques) y monstruos
+    sueltos fuertes desde el principio.
+37. **Otros supervivientes:** los rivales recorren la misma ciudad; cruzarte uno abre duelo o apuesta.
+38. **Desbloqueos a lo Risk of Rain:** desafíos que abren ítems, personajes y habilidades nuevas.
+39. **El Sol Amarillo:** historia, mutantes, personajes, textos, pantalla de inicio y arte nuevos (reemplaza
+    lluvias y paraguas). Los campeones, la Hidra y el Avatar se renombran acá.
 
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
@@ -387,3 +422,14 @@ jugabilidad. Lo nuevo ya se arma con nombres del mundo nuevo; lo viejo se cambia
   - Banco de 30: la curva igual (mediana 27:06, horda 3,3 vidas en el minuto 5-10, duelos de 9,8 s, ganadores
     con 175 ítems). Marea y Roca dieron 0% de victorias y en el banco anterior 16% y 14%: con 30 partidas puede
     ser ruido; mirarlos en el próximo banco antes de tocarlos.
+- **2026-11-23: jefes con fases y dos titanes.** A media vida cada jefe cambia hasta el final de la pelea: lo marca
+  un halo rojo que late, un cartel y el sonido de jefe.
+  - Coloso: se apura y llama a 8 bichos.
+  - Reina del Granizo: abanicos de 9 en vez de 5, y más seguidos.
+  - Leviatán: embiste casi sin pausa.
+  - Titanes nuevos en la ronda de jefes (ahora son cinco):
+    - la Hidra del Coliseo (11:30): a media vida le crecen 2 cabezas y al morir se parte en 3 cabezas que escupen;
+    - el Avatar del Dios Loco (14:30): tira abanicos de fuego de 7, y a media vida abanicos de 11 y llama al
+      Verdugo.
+  - Banco de 30: la curva igual (mediana 27:42, duelos de 9,4 s, ganadores con 195 ítems; una partida pasó de
+    45 minutos). Marea y Roca volvieron a 10% y 14%: lo del banco anterior era ruido. Oxido dio 3% (venía en 13-19%).

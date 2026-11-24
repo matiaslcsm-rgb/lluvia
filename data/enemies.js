@@ -9,6 +9,8 @@
 //   summon: keeps its distance and calls creatures  { every, type, count, keep }
 //   slam:   stops, shows a ring, then hits the floor { every, windup, radius, damage, reach (starts it when this close) }
 // `mini`: a champion of the Mad God (minijefe), between bosses; leaves an elite chest.
+// `phase`: at `at` of its health a boss changes for the rest of the fight { at, text, speed (×), every (× time
+//   between attacks), count (shots per fan), summon { type, count } once }
 // Numbers are provisional; the bench (tools/bench.js) decides them.
 (function (L) {
   'use strict';
@@ -28,10 +30,12 @@
     { id: 'sumidero', name: 'Sumidero', shape: 'swirl', hp: 35, speed: 50, dps: 8, radius: 16, xp: 3, gold: 2, goldChance: 0.6, color: '#4a6a9a', from: 9, weight: 0.8,
       pull: { radius: 260, strength: 80, max: 120 } },
     { id: 'bruto', name: 'Ahogón', shape: 'square', hp: 70, speed: 45, dps: 18, radius: 22, xp: 5, gold: 3, goldChance: 1, color: '#7a4ab0', from: 2.5, weight: 1 },
-    { id: 'coloso', name: 'Coloso del Diluvio', article: 'el', shape: 'boss', hp: 700, speed: 62, dps: 30, radius: 40, xp: 40, gold: 30, goldChance: 1, color: '#d4344f', from: 0, weight: 0, boss: true },
+    { id: 'coloso', name: 'Coloso del Diluvio', article: 'el', shape: 'boss', hp: 700, speed: 62, dps: 30, radius: 40, xp: 40, gold: 30, goldChance: 1, color: '#d4344f', from: 0, weight: 0, boss: true,
+      phase: { at: 0.5, text: 'se enfurece y llama a su manada', speed: 1.35, summon: { type: 'rastrero', count: 8 } } },
     // Hangs back and fires fans of hail you have to slip through.
     { id: 'reina', name: 'Reina del Granizo', article: 'la', shape: 'queen', hp: 800, speed: 50, dps: 20, radius: 36, xp: 45, gold: 35, goldChance: 1, color: '#bfe6ff', from: 0, weight: 0, boss: true,
-      ranged: { range: 520, keep: 300, every: 2.6, speed: 250, damage: 7, count: 5, spread: 0.9 } },
+      ranged: { range: 520, keep: 300, every: 2.6, speed: 250, damage: 7, count: 5, spread: 0.9 },
+      phase: { at: 0.5, text: 'desata la tormenta: abanicos más grandes y seguidos', count: 9, every: 0.7 } },
     // Champions of the Mad God (minijefes): one every 3 minutes, halfway between bosses.
     { id: 'verdugo', name: 'Verdugo del Dios', article: 'el', shape: 'arrow', hp: 260, speed: 70, dps: 20, radius: 24, xp: 20, gold: 12, goldChance: 1, color: '#c23b3b', from: 0, weight: 0, boss: true, mini: true,
       charge: { every: 3.5, windup: 0.7, dash: 0.6, speed: 520 } },
@@ -41,7 +45,18 @@
       slam: { every: 4, windup: 1, radius: 150, damage: 26, reach: 200 } },
     // Crouches (you see it coming), then charges in a straight line at great speed.
     { id: 'leviatan', name: 'Leviatán del desagüe', article: 'el', shape: 'leviathan', hp: 1100, speed: 55, dps: 24, radius: 38, xp: 50, gold: 40, goldChance: 1, color: '#2f7f86', from: 0, weight: 0, boss: true,
-      charge: { every: 4.5, windup: 0.9, dash: 0.75, speed: 540 } }
+      charge: { every: 4.5, windup: 0.9, dash: 0.75, speed: 540 },
+      phase: { at: 0.5, text: 'embiste sin parar', every: 0.55, speed: 1.2 } },
+    // Titans of the Mad God. The Hydra splits into three spitting heads when it falls.
+    { id: 'hidra', name: 'Hidra del Coliseo', article: 'la', shape: 'hydra', hp: 1000, speed: 52, dps: 26, radius: 40, xp: 50, gold: 40, goldChance: 1, color: '#3f9a5a', from: 0, weight: 0, boss: true,
+      splits: { into: 'cabeza', count: 3 },
+      phase: { at: 0.5, text: 'se retuerce: le crecen cabezas', speed: 1.3, summon: { type: 'cabeza', count: 2 } } },
+    { id: 'cabeza', name: 'Cabeza de Hidra', shape: 'spitter', hp: 120, speed: 80, dps: 12, radius: 16, xp: 5, gold: 5, goldChance: 1, color: '#5fc07a', from: 0, weight: 0,
+      ranged: { range: 380, keep: 220, every: 2, speed: 250, damage: 7 } },
+    // The last titan: fans of fire, and at half health it calls the Verdugo.
+    { id: 'avatar', name: 'Avatar del Dios Loco', article: 'el', shape: 'avatar', hp: 1500, speed: 55, dps: 28, radius: 44, xp: 70, gold: 60, goldChance: 1, color: '#ff7a2f', from: 0, weight: 0, boss: true,
+      ranged: { range: 560, keep: 320, every: 2.2, speed: 260, damage: 8, count: 7, spread: 1.2 },
+      phase: { at: 0.5, text: 'se ríe: el Dios en persona baja a la arena', count: 11, every: 0.7, summon: { type: 'verdugo', count: 1 } } }
   ];
 
   L.data.horde = {
@@ -61,7 +76,7 @@
     maxGems: 400,
     bossFirst: 150,       // first boss at 2:30
     bossEvery: 180,       // then every 3 minutes
-    bosses: ['coloso', 'reina', 'leviatan'], // one after the other, then around again
+    bosses: ['coloso', 'reina', 'leviatan', 'hidra', 'avatar'], // one after the other, then around again
     miniFirst: 240,       // first champion of the Mad God at 4:00, then every bossEvery (halfway between bosses)
     minis: ['verdugo', 'nigromante', 'golem'],
     lives: 3,             // lives per player

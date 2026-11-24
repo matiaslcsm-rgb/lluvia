@@ -372,3 +372,26 @@ test('campeones del Dios: salen a mitad entre jefes, el Nigromante invoca, el G�
   for (i = 0; i < 25; i++) L.update(g, 0.05, {});
   assert.ok(p.hp < 1e6 - 20, 'el golpe no peg처');
 });
+
+test('jefes con fases: a media vida cambian; la Hidra se parte en cabezas; el Avatar llama al Verdugo', function () {
+  var L = Lluvia, g = s2Game(), p = g.player;
+  p.hp = p.stats.maxHp = 1e9;
+  var c = L.spawnEnemy(g, 'coloso', p.x + 600, p.y), sp = c.speed;
+  c.hp = c.maxHp * 0.4;
+  var before = g.enemies.length;
+  L.update(g, 1 / 60, {});
+  assert.ok(c.phased, 'no cambi처 de fase');
+  assert.ok(c.speed > sp * 1.3, 'no se apur처');
+  assert.ok(g.enemies.length >= before + 8, 'no llam처 a su manada');
+  g.enemies.length = 0;
+  var h = L.spawnEnemy(g, 'hidra', p.x + 600, p.y);
+  L.hit(g, h, 1e12, 0);
+  L.update(g, 1 / 60, {});
+  assert.ok(g.enemies.filter(function (e) { return e.type.id === 'cabeza'; }).length >= 3, 'no salieron las cabezas');
+  g.enemies.length = 0;
+  var a = L.spawnEnemy(g, 'avatar', p.x + 600, p.y);
+  a.hp = a.maxHp * 0.3;
+  L.update(g, 1 / 60, {});
+  assert.ok(g.enemies.some(function (e) { return e.type.id === 'verdugo'; }), 'no llam처 al Verdugo');
+  assert.deepStrictEqual(L.data.horde.bosses.slice(-2), ['hidra', 'avatar']);
+});
