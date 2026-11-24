@@ -290,13 +290,14 @@
     var grown = (p.merges || []).map(function (m) { return m[1]; });
     var at = function (cx, cy) { return cx < 0 || cy < 0 || cx >= W || cy >= D ? OUT : lab[cy * W + cx]; };
     // Edges between two different rooms, by pair.
-    var pairs, count;
+    var pairs, count, roomy;
     var scan = function () {
-      pairs = new Map(); count = new Array(p.rooms.length).fill(0);
+      pairs = new Map(); count = new Array(p.rooms.length).fill(0); roomy = new Array(p.rooms.length).fill(0);
       for (y = 0; y < D; y++) for (x = 0; x < W; x++) {
         var a = lab[y * W + x];
         if (a < 0) continue;
         count[a]++;
+        if (at(x + 1, y) === a && at(x + 2, y) === a && at(x, y + 1) === a && at(x, y + 2) === a && at(x + 1, y + 1) === a && at(x + 2, y + 2) === a && at(x + 2, y + 1) === a && at(x + 1, y + 2) === a) roomy[a]++; // a 1.5 × 1.5 m spot
         [['v', x + 1, y, at(x + 1, y)], ['h', x, y + 1, at(x, y + 1)]].forEach(function (e) {
           var b = e[3];
           if (b < 0 || b === a) return;
@@ -307,12 +308,13 @@
       }
     };
     scan();
-    // Leftovers the footprint cut too small join the neighbour they share the most wall with.
+    // Leftovers the footprint cut too small, or too thin to stand in (on a turned house the walls eat a strip narrower than 1.5 m), join the
+    // neighbour they share the most wall with.
     var minCells = Math.ceil(H().minRoom / (cs * cs)), merged = true;
     while (merged) {
       merged = false;
       for (i = 0; i < p.rooms.length && !merged; i++) {
-        if (!count[i] || count[i] >= minCells) continue;
+        if (!count[i] || (count[i] >= minCells && roomy[i] >= 2)) continue;
         var bestN = -1, bestLen = 0;
         pairs.forEach(function (list, key) {
           var a = Math.floor(key / 1000), b = key % 1000;
@@ -500,21 +502,40 @@
         });
       }
     });
-    // Keep only spots that leave the room in one piece (every door still reachable from the foot).
+    // Keep only spots that leave the room in one piece: walking from the foot around the stair, with room to pass
+    // (a body takes 2 × 2 cells, and the stair a cell more along its sides and its closed end: on a turned house its
+    // railings take room), every door of the room is still reached.
     var whole = function (st) {
-      var seen = new Uint8Array(W * D), start = st.axis === 'y' ? [st.x0, st.up > 0 ? st.y0 - 1 : st.y1] : [st.up > 0 ? st.x0 - 1 : st.x1, st.y0];
-      var inStair = function (x, y) { return x >= st.x0 && x < st.x1 && y >= st.y0 && y < st.y1; };
-      var q = [start], total = 0;
-      seen[start[1] * W + start[0]] = 1;
+      var seen = new Uint8Array(W * D), win = new Uint8Array(W * D);
+      var ex = st.axis === 'y' ? [1, 1, st.up > 0 ? 0 : 1, st.up > 0 ? 1 : 0] : [st.up > 0 ? 0 : 1, st.up > 0 ? 1 : 0, 1, 1];
+      var blocked = function (x, y) { return x >= st.x0 - ex[0] && x < st.x1 + ex[1] && y >= st.y0 - ex[2] && y < st.y1 + ex[3]; };
+      var open1 = function (x, y) { return x >= 0 && y >= 0 && x < W && y < D && lab[y * W + x] === main && !blocked(x, y); };
+      // A spot (x, y) is the 2 × 2 block from that cell; it is open if all four cells are.
+      var spot = function (x, y) { return open1(x, y) && open1(x + 1, y) && open1(x, y + 1) && open1(x + 1, y + 1); };
+      var sx = st.axis === 'y' ? st.x0 + 1 : (st.up > 0 ? st.x0 - 2 : st.x1), sy = st.axis === 'y' ? (st.up > 0 ? st.y0 - 2 : st.y1) : st.y0 + 1;
+      if (!spot(sx, sy)) return false;
+      var q = [[sx, sy]];
+      win[sy * W + sx] = 1;
       while (q.length) {
-        var c = q.pop(); total++;
+        var c = q.pop();
+        seen[c[1] * W + c[0]] = seen[c[1] * W + c[0] + 1] = seen[(c[1] + 1) * W + c[0]] = seen[(c[1] + 1) * W + c[0] + 1] = 1;
         [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
           var x = c[0] + d[0], y = c[1] + d[1];
-          if (x < 0 || y < 0 || x >= W || y >= D || seen[y * W + x] || lab[y * W + x] !== main || inStair(x, y)) return;
-          seen[y * W + x] = 1; q.push([x, y]);
+          if (x < 0 || y < 0 || win[y * W + x] || !spot(x, y)) return;
+          win[y * W + x] = 1; q.push([x, y]);
         });
       }
-      return total >= plan.rooms[main].cells - (st.x1 - st.x0) * (st.y1 - st.y0) - 2;
+      return plan.doors.concat(plan.exits.map(function (e) { return e.seg; })).every(function (g) {
+        var mine = 0, got = 0, n = Math.max(Math.abs(g[2] - g[0]), Math.abs(g[3] - g[1]));
+        for (var k = 0; k < n; k++) {
+          var cs2 = g[0] === g[2] ? [[g[0] - 1, Math.min(g[1], g[3]) + k], [g[0], Math.min(g[1], g[3]) + k]] : [[Math.min(g[0], g[2]) + k, g[1] - 1], [Math.min(g[0], g[2]) + k, g[1]]];
+          cs2.forEach(function (q2) {
+            if (q2[0] < 0 || q2[1] < 0 || q2[0] >= W || q2[1] >= D || lab[q2[1] * W + q2[0]] !== main) return;
+            mine++; if (seen[q2[1] * W + q2[0]]) got++;
+          });
+        }
+        return !mine || got > 0;
+      });
     };
     cands = cands.filter(whole);
     if (!cands.length) return null;
