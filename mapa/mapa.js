@@ -46,11 +46,11 @@
     for (var y = 0; y < RES; y++) for (var x = 0; x < RES; x++) {
       var gx = x / RES * N - 0.5, gy = y / RES * N - 0.5, z = zAt(gx, gy), t = (z - zmin) / (zmax - zmin || 1);
       var dzx = (zAt(gx + 0.3, gy) - zAt(gx - 0.3, gy)) / 10, dzy = (zAt(gx, gy + 0.3) - zAt(gx, gy - 0.3)) / 10;
-      var shade = Math.max(0.55, Math.min(1.3, 1 - (dzx + dzy) * 0.35));
-      var r = (60 + t * 120) * shade, g = (85 + t * 70) * shade, b = (55 + t * 20) * shade, k = (y * RES + x) * 4;
+      var shade = Math.max(0.6, Math.min(1, 1 - (dzx + dzy) * 0.3)) * (0.88 + t * 0.12);
+      var r = 255 * shade, g = 255 * shade, b = 250 * shade, k = (y * RES + x) * 4;
       // Contour lines every 2 m.
       var band = Math.floor(z / 20), bandR = Math.floor(zAt(gx + N / RES, gy) / 20), bandD = Math.floor(zAt(gx, gy + N / RES) / 20);
-      if (band !== bandR || band !== bandD) { r *= 0.75; g *= 0.75; b *= 0.75; }
+      if (band !== bandR || band !== bandD) { r *= 0.86; g *= 0.86; b *= 0.86; }
       img.data[k] = r; img.data[k + 1] = g; img.data[k + 2] = b; img.data[k + 3] = 255;
     }
     tc.putImageData(img, 0, 0);
@@ -92,50 +92,12 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, W, H);
     ctx.setTransform(s, 0, 0, s, W / 2 - view.x * s, H / 2 - view.y * s);
-    if (opt('lTerrain')) { ctx.imageSmoothingEnabled = true; ctx.drawImage(timg, 0, 0, M.meters, M.meters); }
-    else { ctx.fillStyle = '#2e3527'; ctx.fillRect(0, 0, M.meters, M.meters); }
-    if (opt('lLand')) {
-      land.forEach(function (l) {
-        if (!on(l.b, 0) || l.p.length < 3) return;
-        ctx.fillStyle = /park|grass|recreation|pitch|garden|cemetery/.test(l.cls) ? 'rgba(70,140,60,0.45)' : /industrial/.test(l.cls) ? 'rgba(120,110,120,0.35)' : 'rgba(160,150,120,0.18)';
-        path(l.p, true); ctx.fill();
-      });
-      parks.forEach(function (pk) { if (!on(pk.b, 0)) return; ctx.fillStyle = pk.kind === 'square' || pk.kind === 'plaza' ? 'rgba(170,165,150,0.8)' : 'rgba(60,130,55,0.8)'; path(pk.p, true); ctx.fill(); });
-      water.forEach(function (w) {
-        if (!on(w.b, 10)) return;
-        ctx.strokeStyle = '#3f7fbf'; ctx.fillStyle = 'rgba(63,127,191,0.6)'; ctx.lineWidth = 4;
-        path(w.p, w.p.length > 3 && w.p[0][0] === w.p[w.p.length - 1][0]); if (w.p.length > 3 && w.p[0][0] === w.p[w.p.length - 1][0]) ctx.fill(); else ctx.stroke();
-      });
-    }
-    if (opt('lRoads')) {
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      roads.forEach(function (r) { if (!on(r.b, 20)) return; ctx.strokeStyle = '#7d7a72'; ctx.lineWidth = (ROAD_W[r.kind] || 4) + 5; path(r.p); ctx.stroke(); });
-      roads.forEach(function (r) { if (!on(r.b, 20)) return; ctx.strokeStyle = r.kind === 'footway' || r.kind === 'path' ? '#b8b09a' : '#3c3e45'; ctx.lineWidth = ROAD_W[r.kind] || 4; path(r.p); ctx.stroke(); });
-      rail.forEach(function (r) {
-        if (!on(r.b, 10)) return;
-        ctx.strokeStyle = '#222'; ctx.lineWidth = 5; path(r.p); ctx.stroke();
-        ctx.strokeStyle = '#d0c8b0'; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]); path(r.p); ctx.stroke(); ctx.setLineDash([]);
-      });
-    }
-    var shown = 0;
-    if (opt('lBuildings')) {
-      var seen = new Set(), x0 = Math.max(0, Math.floor(vb[0] / CH)), x1 = Math.min(cols - 1, Math.floor(vb[2] / CH));
-      var y0 = Math.max(0, Math.floor(vb[1] / CH)), y1 = Math.min(cols - 1, Math.floor(vb[3] / CH));
-      ctx.lineWidth = Math.max(0.15, 1 / s);
-      for (var cy = y0; cy <= y1; cy++) for (var cx = x0; cx <= x1; cx++) {
-        (chunks[cy * cols + cx] || []).forEach(function (bd) {
-          if (seen.has(bd) || !on(bd.b, 0)) return;
-          seen.add(bd);
-          var has = hasLevel(bd);
-          ctx.globalAlpha = has ? 1 : 0.18;
-          ctx.fillStyle = buildingColor(bd); path(bd.p, true); ctx.fill();
-          if (s > 1.2) { ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.stroke(); }
-          if (has) shown++;
-        });
-      }
-      ctx.globalAlpha = 1;
-      if (selected) { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 3 / s; path(selected.p, true); ctx.stroke(); }
-    }
+    var colorBy = $('colorBy').value;
+    var shown = Lluvia.mapdraw.draw(ctx, M, {
+      view: vb, scale: s, terrain: opt('lTerrain') ? timg : null, buildings: opt('lBuildings'),
+      color: colorBy === 'real' ? null : buildingColor, dim: function (bd) { return !hasLevel(bd); }
+    });
+    if (selected) { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 3 / s; path(selected.p, true); ctx.stroke(); }
     if (opt('lPlaces') && s > 1.5) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.font = Math.round(11 * devicePixelRatio) + 'px system-ui'; ctx.textAlign = 'center';
@@ -159,7 +121,7 @@
       var counts = {}; buildings.forEach(function (bd) { counts[bd.kind] = (counts[bd.kind] || 0) + 1; });
       Object.keys(KIND_COLORS).forEach(function (k) { if (counts[k]) add(KIND_COLORS[k], k + ' (' + counts[k] + ')'); });
     } else if (by === 'floors') { [1, 2, 4, 7, 10].forEach(function (f) { add(buildingColor({ floors: f }), f + (f === 10 ? '+ pisos' : f === 1 ? ' piso' : ' pisos')); }); }
-    else if (by === 'roof') Object.keys(ROOF_COLORS).forEach(function (k) { add(ROOF_COLORS[k], k); });
+    else if (by === 'roof' || by === 'real') Object.keys(ROOF_COLORS).forEach(function (k) { add(ROOF_COLORS[k], 'techo de ' + k); });
     else SRC.forEach(function (n, i) { add(SRC_COLORS[i], n); });
     html += '<div style="margin-top:6px;color:#9a9db0">Terreno: ' + (zmin / 10).toFixed(0) + ' a ' + (zmax / 10).toFixed(0) + ' m, curvas cada 2 m</div>';
     html += '<div style="margin-top:8px;color:#7d8090;font-size:11px;display:block">Datos: © OpenStreetMap (ODbL), Overture Maps (ODbL), Google Open Buildings (CC BY 4.0), Microsoft (ODbL), SRTM/NASA.</div>';
@@ -205,7 +167,7 @@
     var after = toMap(e.clientX, e.clientY);
     view.x += before[0] - after[0]; view.y += before[1] - after[1]; dirty = true;
   }, { passive: false });
-  ['lTerrain', 'lLand', 'lRoads', 'lBuildings', 'lPlaces'].forEach(function (id) { $(id).addEventListener('change', function () { dirty = true; }); });
+  ['lTerrain', 'lBuildings', 'lPlaces'].forEach(function (id) { $(id).addEventListener('change', function () { dirty = true; }); });
   $('colorBy').addEventListener('change', function () { legend(); dirty = true; });
   $('levelRange').addEventListener('input', function () {
     level = +this.value;

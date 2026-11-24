@@ -33,13 +33,11 @@
   <div id="controls" class="panel">
     <h1>Mapa de San Miguel</h1>
     <p>Arrastrá para moverte, rueda para acercar, clic en un edificio para ver qué es.</p>
-    <label><input type="checkbox" id="lTerrain" checked> Terreno (altura)</label>
-    <label><input type="checkbox" id="lLand" checked> Uso del suelo y agua</label>
-    <label><input type="checkbox" id="lRoads" checked> Calles y tren</label>
+    <label><input type="checkbox" id="lTerrain" checked> Relieve del terreno</label>
     <label><input type="checkbox" id="lBuildings" checked> Edificios</label>
     <label><input type="checkbox" id="lPlaces"> Nombres de lugares</label>
     <div class="row">Color de los edificios
-      <select id="colorBy"><option value="kind">por tipo</option><option value="floors">por pisos</option><option value="roof">por techo</option><option value="src">por fuente del dato</option></select>
+      <select id="colorBy"><option value="real" selected>aspecto real</option><option value="kind">por tipo</option><option value="floors">por pisos</option><option value="roof">por techo</option><option value="src">por fuente del dato</option></select>
     </div>
     <div class="row">Nivel: <span id="level">planta baja</span>
       <input type="range" id="levelRange" min="-1" max="8" value="0">
@@ -49,6 +47,7 @@
   <div id="info" class="panel"></div>
   <div id="status" class="panel"></div>
   <script src="../data/map-sanmiguel.js"></script>
+  <script src="../js/view/mapdraw.js"></script>
   <script src="mapa.js"></script>
 </body>
 </html>

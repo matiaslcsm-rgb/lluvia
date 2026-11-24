@@ -539,3 +539,17 @@ Etapas (cada una se puede jugar al terminarla):
     fuente, un selector de nivel (sótano, planta baja, pisos, terraza) y la ficha de cada edificio al hacer clic.
   - Todavía no está en el juego. Primero lo revisa el usuario; después vienen los interiores y escaleras y el
     paso al juego.
+- **2026-11-24: el mapa con aspecto de ciudad.** El usuario lo revisó: "el mapa está bien, se excede en el
+  terreno; hay que mejorar la estética para que parezca una ciudad: se ve como gráficos ASCII, no hay veredas, no
+  hay pasto ni detalles, las calles parecen muy chicas".
+  - Nuevo dibujante compartido, `js/view/mapdraw.js`, que después usa el juego.
+  - Calles con ancho real (calzada + vereda de cada lado, según el tipo de calle): una calle de barrio mide 11 m
+    de calzada más 3,5 m de vereda por lado; las avenidas, 15-18 m más 4-4,5 m.
+  - Texturas: asfalto, veredas de baldosas, pasto en los patios y parques, adoquines en las plazas.
+  - Marcas: línea amarilla en las avenidas, línea punteada en las calles y sendas peatonales en las esquinas de
+    las calles con tránsito.
+  - Techos con textura (tejas, chapa acanalada, losa de distintos colores con su borde) y tanque de agua en las
+    terrazas. Sombras más largas en los edificios más altos.
+  - Árboles en las veredas y en los parques (unos 30.000), y vías del tren con balasto y durmientes.
+  - El terreno ahora es un relieve suave encima de todo, no un color propio, y nada se dibuja fuera del cuadrado
+    del mapa.
