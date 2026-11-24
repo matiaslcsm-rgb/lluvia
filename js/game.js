@@ -439,20 +439,20 @@
 
   function moveEnemies(g, dt) {
     var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0, city = g.city, dir = g._dir || (g._dir = {}), mv = g._emv || (g._emv = {});
-    // You upstairs: the creatures downstairs head for the foot of your stair.
-    var pf = p.floor || 0, up = city && pf >= 1 && p.house && p.house.footPx;
-    if (city && !(g.flowT > 0)) { L.cityFlow(city, up ? p.house.footPx[0] : p.x, up ? p.house.footPx[1] : p.y); g.flowT = L.data.city.flowEvery; }
+    // You upstairs (or in the basement): the creatures on the ground floor head for the stair that leads to you.
+    var pf = p.floor || 0, go = city && pf ? L.stairToward(p.house, 0, pf) : null, gp = go ? (pf > 0 ? go.footPx : go.topPx) : null;
+    if (city && !(g.flowT > 0)) { L.cityFlow(city, gp ? gp[0] : p.x, gp ? gp[1] : p.y); g.flowT = L.data.city.flowEvery; }
     if (city) g.flowT -= dt;
     for (var i = 0; i < g.enemies.length; i++) {
       var e = g.enemies[i];
       if (e.dead) continue;
       var dx = p.x - e.x, dy = p.y - e.y, ef = e.floor || 0;
-      // On another floor it goes for the stair: up it from the foot, or down it from the top.
+      // On another floor it goes for the stair toward yours: up it from the foot, or down it from the top.
       if (city && ef !== pf) {
-        var hs = ef < pf ? p.house : e.house, onStair = e.z > 0 && e.z < 1;
-        if (hs && hs.footPx) {
-          var wp = onStair ? (ef < pf ? hs.topPx : hs.footPx) : (ef < pf ? hs.footPx : hs.topPx);
-          if (!onStair && Math.hypot(wp[0] - e.x, wp[1] - e.y) < 30) wp = ef < pf ? hs.topPx : hs.footPx;
+        var st = L.stairToward(ef ? e.house : p.house, ef, pf);
+        if (st && st.footPx) {
+          var upw = pf > ef, wa = upw ? st.footPx : st.topPx, wb = upw ? st.topPx : st.footPx;
+          var wp = e.stairOn === st || Math.hypot(wa[0] - e.x, wa[1] - e.y) < 30 ? wb : wa;
           dx = wp[0] - e.x; dy = wp[1] - e.y;
         }
       }
@@ -541,7 +541,7 @@
       var vx = dx / d * sp, vy = dy / d * sp;
       // In the city they go around the blocks, along the streets, until they are close (the flow field is on the
       // ground floor: not for one on a stair or upstairs).
-      if (city && d > 60 && !(e.z > 0) && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
+      if (city && d > 60 && !e.z && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
       g.grid.query(e.x, e.y, e.r + g.maxR, q);

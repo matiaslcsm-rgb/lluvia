@@ -235,3 +235,130 @@ test('casas de San Miguel: se entra por la puerta, adentro se camina y las pared
   }
   assert.ok(found >= 6, 'pocas casas con interior cerca de la plaza: ' + found);
 });
+
+test('edificios: palier con escalera en U, departamentos en cada piso, terraza arriba y sótano abajo', function () {
+  var L = Lluvia, made = 0;
+  for (var seed = 1; seed <= 20; seed++) {
+    var floors = 3 + (seed % 6), bottom = seed % 2 === 0 ? -1 : 0;
+    var p = L.buildingPlan(rectHouse(11 + (seed % 6), 20 + (seed % 9)), [0, -1], seed, { floors: floors, roof: 'terraza', basement: bottom < 0 });
+    if (!p) continue;
+    made++;
+    assert.strictEqual(p.top, floors, 'la terraza no está arriba de todo');
+    assert.strictEqual(p.bottom, bottom, 'el sótano');
+    // A flight from every floor to the next, alternating the two lanes.
+    for (var f = bottom; f < floors; f++) {
+      var st = L.stairToward(p, f, f + 1);
+      assert.ok(st, 'sin escalera del piso ' + f + ' al ' + (f + 1));
+      assert.strictEqual(st.lane, ((f % 2) + 2) % 2, 'los tramos no se alternan');
+      assert.strictEqual(L.stairToward(p, f + 1, f), st, 'para bajar no se usa la misma');
+    }
+    // Every floor: every room reached from the palier (or the hall); the street door on the hall.
+    for (f = bottom; f <= floors; f++) assert.ok(L.planLevel(p, f) && L.planLevel(p, f).reachable, 'un cuarto sin puerta en el piso ' + f + ' (semilla ' + seed + ')');
+    assert.ok(p.exits.some(function (e) { return e.side < 0 && p.rooms[e.room].type === 'hall'; }), 'la puerta de calle no da al hall');
+    var up = p.levels[1], baths = up.rooms.filter(function (r) { return r.type === 'bano' && r.cells; }).length;
+    assert.ok(baths >= 2, 'un piso con ' + baths + ' baños: tiene que tener al menos dos departamentos');
+    assert.strictEqual(p.levels[floors].open, 'terraza');
+    if (bottom < 0) assert.strictEqual(p.levels[-1].open, 'sotano');
+    // The floors repeat (the same apartments), each with its own railings.
+    if (floors >= 3) { assert.strictEqual(p.levels[1].lab, p.levels[2].lab); assert.notStrictEqual(p.levels[1].walls, p.levels[2].walls); }
+  }
+  assert.ok(made >= 15, 'pocos edificios armados: ' + made + ' de 20');
+});
+
+test('casas con terraza y sótano: se sube a la terraza y se baja al sótano', function () {
+  var L = Lluvia, roofs = 0, cellars = 0;
+  for (var seed = 1; seed <= 30; seed++) {
+    var floors = 1 + (seed % 2), p = L.housePlan(rectHouse(9 + (seed % 3), 14 + (seed % 5)), [0, -1], seed, { floors: floors, roof: 'terraza', basement: true });
+    if (L.stairToward(p, floors - 1, floors) && p.levels[floors] && p.levels[floors].open === 'terraza') roofs++;
+    if (L.stairToward(p, 0, -1) && p.levels[-1]) cellars++;
+    // Stairs never overlap.
+    p.stairs.forEach(function (a, i) {
+      p.stairs.forEach(function (b, j) {
+        if (j > i) assert.ok(a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0, 'dos escaleras encimadas en la casa ' + seed);
+      });
+    });
+  }
+  assert.ok(roofs >= 18, 'pocas casas llegan a la terraza: ' + roofs + ' de 30');
+  assert.ok(cellars >= 18, 'pocas casas bajan al sótano: ' + cellars + ' de 30');
+});
+
+// Walks `ent` on its floor of building `p` to (tx, ty) px, along a path found over spots where a body fits: the
+// walk grid's cells on the ground floor, spots 25 cm apart on the others. False if it can't get there.
+function walkTo(L, city, p, ent, tx, ty) {
+  var s = city.scale, f = ent.floor || 0, c = f ? 0.25 * s : city.cell, body = L.data.city.body, level = L.planLevel(p, f);
+  var xs = p.outline.map(function (q) { return q[0]; }), ys = p.outline.map(function (q) { return q[1]; });
+  var x0 = Math.floor((Math.min.apply(null, xs) - 3 * s) / c) * c, y0 = Math.floor((Math.min.apply(null, ys) - 3 * s) / c) * c;
+  var nx = Math.ceil((Math.max.apply(null, xs) + 3 * s - x0) / c), ny = Math.ceil((Math.max.apply(null, ys) + 3 * s - y0) / c);
+  var fits = function (gx, gy) {
+    if (gx < 0 || gy < 0 || gx >= nx || gy >= ny) return false;
+    var x = x0 + (gx + 0.5) * c, y = y0 + (gy + 0.5) * c;
+    return f ? L.cityUpperFits(p, x, y, body, level) : L.cityFits(city, x, y, body);
+  };
+  var g = function (x, y) { return [Math.floor((x - x0) / c), Math.floor((y - y0) / c)]; };
+  var a = g(ent.x, ent.y), b = g(tx, ty), from = new Int32Array(nx * ny).fill(-1), q = [a[1] * nx + a[0]], best = q[0], bestD = Infinity;
+  from[q[0]] = q[0];
+  for (var h = 0; h < q.length; h++) {
+    var k = q[h], kx = k % nx, ky = Math.floor(k / nx), d = Math.hypot(kx - b[0], ky - b[1]);
+    if (d < bestD) { bestD = d; best = k; }
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (dd) {
+      var mx = kx + dd[0], my = ky + dd[1], m = my * nx + mx;
+      if (fits(mx, my) && from[m] < 0) { from[m] = k; q.push(m); }
+    });
+  }
+  if (bestD * c > 0.75 * s) return false;
+  var path = [];
+  for (k = best; k !== from[k]; k = from[k]) path.unshift(k);
+  var out = {};
+  path.forEach(function (k) { L.cityLevelMove(city, ent, x0 + (k % nx + 0.5) * c, y0 + (Math.floor(k / nx) + 0.5) * c, body, out); ent.x = out.x; ent.y = out.y; });
+  return true;
+}
+
+// Walks straight to (tx, ty) px in short steps.
+function walkStraight(L, city, ent, tx, ty) {
+  var out = {};
+  for (var k = 0; k < 400; k++) {
+    var dx = tx - ent.x, dy = ty - ent.y, d = Math.hypot(dx, dy);
+    if (d < 1) break;
+    var step = Math.min(d, 4);
+    L.cityLevelMove(city, ent, ent.x + dx / d * step, ent.y + dy / d * step, L.data.city.body, out);
+    ent.x = out.x; ent.y = out.y;
+  }
+}
+
+test('edificios de San Miguel: desde la vereda se sube caminando hasta la terraza, se baja al sótano y en el primer piso se llega a cada departamento', function () {
+  var L = Lluvia, city = L.cityHome(1), M = city.map, s = city.scale, found = 0;
+  for (var i = 0; i < M.buildings.length && found < 5; i++) {
+    if (M.kinds[M.buildings[i][1]] !== 'edificio') continue;
+    var p = L.cityHouse(city, i);
+    if (!p || !p.exitsPx.length) continue;
+    found++;
+    var door = p.exitsPx[0], ent = { x: door.x + door.nx * 0.8 * s, y: door.y + door.ny * 0.8 * s, floor: 0, z: 0 };
+    for (var f = 0; f < p.top; f++) {
+      var st = L.stairToward(p, f, f + 1);
+      assert.ok(walkTo(L, city, p, ent, st.footPx[0], st.footPx[1]), 'en el edificio ' + i + ' no se llega al pie de la escalera del piso ' + f);
+      walkStraight(L, city, ent, st.topPx[0], st.topPx[1]);
+      assert.strictEqual(ent.floor, f + 1, 'en el edificio ' + i + ' la escalera del piso ' + f + ' no sube (z ' + ent.z + ')');
+      if (f + 1 !== 1) continue;
+      // Floor 1: every apartment's rooms can be reached from the stair.
+      var lv = p.levels[1];
+      lv.rooms.forEach(function (r, ri) {
+        if (r.cells < 16) return;
+        var m = null;
+        for (var k = 0; k < lv.lab.length && !m; k++) if (lv.lab[k] === ri) {
+          var w = L.housePoint(p, k % p.W + 0.5, Math.floor(k / p.W) + 0.5);
+          if (L.cityUpperFits(p, w[0] * s, w[1] * s, L.data.city.body, lv)) m = w;
+        }
+        if (!m) return;
+        var probe = { x: ent.x, y: ent.y, floor: 1, z: 1, house: p };
+        assert.ok(walkTo(L, city, p, probe, m[0] * s, m[1] * s), 'en el edificio ' + i + ' no se llega al ' + r.type + ' del primer piso');
+      });
+    }
+    for (f = p.top; f > p.bottom; f--) {
+      st = L.stairToward(p, f, f - 1);
+      assert.ok(walkTo(L, city, p, ent, st.topPx[0], st.topPx[1]), 'en el edificio ' + i + ' no se llega a la escalera para bajar del piso ' + f);
+      walkStraight(L, city, ent, st.footPx[0], st.footPx[1]);
+      assert.strictEqual(ent.floor, f - 1, 'en el edificio ' + i + ' no se baja del piso ' + f);
+    }
+  }
+  assert.ok(found >= 4, 'pocos edificios con interior: ' + found);
+});

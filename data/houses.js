@@ -4,7 +4,7 @@
   'use strict';
 
   L.data.houses = {
-    kinds: ['casa'],        // building kinds that get an inside (the rest stay solid for now)
+    kinds: ['casa'],        // building kinds that get an inside as a house (the rest stay solid for now)
     area: [25, 320],        // m² of footprint: smaller ones are sheds; bigger ones are odd shapes, solid for now
     cell: 0.5,              // plan cell (the walk grid's)
     // Corridors and doors a bit wider than real ones: on a house turned against the walk grid (most streets of San
@@ -22,6 +22,18 @@
     //   frontBack: living and kitchen at the front, bedrooms at the back
     //   open: one big living-kitchen at the front, bedrooms at the back without a corridor
     layouts: { lateral: 3, central: 2, frontBack: 3, open: 2 },
+    // Apartment buildings: a core with the palier and a "U" stair (two flights side by side), apartments around it.
+    building: {
+      kinds: ['edificio'],
+      area: [80, 1500],     // m² of footprint
+      lane: 2,              // width of each flight (wider than a real one, for the same reason as the corridors)
+      flight: 3.5,          // length of a flight
+      landing: 2,           // palier at each end of the stair
+      side: 1.4,            // palier along each side of the stair
+      hall: 3,              // width of the entrance hall, from the street door to the palier
+      strip: 3.5,           // beside the core, a strip at least this wide is one more apartment
+      units: [140, 260]     // apartments per floor: 2 below the first m², 3 below the second, else 4
+    },
     rooms: {
       living: { name: 'Living', floor: '#a7825a' },
       livingCocina: { name: 'Living cocina', floor: '#a98a63' },
@@ -30,7 +42,12 @@
       lavadero: { name: 'Lavadero', floor: '#b9bec2' },
       dormitorio: { name: 'Dormitorio', floor: '#8e6a46' },
       bano: { name: 'Baño', floor: '#d6dde2' },
-      pasillo: { name: '', floor: '#9a8466' }
+      pasillo: { name: '', floor: '#9a8466' },
+      palier: { name: 'Palier', floor: '#b4ada0' },
+      hall: { name: 'Hall', floor: '#c4bcaa' },
+      terraza: { name: 'Terraza', floor: '#b7a68f' },
+      casilla: { name: 'Sala de máquinas', floor: '#8d877c' },
+      sotano: { name: 'Sótano', floor: '#77716a' }
     },
     wall: '#e8e1d3',        // inside walls, seen from above
     wallEdge: '#5a5146'

@@ -153,23 +153,23 @@
   }
 
   // ---- Inside a house ----
-  // The house you are in (js/interiors.js) loses its roof: you see its rooms, each with its floor, its walls and
-  // doors, the stair and the rooms' names. Walking up the stair the ground floor fades out and the upper one fades
-  // in, by how high you are. Drawn under the people. L.drawCityBuildings then darkens the city outside it.
+  // The building you are in (js/interiors.js) loses its roof: you see its rooms, each with its floor, its walls and
+  // doors, the stairs and the rooms' names. Walking up or down a stair the floor you leave fades out and the next
+  // one fades in, by how high you are. Drawn under the people. L.drawCityBuildings then darkens the city outside.
   L.drawCityInterior = function (ctx, city, who) {
-    var plan = who.house && who.z > 0 ? who.house : city.map && L.cityHouseAt ? L.cityHouseAt(city, who.x, who.y) : null;
+    var plan = who.house && (who.floor || who.z) ? who.house : city.map && L.cityHouseAt ? L.cityHouseAt(city, who.x, who.y) : null;
     city._inside = plan;
     if (!plan) return;
-    var z = plan.upper ? L.clamp(who.z || 0, 0, 1) : 0;
+    var z = L.clamp(who.z || 0, plan.bottom || 0, plan.top || 0), lo = Math.floor(z), k = z - lo;
     ctx.save(); ctx.scale(city.scale, city.scale);
-    if (z < 1) drawLevel(ctx, city, plan, plan, false);
-    if (z > 0) { ctx.globalAlpha = z; drawLevel(ctx, city, plan, plan.upper, true); ctx.globalAlpha = 1; }
+    if (k < 1 && L.planLevel(plan, lo)) drawLevel(ctx, city, plan, lo);
+    if (k > 0 && L.planLevel(plan, lo + 1)) { ctx.globalAlpha = k; drawLevel(ctx, city, plan, lo + 1); ctx.globalAlpha = 1; }
     ctx.restore();
   };
 
-  // One floor of a house: `level` is the plan itself (ground floor) or plan.upper.
-  function drawLevel(ctx, city, plan, level, upper) {
-    var Hd = L.data.houses, s = city.scale, f = plan.frame, cs = plan.cell, W = plan.W;
+  // Floor `fl` of a building (0 the ground floor).
+  function drawLevel(ctx, city, plan, fl) {
+    var Hd = L.data.houses, s = city.scale, f = plan.frame, cs = plan.cell, W = plan.W, level = L.planLevel(plan, fl), upper = fl !== 0;
     // In the house's own frame, in cells: floors room by room (in rows of cells), the stair, then the walls.
     ctx.save(); ctx.transform(f.ux * cs, f.uy * cs, f.vx * cs, f.vy * cs, f.ox, f.oy);
     level.rooms.forEach(function (r, k) {
@@ -186,7 +186,10 @@
       }
       ctx.fill();
     });
-    if (plan.stair) drawStair(ctx, plan.stair, upper);
+    (plan.stairs || []).forEach(function (st) {
+      if (st.from === fl) drawStair(ctx, st, false);
+      else if (st.from + 1 === fl) drawStair(ctx, st, true);
+    });
     ctx.lineCap = 'square';
     ctx.beginPath();
     level.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });

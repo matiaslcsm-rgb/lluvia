@@ -726,6 +726,36 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Ajustes por las casas giradas: escalera de 2 m de ancho, y las barandas que caen sobre una pared de la casa no
     se agregan (engrosaban la pared).
   - Sigue: edificios de departamentos (palier, escalera en "U", departamentos por piso), terrazas y sótanos.
+- **2026-11-24: edificios de departamentos, terrazas y sótanos** (paso 42, tercera parte).
+  - **Cualquier cantidad de pisos.** Antes había planta baja y "arriba"; ahora cada edificio tiene una lista de
+    escaleras (cada una une un piso con el de arriba) y una planta por piso: -1 el sótano, 0 la planta baja, 1, 2...
+    y la terraza arriba de todo. Cada uno (vos y los bichos) lleva su piso, su altura y la escalera en la que está.
+  - **Edificios de departamentos** (104 de los 153 de San Miguel; los demás tienen formas donde no entra el
+    núcleo y siguen macizos):
+    - en el medio, el **palier** con una **escalera en "U"**: dos tramos uno al lado del otro, uno sube desde los
+      pisos pares y el otro desde los impares, así que cada piso llega a una punta del palier. El palier da la
+      vuelta alrededor de la escalera;
+    - **de 2 a 6 departamentos por piso**, adelante y atrás del palier y al costado si hay lugar. Cada uno se arma
+      como una casa (living, cocina, dormitorios y baño) con la puerta al palier. Todos los pisos son iguales, como
+      en un edificio de verdad;
+    - en la planta baja, el **hall de entrada** desde la puerta de calle hasta el palier, sin pared en el medio;
+    - arriba, la **terraza** con la sala de máquinas por donde sale la escalera; abajo, el **sótano** si tiene (la
+      mitad de los edificios, según el mapa).
+  - **Casas con terraza** (la mitad de las de San Miguel): una escalera sube a la losa, desde el living en las de un
+    piso y desde el pasillo o un dormitorio en las de dos. La terraza se camina, cerrada por su murito.
+  - **Casas con sótano** (unas 5.000): una escalera baja desde el living o la cocina.
+  - Las escaleras nunca se pisan entre sí ni tapan puertas; si no entran, la casa queda sin terraza o sin sótano.
+  - Los bichos buscan la escalera que lleva a tu piso, sea arriba o abajo, y la toman piso por piso.
+  - Al subir o bajar, el piso que dejás se apaga y el próximo aparece según tu altura (también el sótano).
+  - Ajuste por los datos: en el centro, las casas y edificios pegados se pisan un poco, y a veces el que está al
+    lado tapaba la puerta de calle. Ahora la puerta se pone donde está libre en todo su ancho.
+  - Pruebas nuevas: edificios con escalera en "U" que se alterna, cada cuarto con puerta en cada piso, al menos dos
+    departamentos por piso, terraza y sótano; casas que llegan a la terraza y al sótano sin escaleras encimadas;
+    y en 5 edificios reales de San Miguel, desde la vereda se sube caminando hasta la terraza, se baja hasta el
+    sótano y en el primer piso se llega a cada cuarto.
+  - Revisado en el navegador: el hall con la escalera, un piso con los dos tramos y la terraza con la sala de
+    máquinas.
+  - Sigue: muebles, puertas y ventanas dibujadas; galpones, negocios, escuelas y los demás tipos de edificio.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

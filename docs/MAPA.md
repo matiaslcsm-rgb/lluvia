@@ -70,11 +70,12 @@ La idea es como Project Zomboid y el SAS: el mapa tiene **niveles** y se ve uno 
 2. **Revisar con el usuario:** recorrer el visor y marcar qué no coincide con la ciudad real (un edificio que
    falta, un tipo equivocado, una calle mal).
 3. Generar los interiores, escaleras, terrazas y sótanos de cada edificio, y verlos en el visor piso por piso.
-   *(empezado)*: las casas ya tienen su planta baja, generada de su contorno con cinco maneras de repartir los
-   cuartos (`js/interiors.js`); se ven en el juego al entrar. Faltan los otros tipos de edificio, las escaleras, los
-   pisos de arriba, las terrazas y los sótanos.
-4. Pasar el mapa al juego. *(hecho, la planta baja)*: el juego usa el mapa real, los edificios son paredes y se
-   dibuja igual que en el visor. Falta: niveles, escaleras y entrar a los edificios (después del paso 3).
+   *(casi hecho, en el juego)*: las casas tienen su planta, generada de su contorno con cinco maneras de repartir
+   los cuartos, escalera y piso de arriba si son de dos pisos, terraza y sótano donde el mapa dice. Los edificios de
+   departamentos tienen palier con escalera en "U", departamentos en cada piso, hall, terraza y sótano
+   (`js/interiors.js`). Faltan galpones, negocios, escuelas y los demás tipos, y verlos en el visor.
+4. Pasar el mapa al juego. *(hecho)*: el juego usa el mapa real y se dibuja igual que en el visor; se entra a las
+   casas y a los edificios, y se sube y se baja caminando por las escaleras, piso por piso.
 5. Alturas reales con Google Open Buildings 2.5D.
 6. *(hecho)* **Agrandar el mapa y recortarlo a San Miguel** (pedido del usuario, 2026-11-24). El usuario eligió
    el partido entero, no solo la ciudad (8,3 km², que ya entraba en el cuadrado viejo).
