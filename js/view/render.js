@@ -315,7 +315,7 @@
 
     if (g.city) {
       L.drawCity(ctx, g.city, camX, camY, W, H, t);
-      L.drawCityInterior(ctx, g.city, p.x, p.y); // the house you are in, without its roof
+      L.drawCityInterior(ctx, g.city, p); // the house you are in, without its roof, on the floor you are on
     } else L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
 
     // Auras under everything.
@@ -372,7 +372,11 @@
     // Enemies.
     g.enemies.forEach(function (e) {
       if (!visible(e.x, e.y, e.r)) return;
+      // One on another floor (below you or above) shows faded.
+      var otherFloor = g.city && (e.floor || 0) !== (p.floor || 0);
+      if (otherFloor) ctx.globalAlpha = 0.3;
       L.drawCreature(ctx, e, p.x, p.y, t);
+      if (otherFloor) ctx.globalAlpha = 1;
       if (e.fuse > 0) { ctx.globalAlpha = 0.25; circle(ctx, e.x, e.y, e.type.bomb.radius, '#ff5a3d'); ctx.globalAlpha = 1; }
       if (e.mode === 'wind') {
         // The Leviatán shows where it is about to charge.

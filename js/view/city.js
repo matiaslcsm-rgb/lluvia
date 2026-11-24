@@ -154,57 +154,87 @@
 
   // ---- Inside a house ----
   // The house you are in (js/interiors.js) loses its roof: you see its rooms, each with its floor, its walls and
-  // doors, and the rooms' names. Drawn under the people. L.drawCityBuildings then darkens the city outside it.
-  L.drawCityInterior = function (ctx, city, px, py) {
-    var plan = city.map && L.cityHouseAt ? L.cityHouseAt(city, px, py) : null;
+  // doors, the stair and the rooms' names. Walking up the stair the ground floor fades out and the upper one fades
+  // in, by how high you are. Drawn under the people. L.drawCityBuildings then darkens the city outside it.
+  L.drawCityInterior = function (ctx, city, who) {
+    var plan = who.house && who.z > 0 ? who.house : city.map && L.cityHouseAt ? L.cityHouseAt(city, who.x, who.y) : null;
     city._inside = plan;
     if (!plan) return;
+    var z = plan.upper ? L.clamp(who.z || 0, 0, 1) : 0;
+    ctx.save(); ctx.scale(city.scale, city.scale);
+    if (z < 1) drawLevel(ctx, city, plan, plan, false);
+    if (z > 0) { ctx.globalAlpha = z; drawLevel(ctx, city, plan, plan.upper, true); ctx.globalAlpha = 1; }
+    ctx.restore();
+  };
+
+  // One floor of a house: `level` is the plan itself (ground floor) or plan.upper.
+  function drawLevel(ctx, city, plan, level, upper) {
     var Hd = L.data.houses, s = city.scale, f = plan.frame, cs = plan.cell, W = plan.W;
-    ctx.save(); ctx.scale(s, s);
-    // In the house's own frame, in cells: floors room by room (in rows of cells), then the walls.
+    // In the house's own frame, in cells: floors room by room (in rows of cells), the stair, then the walls.
     ctx.save(); ctx.transform(f.ux * cs, f.uy * cs, f.vx * cs, f.vy * cs, f.ox, f.oy);
-    plan.rooms.forEach(function (r, k) {
+    level.rooms.forEach(function (r, k) {
       if (!r.cells) return;
       ctx.fillStyle = (Hd.rooms[r.type] || Hd.rooms.living).floor;
       ctx.beginPath();
       for (var y = 0; y < plan.D; y++) {
         for (var x = 0; x < W;) {
-          if (plan.lab[y * W + x] !== k) { x++; continue; }
+          if (level.lab[y * W + x] !== k) { x++; continue; }
           var x0 = x;
-          while (x < W && plan.lab[y * W + x] === k) x++;
+          while (x < W && level.lab[y * W + x] === k) x++;
           ctx.rect(x0 - 0.02, y - 0.02, x - x0 + 0.04, 1.04);
         }
       }
       ctx.fill();
     });
+    if (plan.stair) drawStair(ctx, plan.stair, upper);
     ctx.lineCap = 'square';
     ctx.beginPath();
-    plan.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });
+    level.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });
     ctx.strokeStyle = Hd.wallEdge; ctx.lineWidth = 0.45; ctx.stroke();
     ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.28; ctx.stroke();
     ctx.restore();
-    // The outer wall, then the front and back doorways cut into it.
+    // The outer wall, then (on the ground floor) the front and back doorways cut into it.
     ctx.lineJoin = 'miter';
     ctx.beginPath();
     plan.outline.forEach(function (q, i) { if (i) ctx.lineTo(q[0] / s, q[1] / s); else ctx.moveTo(q[0] / s, q[1] / s); });
     ctx.closePath();
     ctx.strokeStyle = Hd.wallEdge; ctx.lineWidth = 0.34; ctx.stroke();
     ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.2; ctx.stroke();
-    plan.exits.forEach(function (e) {
+    if (!upper) plan.exits.forEach(function (e) {
       var a = L.housePoint(plan, e.seg[0], e.seg[1]), b = L.housePoint(plan, e.seg[2], e.seg[3]);
       ctx.strokeStyle = '#7a5636'; ctx.lineWidth = 0.38; ctx.lineCap = 'butt';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
     });
     // Room names, upright.
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 0.42px system-ui, sans-serif'; ctx.fillStyle = 'rgba(40,30,20,0.5)';
-    plan.rooms.forEach(function (r) {
+    level.rooms.forEach(function (r) {
       var name = (Hd.rooms[r.type] || {}).name;
       if (!name || r.cells < 12) return;
       var m = L.housePoint(plan, r.cx, r.cy);
       ctx.fillText(name, m[0], m[1]);
     });
-    ctx.restore();
-  };
+  }
+
+  // A flight of steps (in cells of the house's frame), a step every 20 cm. From below, the steps get lighter toward
+  // the top; from above (the stairwell) they get darker going down.
+  function drawStair(ctx, st, fromAbove) {
+    var along = st.axis === 'y' ? st.y1 - st.y0 : st.x1 - st.x0, steps = Math.round(along * 0.5 / 0.2);
+    for (var i = 0; i < steps; i++) {
+      var t = (i + 0.5) / steps, a0 = i / steps, a1 = (i + 1) / steps;
+      if (st.up < 0) { a0 = 1 - (i + 1) / steps; a1 = 1 - i / steps; }
+      var light = fromAbove ? 0.85 - t * 0.55 : 0.55 + t * 0.4;
+      ctx.fillStyle = 'rgb(' + Math.round(170 * light) + ',' + Math.round(135 * light) + ',' + Math.round(95 * light) + ')';
+      if (st.axis === 'y') ctx.fillRect(st.x0, st.y0 + along * a0, st.x1 - st.x0, along * (a1 - a0) + 0.02);
+      else ctx.fillRect(st.x0 + along * a0, st.y0, along * (a1 - a0) + 0.02, st.y1 - st.y0);
+    }
+    // The nosing of every step.
+    ctx.strokeStyle = 'rgba(40,25,15,0.45)'; ctx.lineWidth = 0.06; ctx.beginPath();
+    for (i = 1; i < steps; i++) {
+      var k = i / steps * along;
+      if (st.axis === 'y') { ctx.moveTo(st.x0, st.y0 + k); ctx.lineTo(st.x1, st.y0 + k); } else { ctx.moveTo(st.x0 + k, st.y0); ctx.lineTo(st.x0 + k, st.y1); }
+    }
+    ctx.stroke();
+  }
 
   // A doormat outside every doorway of a house you can walk into, so you can tell from the street.
   function doormats(ctx, plan, s) {

@@ -260,10 +260,11 @@
     else { p.still = Math.min(1, (p.still || 0) + dt / 1.5); p.rush = 0; }
   };
 
-  // Moves the player by (dx, dy), against the city walls if there is a city.
+  // Moves the player by (dx, dy), against the city walls if there is a city (on the floor you are on: stairs
+  // take you up and down as you walk them, js/interiors.js).
   function stepPlayer(g, dx, dy) {
     var p = g.player;
-    if (g.city) { var o = L.cityMove(g.city, p.x, p.y, p.x + dx, p.y + dy, p.r, g._mv || (g._mv = {})); p.x = o.x; p.y = o.y; return; }
+    if (g.city) { var o = L.cityLevelMove(g.city, p, p.x + dx, p.y + dy, p.r, g._mv || (g._mv = {})); p.x = o.x; p.y = o.y; return; }
     p.x = L.clamp(p.x + dx, p.r, g.arena - p.r);
     p.y = L.clamp(p.y + dy, p.r, g.arena - p.r);
   }
@@ -438,12 +439,23 @@
 
   function moveEnemies(g, dt) {
     var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0, city = g.city, dir = g._dir || (g._dir = {}), mv = g._emv || (g._emv = {});
-    if (city && !(g.flowT > 0)) { L.cityFlow(city, p.x, p.y); g.flowT = L.data.city.flowEvery; }
+    // You upstairs: the creatures downstairs head for the foot of your stair.
+    var pf = p.floor || 0, up = city && pf >= 1 && p.house && p.house.footPx;
+    if (city && !(g.flowT > 0)) { L.cityFlow(city, up ? p.house.footPx[0] : p.x, up ? p.house.footPx[1] : p.y); g.flowT = L.data.city.flowEvery; }
     if (city) g.flowT -= dt;
     for (var i = 0; i < g.enemies.length; i++) {
       var e = g.enemies[i];
       if (e.dead) continue;
-      var dx = p.x - e.x, dy = p.y - e.y;
+      var dx = p.x - e.x, dy = p.y - e.y, ef = e.floor || 0;
+      // On another floor it goes for the stair: up it from the foot, or down it from the top.
+      if (city && ef !== pf) {
+        var hs = ef < pf ? p.house : e.house, onStair = e.z > 0 && e.z < 1;
+        if (hs && hs.footPx) {
+          var wp = onStair ? (ef < pf ? hs.topPx : hs.footPx) : (ef < pf ? hs.footPx : hs.topPx);
+          if (!onStair && Math.hypot(wp[0] - e.x, wp[1] - e.y) < 30) wp = ef < pf ? hs.topPx : hs.footPx;
+          dx = wp[0] - e.x; dy = wp[1] - e.y;
+        }
+      }
       var d = Math.sqrt(dx * dx + dy * dy) || 1;
       // Stunned enemies stand still; slowed ones move at half speed.
       var sp = e.stun > 0 ? 0 : e.slow > 0 ? e.speed * 0.5 : e.speed;
@@ -470,7 +482,7 @@
           var n = (ph && ph.count) || rg.count || 1, base = Math.atan2(dy, dx), hail = !!rg.count;
           for (var k = 0; k < n; k++) {
             var a = base + (n > 1 ? (k / (n - 1) - 0.5) * rg.spread : 0);
-            g.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(a) * rg.speed, vy: Math.sin(a) * rg.speed, r: hail ? 7 : 6, damage: dmg, life: rg.range / rg.speed + 0.5, hail: hail });
+            g.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(a) * rg.speed, vy: Math.sin(a) * rg.speed, r: hail ? 7 : 6, damage: dmg, life: rg.range / rg.speed + 0.5, hail: hail, floor: e.floor || 0 });
           }
           L.emit(g, 'spit', e.x, e.y);
         }
@@ -527,8 +539,9 @@
         }
       }
       var vx = dx / d * sp, vy = dy / d * sp;
-      // In the city they go around the blocks, along the streets, until they are close.
-      if (city && d > 60 && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
+      // In the city they go around the blocks, along the streets, until they are close (the flow field is on the
+      // ground floor: not for one on a stair or upstairs).
+      if (city && d > 60 && !(e.z > 0) && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
       g.grid.query(e.x, e.y, e.r + g.maxR, q);
@@ -546,10 +559,11 @@
       }
       var push = Math.abs(sp) * 1.5;
       var ex = L.clamp(e.x + (vx + sx * push) * dt, e.r, g.arena - e.r), ey = L.clamp(e.y + (vy + sy * push) * dt, e.r, g.arena - e.r);
-      if (city) { L.cityMove(city, e.x, e.y, ex, ey, 4, mv); ex = mv.x; ey = mv.y; }
+      if (city) { L.cityLevelMove(city, e, ex, ey, 4, mv); ex = mv.x; ey = mv.y; }
       e.x = ex; e.y = ey;
       if (e.flash > 0) e.flash -= dt;
-      if (d < e.r + p.r && p.invuln <= 0) { p.hp -= e.dps * dt * (1 - p.stats.armor); p.hurt = 0.15; }
+      var touch = Math.hypot(p.x - e.x, p.y - e.y);
+      if (touch < e.r + p.r && (e.floor || 0) === pf && p.invuln <= 0) { p.hp -= e.dps * dt * (1 - p.stats.armor); p.hurt = 0.15; }
       if (e.burnTtl > 0) {
         e.burnTtl -= dt;
         L.applyHit(g, e, e.burnDps * dt, 0, 0);
@@ -573,7 +587,7 @@
       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
       if (s.life <= 0) continue;
       var rr = s.r + p.r;
-      if ((s.x - p.x) * (s.x - p.x) + (s.y - p.y) * (s.y - p.y) < rr * rr) {
+      if ((s.floor || 0) === (p.floor || 0) && (s.x - p.x) * (s.x - p.x) + (s.y - p.y) * (s.y - p.y) < rr * rr) {
         if (p.invuln <= 0) { p.hp -= s.damage * (1 - p.stats.armor); p.hurt = 0.15; }
         continue;
       }
@@ -807,13 +821,17 @@
         if (pr.y < 0 || pr.y > g.arena) { pr.vy = -pr.vy; pr.y = L.clamp(pr.y, 0, g.arena); pr.hit.length = 0; }
       }
       if (pr.life <= 0 || pr.x < 0 || pr.y < 0 || pr.x > g.arena || pr.y > g.arena) pr.dead = true;
-      else if (g.city && !L.cityWalkable(g.city, pr.x, pr.y)) pr.dead = true; // walls stop bullets
+      else if (g.city) {
+        // Walls stop bullets, those of the floor it was shot on (yours: the player shoots them all).
+        if (pr.floor === undefined) { pr.floor = g.player.floor || 0; pr.house = g.player.house; }
+        if (!L.cityLevelOpen(g.city, pr.floor, pr.house, pr.x, pr.y)) pr.dead = true;
+      }
       if (!pr.dead) {
         q.length = 0;
         g.grid.query(pr.x, pr.y, pr.r + g.maxR, q);
         for (var j = 0; j < q.length; j++) {
           var e = q[j];
-          if (e.dead || pr.hit.indexOf(e.id) !== -1) continue;
+          if (e.dead || pr.hit.indexOf(e.id) !== -1 || (g.city && (e.floor || 0) !== (pr.floor || 0))) continue;
           var rr = pr.r + e.r, dx = e.x - pr.x, dy = e.y - pr.y;
           if (dx * dx + dy * dy >= rr * rr) continue;
           pr.hit.push(e.id);

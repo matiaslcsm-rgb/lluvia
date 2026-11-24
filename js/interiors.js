@@ -236,20 +236,50 @@
   }
 
   // pts: the footprint in meters; toStreet: unit vector toward its street; seed: the same seed, the same house;
-  // opts.canExit(x, y): optional, false where a door can't lead (a point in cells of the plan's frame).
+  // opts.canExit(x, y): optional, false where a door can't lead (a point in cells of the plan's frame);
+  // opts.floors: how many floors the house has (with 2 or more it gets a stair and an upper floor).
   // Returns { frame, W, D, cell, lab (room index per cell, or OUT), rooms [{ type, cells, cx, cy }], walls,
   // doors (segments in cells), exits [{ x, y, side, dir, seg }] (a door's middle on the outline; side -1 front,
-  // 1 back, 0 a side; dir: outward, in the frame), layout, bedrooms, reachable }.
+  // 1 back, 0 a side; dir: outward, in the frame), layout, bedrooms, reachable, and with an upper floor
+  // stair { x0, y0, x1, y1, axis, up } (cells) and upper (the upper floor's plan, same frame, no exits) }.
   L.housePlan = function (pts, toStreet, seed, opts) {
+    opts = opts || {};
     var cs = H().cell, fr = L.houseFrame(pts, toStreet), W = Math.max(2, Math.round(fr.w / cs)), D = Math.max(2, Math.round(fr.d / cs));
     var rng = L.makeRng((seed * 2654435761) >>> 0 || 1), n = bedroomsFor(areaOf(pts), rng), p = layoutFor(W, D, n, rng);
     if (rng() < 0.5) p.rooms.forEach(function (r) { var x0 = r.x0; r.x0 = W - r.x1; r.x1 = W - x0; }); // mirrored
-    var lab = new Int16Array(W * D).fill(-1), x, y, i;
+    var plan = finish(pts, fr, W, D, p, opts.canExit, true);
+    if ((opts.floors || 1) >= 2) {
+      // No room for a stair: the biggest bedroom becomes the stair hall, joined to the room it opened into (the
+      // bedrooms go upstairs), as in many real two-floor houses.
+      if (!placeStair(plan, L.makeRng(1))) {
+        var beds = p.rooms.map(function (r, k) { return k; }).filter(function (k) { return p.rooms[k].type === 'dormitorio' && plan.rooms[k].cells; });
+        beds.sort(function (a, b) { return plan.rooms[b].cells - plan.rooms[a].cells; });
+        var into = beds.length ? p.links.filter(function (l) { return l[0] === beds[0] || l[1] === beds[0]; })[0] : null;
+        if (into) {
+          p.merges = [[beds[0], into[0] === beds[0] ? into[1] : into[0]]];
+          plan = finish(pts, fr, W, D, p, opts.canExit, true);
+        }
+      }
+      addUpperFloor(pts, plan, rng);
+    }
+    return plan;
+  };
+
+  // Turns a layout into a plan: cuts it to the footprint, merges leftovers, opens doors, finds the walls and (if
+  // `withExits`) the front and back doors.
+  function finish(pts, fr, W, D, p, canExit, withExits) {
+    var cs = H().cell, lab = new Int16Array(W * D).fill(-1), x, y, i;
     p.rooms.forEach(function (r, k) { for (y = r.y0; y < r.y1; y++) for (x = r.x0; x < r.x1; x++) lab[y * W + x] = k; });
     for (y = 0; y < D; y++) for (x = 0; x < W; x++) {
       var mx = (x + 0.5) * cs, my = (y + 0.5) * cs;
       if (!inside(pts, fr.ox + fr.ux * mx + fr.vx * my, fr.oy + fr.uy * mx + fr.vy * my)) lab[y * W + x] = OUT;
     }
+    // Rooms joined into another one (a bedroom given to the stair).
+    (p.merges || []).forEach(function (m) {
+      for (var c = 0; c < lab.length; c++) if (lab[c] === m[0]) lab[c] = m[1];
+      p.links = p.links.filter(function (l) { return l[0] !== m[0] && l[1] !== m[0]; });
+    });
+    var grown = (p.merges || []).map(function (m) { return m[1]; });
     var at = function (cx, cy) { return cx < 0 || cy < 0 || cx >= W || cy >= D ? OUT : lab[cy * W + cx]; };
     // Edges between two different rooms, by pair.
     var pairs, count;
@@ -330,7 +360,7 @@
     var walls = wallEdges.length ? runsOf(wallEdges).map(segment) : [];
     // Front door from the entry room (or any room on the front), back door from the kitchen. `canExit(x, y)` (in
     // cells, the spot 80 cm out of a door) can turn a side down: then the front door goes on a side, or the back.
-    var exitLen = cells(H().exit), exits = [], canExit = opts && opts.canExit;
+    var exitLen = cells(H().exit), exits = [];
     var SIDES = { front: [0, -1], back: [0, 1], left: [-1, 0], right: [1, 0] };
     var exitFrom = function (room, side) {
       var sd = SIDES[side], edges = [], o = sd[0] ? 'v' : 'h';
@@ -352,19 +382,171 @@
       }
       return false;
     };
-    var tries = [[p.entry, 'front'], [-1, 'front'], [p.entry, 'left'], [p.entry, 'right'], [-1, 'left'], [-1, 'right'], [-1, 'back']];
-    for (i = 0; i < tries.length; i++) if (exitFrom(tries[i][0], tries[i][1])) break;
-    if (p.back >= 0 && count[p.back] && !(exits[0] && exits[0].side > 0)) exitFrom(p.back, 'back');
+    if (withExits) {
+      var tries = [[p.entry, 'front'], [-1, 'front'], [p.entry, 'left'], [p.entry, 'right'], [-1, 'left'], [-1, 'right'], [-1, 'back']];
+      for (i = 0; i < tries.length; i++) if (exitFrom(tries[i][0], tries[i][1])) break;
+      if (p.back >= 0 && count[p.back] && !(exits[0] && exits[0].side > 0)) exitFrom(p.back, 'back');
+    }
     var rooms = p.rooms.map(function (r, k) {
       var sx = 0, sy = 0;
       for (var c = 0; c < lab.length; c++) if (lab[c] === k) { sx += c % W + 0.5; sy += Math.floor(c / W) + 0.5; }
-      return { type: r.type, cells: count[k], cx: count[k] ? sx / count[k] : 0, cy: count[k] ? sy / count[k] : 0 };
+      return { type: r.type, cells: count[k], cx: count[k] ? sx / count[k] : 0, cy: count[k] ? sy / count[k] : 0, grown: grown.indexOf(k) >= 0 };
     });
     return { frame: fr, W: W, D: D, cell: cs, lab: lab, rooms: rooms, walls: walls, doors: doors.map(function (d) { return d.seg; }),
       exits: exits, layout: p.name, bedrooms: rooms.filter(function (r) { return r.type === 'dormitorio' && r.cells; }).length,
-      reachable: reach.size === count.filter(function (c) { return c; }).length };
-  };
+      reachable: reach.size === count.filter(function (c) { return c; }).length, entry: p.entry };
+  }
   L.housePlan.OUT = OUT;
+
+  // ---- Stairs and the upper floor ----
+  // The stair is a straight flight STAIR_W wide and STAIR_L long against a wall of the main room (living,
+  // living-kitchen or the studio's room), with room to stand at its foot and without blocking any door. On the
+  // ground floor its railing closes both long sides and the top, so you walk in only from the foot; upstairs it
+  // closes both long sides and the foot, so you step out only at the top. Walking along it takes you up: `t`, from
+  // 0 at the foot to 1 at the top, is how high you are.
+  // Wider than a real one (about 1 m) for the same reason as the corridors: on a turned house its railings take
+  // room, and a narrower stair closes up.
+  var STAIR_W = 2, STAIR_L = 3.5;
+
+  // Where along a stair a point (in cells of the plan's frame) is: t from 0 (foot) to 1 (top), or null if the point
+  // isn't on it.
+  function stairT(st, x, y) {
+    if (x < st.x0 || x > st.x1 || y < st.y0 || y > st.y1) return null;
+    var a = st.axis === 'y' ? (y - st.y0) / (st.y1 - st.y0) : (x - st.x0) / (st.x1 - st.x0);
+    return st.up > 0 ? a : 1 - a;
+  }
+  L.stairT = stairT;
+
+  // The stair's railings as wall segments (cells): both long sides, and the top end (ground floor) or the foot
+  // (upper floor).
+  function railings(st, upper) {
+    var lo = st.up > 0 ? 'start' : 'end', closed = upper ? lo : (lo === 'start' ? 'end' : 'start'), segs;
+    if (st.axis === 'y') {
+      segs = [[st.x0, st.y0, st.x0, st.y1], [st.x1, st.y0, st.x1, st.y1]];
+      segs.push(closed === 'start' ? [st.x0, st.y0, st.x1, st.y0] : [st.x0, st.y1, st.x1, st.y1]);
+    } else {
+      segs = [[st.x0, st.y0, st.x1, st.y0], [st.x0, st.y1, st.x1, st.y1]];
+      segs.push(closed === 'start' ? [st.x0, st.y0, st.x0, st.y1] : [st.x1, st.y0, st.x1, st.y1]);
+    }
+    return segs;
+  }
+
+  // Finds a place for the stair: in the living (or the studio's room), in a room that grew with a bedroom given to
+  // the stair, else in the kitchen. Or null.
+  function placeStair(plan, rng) {
+    var rank = function (k) { var r = plan.rooms[k]; return r.grown ? 0 : r.type === 'cocina' ? 2 : 1; };
+    var order = plan.rooms.map(function (r, k) { return k; }).filter(function (k) { return plan.rooms[k].cells && (plan.rooms[k].grown || /living|ambiente|cocina/.test(plan.rooms[k].type)); });
+    order.sort(function (a, b) { return rank(a) - rank(b) || plan.rooms[b].cells - plan.rooms[a].cells; });
+    for (var i = 0; i < order.length; i++) { var st = placeStairIn(plan, order[i], rng); if (st) return st; }
+    return null;
+  }
+
+  function placeStairIn(plan, main, rng) {
+    var W = plan.W, D = plan.D, lab = plan.lab, sw = cells(STAIR_W), sl = cells(STAIR_L), foot = 3, landing = 2;
+    // Cells next to a door or doorway can't be under the stair or its railing.
+    var nearDoor = new Uint8Array(W * D), mark = function (g) {
+      for (var y = Math.floor(Math.min(g[1], g[3])) - 1; y <= Math.ceil(Math.max(g[1], g[3])); y++)
+        for (var x = Math.floor(Math.min(g[0], g[2])) - 1; x <= Math.ceil(Math.max(g[0], g[2])); x++)
+          if (x >= 0 && y >= 0 && x < W && y < D) nearDoor[y * W + x] = 1;
+    };
+    plan.doors.forEach(mark); plan.exits.forEach(function (e) { mark(e.seg); });
+    var free = function (x, y) { return x >= 0 && y >= 0 && x < W && y < D && lab[y * W + x] === main && !nearDoor[y * W + x]; };
+    var cands = [];
+    ['y', 'x'].forEach(function (axis) {
+      var lw = axis === 'y' ? sw : sl, lh = axis === 'y' ? sl : sw;
+      for (var y0 = 0; y0 + lh <= D; y0++) for (var x0 = 0; x0 + lw <= W; x0++) {
+        var ok = true;
+        for (var y = y0; y < y0 + lh && ok; y++) for (var x = x0; x < x0 + lw && ok; x++) if (!free(x, y)) ok = false;
+        if (!ok) continue;
+        // Against a wall: one long side borders something that isn't the room.
+        var side = function (c) { for (var k = 0; k < (axis === 'y' ? lh : lw); k++) { var xx = axis === 'y' ? c : x0 + k, yy = axis === 'y' ? y0 + k : c; if (xx >= 0 && yy >= 0 && xx < W && yy < D && lab[yy * W + xx] === main) return false; } return true; };
+        var walled = axis === 'y' ? side(x0 - 1) || side(x0 + lw) : side(y0 - 1) || side(y0 + lh);
+        if (!walled) continue;
+        [1, -1].forEach(function (up) {
+          // Room to stand at the foot (in this room), and a landing past the top (inside the house: upstairs it is
+          // the corridor).
+          for (var k = 1; k <= foot; k++) for (var j = 0; j < sw; j++) {
+            var fx = axis === 'y' ? x0 + j : (up > 0 ? x0 - k : x0 + lw - 1 + k), fy = axis === 'y' ? (up > 0 ? y0 - k : y0 + lh - 1 + k) : y0 + j;
+            if (!(fx >= 0 && fy >= 0 && fx < W && fy < D && lab[fy * W + fx] === main)) return;
+            var tx = axis === 'y' ? x0 + j : (up > 0 ? x0 + lw - 1 + k : x0 - k), ty = axis === 'y' ? (up > 0 ? y0 + lh - 1 + k : y0 - k) : y0 + j;
+            if (k <= landing && !(tx >= 0 && ty >= 0 && tx < W && ty < D && lab[ty * W + tx] >= 0)) return;
+          }
+          cands.push({ x0: x0, y0: y0, x1: x0 + lw, y1: y0 + lh, axis: axis, up: up });
+        });
+      }
+    });
+    // Keep only spots that leave the room in one piece (every door still reachable from the foot).
+    var whole = function (st) {
+      var seen = new Uint8Array(W * D), start = st.axis === 'y' ? [st.x0, st.up > 0 ? st.y0 - 1 : st.y1] : [st.up > 0 ? st.x0 - 1 : st.x1, st.y0];
+      var inStair = function (x, y) { return x >= st.x0 && x < st.x1 && y >= st.y0 && y < st.y1; };
+      var q = [start], total = 0;
+      seen[start[1] * W + start[0]] = 1;
+      while (q.length) {
+        var c = q.pop(); total++;
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+          var x = c[0] + d[0], y = c[1] + d[1];
+          if (x < 0 || y < 0 || x >= W || y >= D || seen[y * W + x] || lab[y * W + x] !== main || inStair(x, y)) return;
+          seen[y * W + x] = 1; q.push([x, y]);
+        });
+      }
+      return total >= plan.rooms[main].cells - (st.x1 - st.x0) * (st.y1 - st.y0) - 2;
+    };
+    cands = cands.filter(whole);
+    if (!cands.length) return null;
+    var st = cands[Math.floor(rng() * cands.length)];
+    st.room = main;
+    return st;
+  }
+
+  // The upper floor: a corridor along the stair (with the stairwell in it) and the bedrooms and a bath on its sides.
+  function upperLayout(W, D, st, n, rng) {
+    var p = new Plan('upper'), hall = cells(H().hall), axis = st.axis;
+    var size = axis === 'y' ? W : D, len = axis === 'y' ? D : W, c0 = axis === 'y' ? st.x0 : st.y0, c1 = axis === 'y' ? st.x1 : st.y1;
+    // The corridor holds the stairwell with a walkway on both sides, so no room borders the railing.
+    var h0 = Math.max(0, c0 - hall), h1 = Math.min(size, c1 + hall), narrow = cells(H().bedroomMin);
+    // A strip left too narrow for a room on either side joins the corridor.
+    if (h0 < narrow) h0 = 0;
+    if (size - h1 < narrow) h1 = size;
+    var rect = function (a0, a1, b0, b1) { return axis === 'y' ? [a0, b0, a1, b1] : [b0, a0, b1, a1]; }; // (cross, along) → x0 y0 x1 y1
+    var add = function (type, r) { return p.add(type, r[0], r[1], r[2], r[3]); };
+    var h = add('pasillo', rect(h0, h1, 0, len));
+    var parts = [[0, h0], [h1, size]].filter(function (q) { return q[1] - q[0] > 0; }), types = bedroomsAndBath(Math.max(1, n), rng), bathPlaced = false;
+    parts.forEach(function (q, pi) {
+      if (q[1] - q[0] < cells(H().bedroomMin)) { p.link(add('pasillo', rect(q[0], q[1], 0, len)), h); return; }
+      var count = Math.max(1, Math.min(4, Math.round(len / cells(3.4)))), mine = [];
+      for (var k = 0; k < count; k++) mine.push('dormitorio');
+      if (!bathPlaced && (pi === parts.length - 1 || types.indexOf('bano') >= 0)) { mine[Math.floor(rng() * count)] = 'bano'; bathPlaced = true; }
+      var ws = wobble(mine.map(function (t) { return t === 'bano' ? 2.4 : 3.3; }), rng), cut = cuts(len, ws, cells(MIN_SIDE));
+      if (!cut) { p.link(add('dormitorio', rect(q[0], q[1], 0, len)), h); return; }
+      mine.forEach(function (t, k) { p.link(add(t, rect(q[0], q[1], cut[k], cut[k + 1])), h); });
+    });
+    p.entry = h;
+    return p;
+  }
+
+  function addUpperFloor(pts, plan, rng) {
+    var st = placeStair(plan, rng);
+    if (!st) return;
+    plan.stair = st;
+    // A railing that runs along the house's own wall is left out: the wall already closes that side, and the two
+    // together would make a wall too thick for a turned house.
+    var W = plan.W, D = plan.D, outside = function (x, y) { return x < 0 || y < 0 || x >= W || y >= D || plan.lab[y * W + x] === OUT; };
+    var onOutline = function (g) {
+      var sides = g[0] === g[2] ? [[-1, 0], [0, 0]] : [[0, -1], [0, 0]];
+      return sides.some(function (sd) {
+        for (var k = Math.min(g[0], g[2], g[1], g[3]) * 0, n = Math.max(Math.abs(g[2] - g[0]), Math.abs(g[3] - g[1])); k < n; k++) {
+          var x = (g[0] === g[2] ? g[0] : Math.min(g[0], g[2]) + k) + sd[0], y = (g[0] === g[2] ? Math.min(g[1], g[3]) + k : g[1]) + sd[1];
+          if (!outside(x, y)) return false;
+        }
+        return true;
+      });
+    };
+    var keep = function (g) { return !onOutline(g); };
+    plan.walls = plan.walls.concat(railings(st, false).filter(keep));
+    var up = finish(pts, plan.frame, plan.W, plan.D, upperLayout(plan.W, plan.D, st, Math.max(1, plan.bedrooms), rng), null, false);
+    up.walls = up.walls.concat(railings(st, true).filter(keep));
+    plan.upper = up;
+  }
 
   // A point of a plan (in cells, its own frame) in meters on the map.
   L.housePoint = function (plan, x, y) {
@@ -440,9 +622,10 @@
         };
         var street = toStreet(city, cx / pts.length * s, cy / pts.length * s);
         frameOf = { frame: L.houseFrame(pts, street), cell: Hd.cell };
-        plan = L.housePlan(pts, street, i, { canExit: canExit });
+        plan = L.housePlan(pts, street, i, { canExit: canExit, floors: b[2] });
         var px = function (q) { return [q[0] * s, q[1] * s]; }, f = plan.frame;
         plan.index = i;
+        plan.scale = s;
         plan.outline = pts.map(px);
         plan.wallsPx = plan.walls.map(function (w) { return px(L.housePoint(plan, w[0], w[1])).concat(px(L.housePoint(plan, w[2], w[3]))); });
         plan.exitsPx = plan.exits.map(function (e) {
@@ -452,11 +635,77 @@
         var segPx = function (g) { return px(L.housePoint(plan, g[0], g[1])).concat(px(L.housePoint(plan, g[2], g[3]))); };
         plan.doorsPx = plan.doors.map(segPx);
         plan.exitSegsPx = plan.exits.map(function (e) { return segPx(e.seg); });
+        if (plan.upper) {
+          plan.upper.wallsPx = plan.upper.walls.map(segPx);
+          // Where to stand to go up (just past the foot) and to go down (just past the top), for the creatures.
+          var st = plan.stair, mid = st.axis === 'y' ? (st.x0 + st.x1) / 2 : (st.y0 + st.y1) / 2;
+          var lo = st.axis === 'y' ? st.y0 - 1 : st.x0 - 1, hi = st.axis === 'y' ? st.y1 + 1 : st.x1 + 1;
+          var foot = st.up > 0 ? lo : hi, top = st.up > 0 ? hi : lo;
+          plan.footPx = px(st.axis === 'y' ? L.housePoint(plan, mid, foot) : L.housePoint(plan, foot, mid));
+          plan.topPx = px(st.axis === 'y' ? L.housePoint(plan, mid, top) : L.housePoint(plan, top, mid));
+        }
       }
     }
     cache.set(i, plan);
     return plan;
   };
+
+  // ---- Floors: moving up and down ----
+  // Anyone moving in the city (`ent`: the player, a creature) carries `floor` (0 the ground, 1 upstairs), `z` (how
+  // high: equal to the floor, or between 0 and 1 on a stair) and `house` (the plan of the house whose stair or upper
+  // floor it is on). On the ground floor the walk grid is used; upstairs, the upper floor's own walls.
+
+  var WALL_HALF = 0.08; // meters: half the thickness of a wall upstairs, for bodies against it
+
+  // A point in px → cells of the plan's frame.
+  function toPlan(plan, x, y) {
+    var f = plan.frame, mx = x / plan.scale - f.ox, my = y / plan.scale - f.oy;
+    return [(mx * f.ux + my * f.uy) / plan.cell, (mx * f.vx + my * f.vy) / plan.cell];
+  }
+
+  function segDist(x, y, s) {
+    var dx = s[2] - s[0], dy = s[3] - s[1], t = L.clamp(((x - s[0]) * dx + (y - s[1]) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+    return Math.hypot(s[0] + dx * t - x, s[1] + dy * t - y);
+  }
+
+  // Does a body of radius r (px) fit at (x, y) on a house's upper floor?
+  function upperFits(plan, x, y, r) {
+    if (!inside(plan.outline, x, y)) return false;
+    var m = r + WALL_HALF * plan.scale, o = plan.outline, w = plan.upper.wallsPx;
+    for (var i = 0; i < o.length; i++) { var q = o[i], n = o[(i + 1) % o.length]; if (segDist(x, y, [q[0], q[1], n[0], n[1]]) < m) return false; }
+    for (i = 0; i < w.length; i++) if (segDist(x, y, w[i]) < m) return false;
+    return true;
+  }
+
+  // Moves `ent` toward (nx, ny) px on its floor, sliding along walls, and works out its floor and height from the
+  // stair it is on. The new position goes in `out`.
+  L.cityLevelMove = function (city, ent, nx, ny, r, out) {
+    out = out || {};
+    r = Math.min(r, L.data.city.body);
+    var plan = ent.house, x = ent.x, y = ent.y;
+    if ((ent.floor || 0) >= 1 && plan && plan.upper) {
+      if (upperFits(plan, nx, ny, r)) { out.x = nx; out.y = ny; }
+      else if (upperFits(plan, nx, y, r)) { out.x = nx; out.y = y; }
+      else if (upperFits(plan, x, ny, r)) { out.x = x; out.y = ny; }
+      else { out.x = x; out.y = y; }
+    } else L.cityMove(city, x, y, nx, ny, r, out);
+    // On a stair: the one of the house it was in, else the one of the house it is in now.
+    var t = plan && plan.stair ? stairT(plan.stair, toPlan(plan, out.x, out.y)[0], toPlan(plan, out.x, out.y)[1]) : null;
+    if (t === null && !(ent.floor >= 1)) {
+      var here = L.cityHouseAt(city, out.x, out.y);
+      if (here && here.stair) { var q = toPlan(here, out.x, out.y); t = stairT(here.stair, q[0], q[1]); if (t !== null) plan = here; }
+    }
+    if (t !== null) { ent.house = plan; ent.z = t; ent.floor = t > 0.5 ? 1 : 0; }
+    else ent.z = ent.floor || 0;
+    return out;
+  };
+
+  // Is (x, y) px open (not a wall) on a floor? `plan` is the house for an upper floor.
+  L.cityLevelOpen = function (city, floor, plan, x, y) {
+    return floor >= 1 && plan && plan.upper ? upperFits(plan, x, y, 0) : L.cityWalkable(city, x, y);
+  };
+  L.cityUpperFits = upperFits;
+  L.housePlanPoint = toPlan;
 
   // The house (its plan) you are standing in at (x, y) px, or null.
   L.cityHouseAt = function (city, x, y) {

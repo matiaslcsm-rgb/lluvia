@@ -62,6 +62,128 @@ test('casas por dentro: más metros, más dormitorios; y los dormitorios tienen 
   }
 });
 
+test('escaleras: las casas de dos pisos tienen escalera (en el living, la cocina o un hall) y un piso de arriba con sus cuartos', function () {
+  var L = Lluvia, withStair = 0, total = 0;
+  for (var seed = 1; seed <= 40; seed++) {
+    var p = L.housePlan(rectHouse(8 + (seed % 3), 12 + (seed % 4)), [0, -1], seed, { floors: 2 });
+    total++;
+    if (!p.stair) continue;
+    withStair++;
+    var st = p.stair;
+    // Every cell under the stair belongs to the main room.
+    for (var y = st.y0; y < st.y1; y++) for (var x = st.x0; x < st.x1; x++) assert.strictEqual(p.lab[y * p.W + x], st.room, 'la escalera pisa otro cuarto');
+    var room = p.rooms[st.room];
+    assert.ok(room.grown || /living|ambiente|cocina/.test(room.type), 'la escalera está en: ' + room.type);
+    var up = p.upper;
+    assert.ok(up.reachable, 'arriba hay un cuarto sin puerta (semilla ' + seed + ')');
+    assert.ok(up.rooms.some(function (r) { return r.type === 'dormitorio' && r.cells; }), 'arriba no hay dormitorio');
+    // The top of the stair lands in the upstairs corridor.
+    var tx = st.axis === 'y' ? Math.floor((st.x0 + st.x1) / 2) : (st.up > 0 ? st.x1 - 1 : st.x0), ty = st.axis === 'y' ? (st.up > 0 ? st.y1 - 1 : st.y0) : Math.floor((st.y0 + st.y1) / 2);
+    assert.strictEqual(up.rooms[up.lab[ty * up.W + tx]].type, 'pasillo', 'la escalera no llega al pasillo de arriba');
+    assert.ok(L.stairT(st, tx + 0.5, ty + 0.5) > 0.8, 'la punta de arriba no es la de arriba');
+  }
+  assert.ok(withStair >= total * 0.8, 'pocas casas de dos pisos con escalera: ' + withStair + ' de ' + total);
+  assert.ok(!L.housePlan(rectHouse(9, 14), [0, -1], 3, { floors: 1 }).stair, 'una casa de un piso con escalera');
+});
+
+test('escaleras de San Miguel: se suben caminando, arriba se llega a cada cuarto y por el costado no se entra', function () {
+  var L = Lluvia, city = L.cityHome(1), s = city.scale, M = city.map, start = city.start, found = 0;
+  for (var i = 0; i < M.buildings.length && found < 12; i++) {
+    var f = M.buildings[i][0], bx = f[0] * M.unit * s, by = f[1] * M.unit * s;
+    if (Math.abs(bx - start.x) > 600 * s || Math.abs(by - start.y) > 600 * s) continue;
+    var p = L.cityHouse(city, i);
+    if (!p || !p.upper) continue;
+    found++;
+    // The foot can be reached walking from the room around it (a search over the walk grid, from the room's
+    // middle-most free spot near the foot).
+    var st0 = p.stair, cell = city.cell, mid = st0.axis === 'y' ? (st0.x0 + st0.x1) / 2 : (st0.y0 + st0.y1) / 2;
+    var along = function (t) { var a = st0.up > 0 ? t : 1 - t; return st0.axis === 'y' ? L.housePoint(p, mid, st0.y0 + (st0.y1 - st0.y0) * a) : L.housePoint(p, st0.x0 + (st0.x1 - st0.x0) * a, mid); };
+    var first = along(0.08), fromRoom = null, best = Infinity;
+    for (var rc = 0; rc < p.lab.length; rc++) {
+      if (p.lab[rc] !== st0.room || L.stairT(st0, rc % p.W + 0.5, Math.floor(rc / p.W) + 0.5) !== null) continue;
+      var rm = L.housePoint(p, rc % p.W + 0.5, Math.floor(rc / p.W) + 0.5), rx = rm[0] * s, ry = rm[1] * s, rd = Math.hypot(rx - p.footPx[0], ry - p.footPx[1]);
+      if (rd > 0.6 * s && rd < best && L.cityFits(city, rx, ry, L.data.city.body)) { best = rd; fromRoom = { x: rx, y: ry }; }
+    }
+    assert.ok(fromRoom, 'en la casa ' + i + ' no hay lugar libre en el cuarto de la escalera');
+    var c0 = [Math.floor(fromRoom.x / cell), Math.floor(fromRoom.y / cell)];
+    var visited = new Set([c0.join()]), todo = [c0], got = null;
+    while (todo.length && !got && visited.size < 4000) {
+      var cc = todo.shift(), cq = L.housePlanPoint(p, (cc[0] + 0.5) * cell, (cc[1] + 0.5) * cell), ct = L.stairT(st0, cq[0], cq[1]);
+      if (ct !== null && ct < 0.35) { got = cc; break; } // on the lower part of the stair
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (dd) {
+        var nn = [cc[0] + dd[0], cc[1] + dd[1]], key = nn.join();
+        if (!visited.has(key) && L.cityFits(city, (nn[0] + 0.5) * cell, (nn[1] + 0.5) * cell, L.data.city.body)) { visited.add(key); todo.push(nn); }
+      });
+    }
+    assert.ok(got, 'en la casa ' + i + ' no se llega caminando al pie de la escalera');
+    // From there, walking up the stair: you pass halfway and end upstairs, all the way up.
+    var ent = { x: (got[0] + 0.5) * cell, y: (got[1] + 0.5) * cell, floor: 0, z: 0 }, out = {}, sawMiddle = false;
+    for (var k = 0; k < 400 && !(ent.floor === 1 && ent.z === 1); k++) {
+      var dx = p.topPx[0] - ent.x, dy = p.topPx[1] - ent.y, d = Math.hypot(dx, dy) || 1, step = Math.min(d, 6);
+      L.cityLevelMove(city, ent, ent.x + dx / d * step, ent.y + dy / d * step, 14, out);
+      ent.x = out.x; ent.y = out.y;
+      if (ent.z > 0.3 && ent.z < 0.7) sawMiddle = true;
+    }
+    assert.ok(sawMiddle, 'en la casa ' + i + ' no se pasa por la mitad de la escalera');
+    assert.strictEqual(ent.floor, 1, 'en la casa ' + i + ' la escalera no lleva arriba (z ' + ent.z + ')');
+    // From the top, walking upstairs, every room is reached (a grid of spots 25 cm apart).
+    var c = 0.25 * s, xs = p.outline.map(function (q) { return q[0]; }), ys = p.outline.map(function (q) { return q[1]; });
+    var x0 = Math.min.apply(null, xs), y0 = Math.min.apply(null, ys), nx = Math.ceil((Math.max.apply(null, xs) - x0) / c), ny = Math.ceil((Math.max.apply(null, ys) - y0) / c);
+    var fits = function (gx, gy) { return gx >= 0 && gy >= 0 && gx < nx && gy < ny && L.cityUpperFits(p, x0 + (gx + 0.5) * c, y0 + (gy + 0.5) * c, L.data.city.body); };
+    var seen = new Uint8Array(nx * ny), g0 = [Math.floor((ent.x - x0) / c), Math.floor((ent.y - y0) / c)], queue = [g0];
+    assert.ok(fits(g0[0], g0[1]), 'arriba de la escalera de la casa ' + i + ' no hay lugar');
+    seen[g0[1] * nx + g0[0]] = 1;
+    while (queue.length) {
+      var cur = queue.pop();
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (dd) {
+        var gx = cur[0] + dd[0], gy = cur[1] + dd[1];
+        if (fits(gx, gy) && !seen[gy * nx + gx]) { seen[gy * nx + gx] = 1; queue.push([gx, gy]); }
+      });
+    }
+    p.upper.rooms.forEach(function (r, ri) {
+      if (r.cells < 16) return;
+      var reached = false;
+      for (var cc = 0; cc < p.upper.lab.length && !reached; cc++) {
+        if (p.upper.lab[cc] !== ri) continue;
+        var m = L.housePoint(p, cc % p.W + 0.5, Math.floor(cc / p.W) + 0.5), gx = Math.floor((m[0] * s - x0) / c), gy = Math.floor((m[1] * s - y0) / c);
+        if (gx >= 0 && gy >= 0 && gx < nx && gy < ny && seen[gy * nx + gx]) reached = true;
+      }
+      assert.ok(reached, 'arriba no se llega al ' + r.type + ' de la casa ' + i);
+    });
+    // On the ground floor, from beside the middle of the stair, walking into it from the side doesn't get you on it.
+    var st = p.stair, midT = st.axis === 'y' ? [st.x0 - 1.2, (st.y0 + st.y1) / 2, st.x1 + 1.2, (st.y0 + st.y1) / 2] : [(st.x0 + st.x1) / 2, st.y0 - 1.2, (st.x0 + st.x1) / 2, st.y1 + 1.2];
+    [[midT[0], midT[1], midT[2], midT[3]], [midT[2], midT[3], midT[0], midT[1]]].forEach(function (pair) {
+      var a = L.housePoint(p, pair[0], pair[1]), b = L.housePoint(p, pair[2], pair[3]), side = { x: a[0] * s, y: a[1] * s, floor: 0, z: 0 };
+      if (!L.cityFits(city, side.x, side.y, L.data.city.body)) return; // the wall side
+      for (var k2 = 0; k2 < 60; k2++) {
+        var ddx = b[0] * s - side.x, ddy = b[1] * s - side.y, dd = Math.hypot(ddx, ddy) || 1;
+        L.cityLevelMove(city, side, side.x + ddx / dd * 5, side.y + ddy / dd * 5, 14, out);
+        side.x = out.x; side.y = out.y;
+        assert.ok(!(side.z > 0.2), 'en la casa ' + i + ' se entra a la escalera por el costado');
+      }
+    });
+  }
+  assert.ok(found >= 8, 'pocas casas con escalera cerca de la plaza: ' + found);
+});
+
+test('escaleras: las paredes de un piso no frenan en el otro', function () {
+  var L = Lluvia, city = L.cityHome(1), s = city.scale, M = city.map, start = city.start, checked = 0;
+  for (var i = 0; i < M.buildings.length && checked < 5; i++) {
+    var f = M.buildings[i][0], bx = f[0] * M.unit * s, by = f[1] * M.unit * s;
+    if (Math.abs(bx - start.x) > 600 * s || Math.abs(by - start.y) > 600 * s) continue;
+    var p = L.cityHouse(city, i);
+    if (!p || !p.upper) continue;
+    // A spot on a ground-floor wall that is in the middle of a room upstairs: closed below, open above.
+    p.wallsPx.forEach(function (w) {
+      var mx = (w[0] + w[2]) / 2, my = (w[1] + w[3]) / 2;
+      if (L.cityWalkable(city, mx, my) || !L.cityUpperFits(p, mx, my, L.data.city.body)) return;
+      assert.ok(L.cityLevelOpen(city, 1, p, mx, my) && !L.cityLevelOpen(city, 0, p, mx, my), 'los pisos se mezclan en la casa ' + i);
+      checked++;
+    });
+  }
+  assert.ok(checked >= 3, 'no se encontraron paredes de abajo bajo cuartos de arriba: ' + checked);
+});
+
 test('casas de San Miguel: se entra por la puerta, adentro se camina y las paredes no se atraviesan', function () {
   var L = Lluvia, city = L.cityHome(1), s = city.scale, M = city.map, start = city.start, found = 0, tried = 0;
   for (var i = 0; i < M.buildings.length && found < 30 && tried < 8000; i++) {

@@ -700,6 +700,32 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     la vereda se llega caminando a cada cuarto y las paredes no se cruzan.
   - Revisado en el navegador: se entra caminando por la puerta a una casa chorizo y a una de pasillo al medio.
   - Sigue: muebles, puertas y ventanas dibujadas, y después escaleras y pisos de arriba.
+- **2026-11-24: escaleras fluidas y piso de arriba en las casas de dos pisos** (paso 42, segunda parte, con la
+  decisión del usuario de escaleras sin botón).
+  - **La escalera** es un tramo recto de 2 × 3,5 m contra una pared del living (o de la cocina), con lugar para
+    pararse al pie y un descanso arriba, sin tapar ninguna puerta. Si no entra en ningún lado (pasa en las casas
+    de pasillo al medio, con el living ancho y poco profundo), el dormitorio más grande se vuelve el hall de la
+    escalera, como en muchas casas reales de dos pisos, y los dormitorios quedan arriba. En las casas de prueba, 4
+    de cada 5 de dos pisos tienen escalera.
+  - **Se sube caminando**: cada uno (vos y los bichos) lleva su piso y su altura. Sobre la escalera la altura va
+    de 0 al pie a 1 arriba, según lo que avanzaste, y pasada la mitad chocás con las paredes de arriba. Abajo la
+    baranda cierra los costados y la punta de arriba; arriba cierra los costados y el pie: por el costado no se
+    entra.
+  - **El piso de arriba** tiene su propia planta (`plan.upper`): un pasillo con el hueco de la escalera y pasillo a
+    los dos lados, y los dormitorios y un baño al costado. Arriba los choques no usan la grilla: se calculan contra
+    las paredes de ese piso.
+  - **Al subir**, la planta de abajo se apaga y la de arriba aparece según tu altura; desde arriba los escalones
+    se ven oscurecerse hacia abajo. Un bicho de otro piso se ve medio transparente.
+  - **Los bichos suben**: si estás arriba van al pie de tu escalera, suben y te siguen; si están arriba y vos
+    abajo, bajan. Las balas y los golpes solo valen entre los que están en el mismo piso.
+  - El techo de las casas de dos pisos se dibuja como siempre desde afuera (paso 41).
+  - Pruebas nuevas: escalera y planta de arriba con sus cuartos en las casas de dos pisos; en 12 casas reales se
+    llega caminando al pie, se sube hasta arriba pasando por la mitad, arriba se llega a cada cuarto y por el
+    costado no se entra; y las paredes de abajo no frenan arriba.
+  - Revisado en el navegador: se sube y se baja una escalera de a poco, con el cambio de planta gradual.
+  - Ajustes por las casas giradas: escalera de 2 m de ancho, y las barandas que caen sobre una pared de la casa no
+    se agregan (engrosaban la pared).
+  - Sigue: edificios de departamentos (palier, escalera en "U", departamentos por piso), terrazas y sótanos.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
