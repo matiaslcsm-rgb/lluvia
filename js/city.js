@@ -39,9 +39,12 @@
     body: 9              // radius used against walls (smaller than the drawing, which also covers the sidewalk)
   };
 
-  function makeCity(size) {
-    var C = L.data.city, cols = Math.ceil(size / C.cell);
-    return { size: size, cell: C.cell, cols: cols, rows: cols, walk: new Uint8Array(cols * cols),
+  // w × h pixels (square when h is left out). `size` is the longer side: the game's play area (g.arena) is square,
+  // and the walk grid already walls off whatever lies outside the city.
+  function makeCity(w, h) {
+    h = h || w;
+    var C = L.data.city, cols = Math.ceil(w / C.cell), rows = Math.ceil(h / C.cell);
+    return { size: Math.max(w, h), w: w, h: h, cell: C.cell, cols: cols, rows: rows, walk: new Uint8Array(cols * rows),
       roads: [], parks: [], buildings: [], houses: [], cars: [], trees: [], flow: null, flowCell: -1, flowAt: -1 };
   }
 
@@ -151,25 +154,128 @@
   L.cityStreet = function (kind) { return L.data.city.streets[kind] || [6, 1.5]; };
 
   // ---- The real map (data/map-*.js, made with tools/bake-map.js; see docs/MAPA.md) ----
-  // Every real building footprint is a wall (no houses are invented) and the city is drawn by js/view/mapdraw.js.
+  // The whole Partido de San Miguel: inside its border you walk everywhere except through its real buildings (no
+  // house is invented) and the parked cars; past the border you can't go. It is drawn by js/view/mapdraw.js.
+  // Built lean, because the partido is big (a walk grid of ~70 million cells): polygons are filled row by row
+  // straight from the map's numbers, and the footprints aren't kept (the drawing has its own).
   // Streets keep their real width: `w` is the carriageway, where cars park.
   L.cityFromMap = function (M) {
-    var C = L.data.city, s = C.scale, k = M.unit * s, city = makeCity(M.meters * s);
+    var C = L.data.city, s = C.scale, k = M.unit * s, city = makeCity(M.w * s, M.h * s);
     var pts = function (f) { var out = []; for (var i = 0; i + 1 < f.length; i += 2) out.push([f[i] * k, f[i + 1] * k]); return out; };
-    M.parks.forEach(function (pk) { var p = pts(pk[2]); paintPolygon(city, p); city.parks.push({ pts: p, kind: pk[0], name: pk[1] }); });
-    M.roads.forEach(function (r) {
-      var w = L.cityStreet(r[0]), p = pts(r[2]), half = (w[0] + w[1] * 2) * s / 2;
-      for (var i = 1; i < p.length; i++) paintSegment(city, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], half);
-      city.roads.push({ pts: p, w: w[0] * s, kind: r[0], name: r[1] });
-    });
-    city.buildings = M.buildings.map(function (b) { return pts(b[0]); });
+    M.parks.forEach(function (pk) { city.parks.push({ pts: pts(pk[2]), kind: pk[0], name: pk[1] }); });
+    M.roads.forEach(function (r) { city.roads.push({ pts: pts(r[2]), w: L.cityStreet(r[0])[0] * s, kind: r[0], name: r[1] }); });
+    if (M.border) fillFlat(city, M.border, k, 1); else city.walk.fill(1);
+    M.buildings.forEach(function (b) { fillFlat(city, b[0], k, 0); });
+    parkCars(city, L.makeRng(0x5a17));
     city.map = M;
     city.name = M.name;
     city.real = true;
     city.start = { x: M.start[0] * k, y: M.start[1] * k };
-    L.cityBuild(city, 0x5a17, { lots: false, trees: false });
+    keepReachable(city, city.start.x, city.start.y);
+    bucket(city);
     return city;
   };
+
+  // Fills a polygon given as flat numbers (x, y, x, y...) times `k` into the walk grid, row by row: a cell takes
+  // `value` when its center is inside. Quick even for the partido's border, with thousands of points.
+  function fillFlat(city, f, k, value) {
+    var c = city.cell, cols = city.cols, n = f.length >> 1, minY = Infinity, maxY = -Infinity, xs = [], i, j;
+    for (i = 1; i < f.length; i += 2) { minY = Math.min(minY, f[i] * k); maxY = Math.max(maxY, f[i] * k); }
+    var y0 = Math.max(0, Math.ceil(minY / c - 0.5)), y1 = Math.min(city.rows - 1, Math.floor(maxY / c - 0.5));
+    for (var cy = y0; cy <= y1; cy++) {
+      var py = (cy + 0.5) * c;
+      xs.length = 0;
+      for (i = 0, j = n - 1; i < n; j = i++) {
+        var yi = f[i * 2 + 1] * k, yj = f[j * 2 + 1] * k;
+        if ((yi > py) !== (yj > py)) { var xi = f[i * 2] * k, xj = f[j * 2] * k; xs.push(xi + (py - yi) * (xj - xi) / (yj - yi)); }
+      }
+      xs.sort(function (a, b) { return a - b; });
+      for (var m = 0; m + 1 < xs.length; m += 2) {
+        var a = Math.max(0, Math.ceil(xs[m] / c - 0.5)), b = Math.min(cols - 1, Math.floor(xs[m + 1] / c - 0.5));
+        for (var cx = a; cx <= b; cx++) city.walk[cy * cols + cx] = value;
+      }
+    }
+  }
+
+  // Parked cars along the curb of the real streets (solid: they block bullets too), never close to a corner, on a
+  // building, past the border or on another car.
+  function parkCars(city, rng) {
+    var C = L.data.city, CR = C.cars, s = C.scale;
+    // Corners: points shared by two streets (or twice by one), in a 30 m bucket grid.
+    var seen = new Map(), corners = new Map(), B = 30 * s, key = function (p) { return Math.round(p[0]) + ',' + Math.round(p[1]); };
+    city.roads.forEach(function (r, ri) {
+      r.pts.forEach(function (p) {
+        var kk = key(p), was = seen.get(kk);
+        if (was === undefined) { seen.set(kk, ri); return; }
+        var bk = Math.floor(p[0] / B) + ',' + Math.floor(p[1] / B);
+        if (!corners.has(bk)) corners.set(bk, []);
+        corners.get(bk).push(p);
+      });
+    });
+    var nearCorner = function (x, y, d) {
+      for (var gy = Math.floor((y - d) / B); gy <= Math.floor((y + d) / B); gy++) for (var gx = Math.floor((x - d) / B); gx <= Math.floor((x + d) / B); gx++) {
+        var list = corners.get(gx + ',' + gy);
+        if (list) for (var i = 0; i < list.length; i++) if (Math.abs(list[i][0] - x) < d && Math.abs(list[i][1] - y) < d) return true;
+      }
+      return false;
+    };
+    var open = function (x, y) { return L.cityWalkable(city, x, y); };
+    var range = function (a) { return (a[0] + rng() * (a[1] - a[0])) * s; };
+    city.roads.forEach(function (r) {
+      if (CR.kinds.indexOf(r.kind) < 0 || r.w < 8 * s) return;
+      for (var k = 1; k < r.pts.length; k++) {
+        var ax = r.pts[k - 1][0], ay = r.pts[k - 1][1], dx = r.pts[k][0] - ax, dy = r.pts[k][1] - ay, len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 10 * s) continue;
+        var ux = dx / len, uy = dy / len;
+        for (var side = -1; side <= 1; side += 2) {
+          var nx = -uy * side, ny = ux * side;
+          for (var t = 4 * s + rng() * 6 * s; t < len - 4 * s; t += range(CR.every)) {
+            if (rng() > CR.chance) continue;
+            var cx = ax + ux * t + nx * (r.w / 2 - 1.3 * s), cy = ay + uy * t + ny * (r.w / 2 - 1.3 * s), hl = CR.length * s / 2, hw = CR.width * s / 2;
+            if (nearCorner(cx, cy, r.w / 2 + 9 * s)) continue;
+            var car = [cx - ux * hl - nx * hw, cy - uy * hl - ny * hw, cx + ux * hl - nx * hw, cy + uy * hl - ny * hw,
+              cx + ux * hl + nx * hw, cy + uy * hl + ny * hw, cx - ux * hl + nx * hw, cy - uy * hl + ny * hw];
+            if (!open(cx, cy) || !open(car[0], car[1]) || !open(car[2], car[3]) || !open(car[4], car[5]) || !open(car[6], car[7])) continue;
+            fillFlat(city, car, 1, 0);
+            city.cars.push({ pts: [[car[0], car[1]], [car[2], car[3]], [car[4], car[5]], [car[6], car[7]]], x: cx, y: cy, ang: Math.atan2(uy, ux), color: Math.floor(rng() * 7) });
+          }
+        }
+      }
+    });
+  }
+
+  // Only what you can reach from (x, y) stays walkable (a yard closed in by houses, a corner cut off by the border
+  // become walls, so nothing spawns where it can never reach you). A scanline flood fill: it marks the reachable
+  // cells with 2 inside the walk grid itself, then turns 2 into walkable and everything else into wall.
+  function keepReachable(city, x, y) {
+    var cols = city.cols, rows = city.rows, w = city.walk, seed = free(city, x, y, false, 400);
+    if (!seed) return;
+    var stack = new Int32Array(4096), top = 0;
+    var push = function (i) {
+      if (top === stack.length) { var bigger = new Int32Array(stack.length * 2); bigger.set(stack); stack = bigger; }
+      stack[top++] = i;
+    };
+    push(Math.floor(seed.y / city.cell) * cols + Math.floor(seed.x / city.cell));
+    while (top) {
+      var i = stack[--top];
+      if (w[i] !== 1) continue;
+      var row = (i / cols) | 0, x0 = i - row * cols, x1 = x0;
+      while (x0 > 0 && w[row * cols + x0 - 1] === 1) x0--;
+      while (x1 < cols - 1 && w[row * cols + x1 + 1] === 1) x1++;
+      for (var cx = x0; cx <= x1; cx++) w[row * cols + cx] = 2;
+      for (var dr = -1; dr <= 1; dr += 2) {
+        var r2 = row + dr;
+        if (r2 < 0 || r2 >= rows) continue;
+        var inRun = false;
+        for (cx = x0; cx <= x1; cx++) {
+          var open = w[r2 * cols + cx] === 1;
+          if (open && !inRun) push(r2 * cols + cx);
+          inRun = open;
+        }
+      }
+    }
+    for (var k = 0; k < w.length; k++) w[k] = w[k] === 2 ? 1 : 0;
+  }
 
   // The home city: the real map if it is baked in, else the older baked streets, else an invented one.
   L.cityHome = function (seed) {
@@ -318,9 +424,9 @@
 
   // Drawing buckets: which houses, buildings, cars and trees touch each chunk of the map.
   function bucket(city) {
-    var S = L.data.city.chunk, cols = Math.ceil(city.size / S), b = new Array(cols * cols);
+    var S = L.data.city.chunk, cols = Math.ceil(city.w / S), rows = Math.ceil(city.h / S), b = new Array(cols * rows);
     var put = function (kind, item, x0, y0, x1, y1) {
-      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(cols - 1, Math.floor(y1 / S)); cy++) {
+      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(rows - 1, Math.floor(y1 / S)); cy++) {
         for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
           var k = cy * cols + cx, slot = b[k] || (b[k] = { houses: [], buildings: [], cars: [], trees: [] });
           slot[kind].push(item);
@@ -336,7 +442,7 @@
     city.buildings.forEach(function (bd) { var q = box(bd); put('buildings', bd, q[0], q[1], q[2], q[3]); });
     city.cars.forEach(function (c) { put('cars', c, c.x - 30, c.y - 30, c.x + 30, c.y + 30); });
     city.trees.forEach(function (t) { put('trees', t, t.x - t.r, t.y - t.r, t.x + t.r, t.y + t.r); });
-    city.chunks = b; city.chunkCols = cols;
+    city.chunks = b; city.chunkCols = cols; city.chunkRows = rows;
   }
 
   // Streets that don't connect to the rest (a dead end cut by the square's edge) become walls, so nothing spawns
@@ -410,12 +516,14 @@
   };
 
   // needFit: only spots where a body fits (the middle of a street); searches up to maxRing cells away.
+  // Only the edge of each ring is looked at (the real map is big: a spot past the border can be far from any street).
   function free(city, x, y, needFit, maxRing) {
     var c = city.cell, cx0 = L.clamp(Math.floor(x / c), 0, city.cols - 1), cy0 = L.clamp(Math.floor(y / c), 0, city.rows - 1);
     for (var ring = 0; ring < maxRing; ring++) {
+      if (cx0 - ring < 0 && cy0 - ring < 0 && cx0 + ring >= city.cols && cy0 + ring >= city.rows) break;
       for (var dy = -ring; dy <= ring; dy++) {
-        for (var dx = -ring; dx <= ring; dx++) {
-          if (Math.abs(dx) !== ring && Math.abs(dy) !== ring) continue;
+        var edge = Math.abs(dy) === ring, step = edge || !ring ? 1 : ring * 2;
+        for (var dx = -ring; dx <= ring; dx += step) {
           var cx = cx0 + dx, cy = cy0 + dy;
           if (cx < 0 || cy < 0 || cx >= city.cols || cy >= city.rows || !city.walk[cy * city.cols + cx]) continue;
           if (needFit && !fits(city, (cx + 0.5) * c, (cy + 0.5) * c, L.data.city.body)) continue;

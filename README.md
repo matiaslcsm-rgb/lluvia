@@ -13,7 +13,8 @@ Abrí `index.html` en el navegador de la PC. No hace falta instalar nada ni tene
 - **Esc**: pausa
 
 ## Qué hay
-- La ciudad de San Miguel completa, con el mapa real: sus 54.745 edificios y casas tal como están, calles con
+- El partido de San Miguel entero (San Miguel, Bella Vista, Muñiz, Santa María y parte de Campo de Mayo), con el
+  mapa real y su borde de verdad: sus 118.532 edificios y casas tal como están, calles con
   su ancho de verdad, veredas, sendas peatonales, plazas, el tren, árboles, autos estacionados y el relieve del
   terreno.
 - Zombis de distintos tipos y jefes que se enfurecen a mitad de vida.
@@ -30,7 +31,7 @@ la marca `lluvia-clasico`.
 
 ## El mapa
 El visor del mapa está en `mapa/index.html` (en la web: `/lluvia/mapa/`). Sirve para recorrer San Miguel con sus
-54.745 edificios, el terreno y los lugares, y para ver cada edificio piso por piso. Cómo se arma está en
+118.532 edificios, el terreno y los lugares, y para ver cada edificio piso por piso. Cómo se arma está en
 [`docs/MAPA.md`](docs/MAPA.md).
 
 ## Datos del mapa

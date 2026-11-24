@@ -10,11 +10,12 @@ y los sótanos. El mapa se mira en el **visor**: `mapa/index.html`, aparte del j
 ## De dónde salen los datos
 | Qué | Fuente | Qué aporta en San Miguel |
 |---|---|---|
-| Calles, plazas, parques | OpenStreetMap | 1842 calles con su nombre y tipo, 169 plazas y parques |
-| Contornos de edificios | Overture Maps (junta OpenStreetMap con los contornos que Google y Microsoft sacaron de fotos satelitales) | **54.745 edificios reales**: 30.769 de Google, 22.434 de Microsoft y 1.547 de OpenStreetMap. Antes teníamos 1.702 |
-| Lugares con nombre | Overture Maps (places) | 2.642 negocios, escuelas, iglesias, consultorios...; 887 caen dentro de su edificio y le dan el tipo |
+| Borde del partido | OpenStreetMap (relación 2430369, "Partido de San Miguel") | 83 km², unos 15,6 × 11,5 km. Recorta todo lo demás y es el límite del juego |
+| Calles, plazas, parques | OpenStreetMap | 4510 calles con su nombre y tipo, 314 plazas y parques |
+| Contornos de edificios | Overture Maps (junta OpenStreetMap con los contornos que Google y Microsoft sacaron de fotos satelitales) | **118.532 edificios reales**: 61.981 de Google, 53.702 de Microsoft y 2.849 de OpenStreetMap |
+| Lugares con nombre | Overture Maps (places) | 3.751 negocios, escuelas, iglesias, consultorios...; 1.268 caen dentro de su edificio y le dan el tipo |
 | Uso del suelo, agua, tren | Overture Maps | 227 zonas, 67 cursos de agua, las vías |
-| Altura del terreno | SRTM de la NASA (30 m), bajado con OpenTopoData | una grilla cada 60 m: San Miguel va de **18 a 41 m** sobre el mar |
+| Altura del terreno | SRTM de la NASA (30 m), bajado con OpenTopoData | una grilla cada 60 m (265 × 197 puntos): el partido va de **0 a 43 m** sobre el mar; lo más bajo, hacia el río Reconquista |
 | Pisos y techos | OpenStreetMap, donde están cargados | solo 51 edificios tienen la cantidad de pisos |
 
 Los datos crudos se bajan con los programas de `tools/fetch/` y quedan en `tools/raw/` (no se suben a GitHub:
@@ -53,7 +54,7 @@ La idea es como Project Zomboid y el SAS: el mapa tiene **niveles** y se ve uno 
 - **Al entrar a un edificio**, el techo se vuelve transparente y se ve el piso donde estás, como en el SAS. Al
   subir o bajar la escalera se cambia de nivel.
 - **Terreno:** la altura cambia el color del piso (más claro arriba, sombreado en las pendientes) y las curvas de
-  nivel. San Miguel es bastante plano (23 m de diferencia en 4,75 km), así que el terreno es más ambiente que
+  nivel. San Miguel es bastante plano (43 m de diferencia en 15 km), así que el terreno es más ambiente que
   obstáculo; las barrancas hacia el arroyo se notan.
 
 ## Qué se puede mejorar con más datos
@@ -72,7 +73,18 @@ La idea es como Project Zomboid y el SAS: el mapa tiene **niveles** y se ve uno 
 4. Pasar el mapa al juego. *(hecho, la planta baja)*: el juego usa el mapa real, los edificios son paredes y se
    dibuja igual que en el visor. Falta: niveles, escaleras y entrar a los edificios (después del paso 3).
 5. Alturas reales con Google Open Buildings 2.5D.
-6. **Agrandar el mapa y recortarlo a San Miguel** (pedido del usuario, 2026-11-24): hoy es un cuadrado de 4,75 km
-   que toma parte de San Miguel y parte de los partidos vecinos, de manera dispar. Bajar el límite del partido
-   de OpenStreetMap, agrandar el área hasta cubrirlo entero, dejar afuera lo que no es San Miguel y hacer de ese
-   borde el límite del juego.
+6. *(hecho)* **Agrandar el mapa y recortarlo a San Miguel** (pedido del usuario, 2026-11-24). El usuario eligió
+   el partido entero, no solo la ciudad (8,3 km², que ya entraba en el cuadrado viejo).
+
+## El área y el borde
+- El área es el rectángulo de `tools/fetch/area.json`: el partido más 150 m de margen, unos 15,9 × 11,8 km.
+  Todos los programas de descarga y `tools/bake-map.js` la leen de ahí (`tools/fetch/frame.js` la pasa a
+  metros, con el (0, 0) en la esquina noroeste).
+- Se guarda lo que está adentro del partido o a menos de 60 m de su borde (para que se dibuje un poco del otro
+  lado). El borde va en el mapa (`border`).
+- En el juego, adentro del borde se camina (menos los edificios y los autos) y afuera no; lo de afuera se dibuja
+  oscuro. Lo que no se puede alcanzar desde la plaza también queda como pared.
+- Para rehacer todo desde cero (pide internet; DuckDB va en un entorno de Python aparte):
+  `python tools/fetch/overture-buildings.py`, `python tools/fetch/overture-extra.py`,
+  `node tools/fetch/osm.js` (borde, calles y edificios de OpenStreetMap), `node tools/fetch/terrain.js` (unos
+  25 minutos: 523 pedidos) y al final `node tools/bake-map.js`.

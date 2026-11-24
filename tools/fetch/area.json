@@ -1,0 +1,7 @@
+{
+  "note": "Partido de San Miguel (OpenStreetMap relation 2430369) plus a 150 m margin. Every fetch script and tools/bake-map.js read this.",
+  "boundary": 2430369,
+  "west": -58.7785, "east": -58.6053, "south": -34.6070, "north": -34.5005,
+  "plaza": { "lat": -34.5430, "lon": -58.7125 },
+  "terrainStep": 60
+}

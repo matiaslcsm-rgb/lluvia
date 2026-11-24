@@ -44,7 +44,7 @@
     // Chunks on screen.
     var S = L.data.city.chunk, cols = city.chunkCols, seen = [];
     if (city.chunks) {
-      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(cols - 1, Math.floor(y1 / S)); cy++) {
+      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(city.chunkRows - 1, Math.floor(y1 / S)); cy++) {
         for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
           var c = city.chunks[cy * cols + cx];
           if (c) seen.push(c);

@@ -100,6 +100,8 @@
     recalcStats(g);
     if (opts.gun) L.giveGun(g, opts.gun);
     g.player.hp = g.player.stats.maxHp;
+    // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
+    if (g.city && g.city.start) { var fr = L.cityFree(g.city, g.city.start.x, g.city.start.y); g.player.x = fr.x; g.player.y = fr.y; }
     if (g.spawning) L.fillChests(g);
     return g;
   };

@@ -1,9 +1,10 @@
-import duckdb, time
+import duckdb, json, time
 t = time.time()
 c = duckdb.connect()
 c.execute("INSTALL spatial; LOAD spatial; INSTALL httpfs; LOAD httpfs; SET s3_region='us-west-2';")
 rel = '2026-11-18.0'
-box = "bbox.xmin > -58.7445 AND bbox.xmax < -58.6930 AND bbox.ymin > -34.5583 AND bbox.ymax < -34.5153"
+A = json.load(open('tools/fetch/area.json'))
+box = f"bbox.xmin > {A['west']} AND bbox.xmax < {A['east']} AND bbox.ymin > {A['south']} AND bbox.ymax < {A['north']}"
 base = f"s3://overturemaps-us-west-2/release/{rel}"
 jobs = {
   'tools/raw/sm-places.csv': f"SELECT names.primary AS name, basic_category AS cat, ST_AsText(geometry) AS wkt FROM read_parquet('{base}/theme=places/type=place/*', hive_partitioning=1) WHERE {box} AND confidence > 0.5",

@@ -25,19 +25,19 @@
   var places = M.places.map(function (r) { return { name: r[0], cat: r[1], x: r[2] * U, y: r[3] * U, b: r[4] }; });
 
   // Chunks of 100 m for buildings, so a frame only looks at what is on screen.
-  var CH = 100, cols = Math.ceil(M.meters / CH), chunks = [];
+  var CH = 100, cols = Math.ceil(M.w / CH), rows = Math.ceil(M.h / CH), chunks = [];
   buildings.forEach(function (bd) {
-    for (var cy = Math.max(0, Math.floor(bd.b[1] / CH)); cy <= Math.min(cols - 1, Math.floor(bd.b[3] / CH)); cy++)
+    for (var cy = Math.max(0, Math.floor(bd.b[1] / CH)); cy <= Math.min(rows - 1, Math.floor(bd.b[3] / CH)); cy++)
       for (var cx = Math.max(0, Math.floor(bd.b[0] / CH)); cx <= Math.min(cols - 1, Math.floor(bd.b[2] / CH)); cx++)
         (chunks[cy * cols + cx] = chunks[cy * cols + cx] || []).push(bd);
   });
 
   // Terrain image (shared with the game, js/view/mapdraw.js).
-  var T = M.terrain, N = T.n, timg = Lluvia.mapdraw.terrain(M);
+  var T = M.terrain, timg = Lluvia.mapdraw.terrain(M);
   var zmin = Math.min.apply(null, T.dm), zmax = Math.max.apply(null, T.dm);
   var heightAt = function (x, y) { // meters above sea level at a map point
-    var gx = Math.max(0, Math.min(N - 1, Math.floor(x / T.step))), gy = Math.max(0, Math.min(N - 1, Math.floor(y / T.step)));
-    return T.dm[gy * N + gx] / 10;
+    var gx = Math.max(0, Math.min(T.nx - 1, Math.floor(x / T.step))), gy = Math.max(0, Math.min(T.ny - 1, Math.floor(y / T.step)));
+    return T.dm[gy * T.nx + gx] / 10;
   };
 
   // ---- View ----

@@ -570,11 +570,27 @@ Etapas (cada una se puede jugar al terminarla):
     más cerrada (más paredes y esquinas que la vieja) y el bot aguanta un 24% menos. No se tocaron números.
     Decidido por el usuario: dejarlo así por ahora; el balance se vuelve a medir después de los bordes y de
     Darkwood, porque el mapa cambia otra vez.
+- **2026-11-24: el partido de San Miguel entero, con su borde** (pedido: "agrandarlo y delimitar los bordes para
+  que sea solo San Miguel"). El usuario eligió el partido (83 km²) y no solo la ciudad (8,3 km²).
+  - Se bajó todo de nuevo para el partido: el borde y las calles de OpenStreetMap (`tools/fetch/overpass.js`),
+    los edificios, lugares, uso del suelo, agua y tren de Overture, y el terreno (523 pedidos a OpenTopoData).
+    El área vive en `tools/fetch/area.json` y todos la leen de ahí. Detalle en `docs/MAPA.md`.
+  - El mapa ahora es un rectángulo de 15,9 × 11,8 km recortado al borde del partido: 118.532 edificios, 4510
+    calles, 314 plazas, terreno de 0 a 43 m. `data/map-sanmiguel.js` pasó de 3,8 a 9,3 MB.
+  - Adentro del borde se camina; afuera no, y se ve oscuro.
+  - El armado de la ciudad real se rehízo para que entre en memoria: rellenos por filas, sin guardar copias de
+    los edificios, sin grillas de ayuda. Se arma en 0,6 s y usa unos 74 MB (con el método viejo habrían sido
+    unos 500 MB). Dibujar la pantalla sigue tardando menos de 1 ms.
+  - Dos arreglos que el mapa grande destapó: buscar el lugar libre más cercano miraba el cuadrado entero de cada
+    anillo y no solo su borde (un cofre lejos de la calle colgaba el juego); y la partida empezaba en una
+    esquina del mapa y recién después te llevaba a la plaza, así que los primeros cofres caían lejos.
+  - Banco solo (`node tools/solo.js 8 25`): mediana 8:38 (con el mapa de la ciudad era 7:22), pero dos bots
+    aguantaron los 25 minutos con más de 6000 bajas, cosa que antes no pasaba. Lo más probable es que hayan
+    llegado a los campos abiertos de Campo de Mayo, donde es fácil escaparse. Se mira cuando se ajuste el balance
+    (el usuario decidió no tocarlo por ahora).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
     arriba con campo de visión, oscuridad, sonido, armado de defensas, día y noche...) y qué no, con la regla de
     la casa: mecánicas sí, contenido no.
-  - **Afinar el mapa: agrandarlo y que sea solo San Miguel**: "el mapa actual es un cuadrado que abarca San
-    Miguel en parte y de manera dispar". Usar el límite real del partido (OpenStreetMap lo tiene) para recortar,
-    agrandar el cuadrado hasta cubrirlo entero y hacer de ese borde el límite del juego. Ver `docs/MAPA.md`.
+  - *(hecho, ver arriba)* Afinar el mapa: agrandarlo y que sea solo San Miguel.

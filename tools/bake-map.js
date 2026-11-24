@@ -1,16 +1,16 @@
 // Bakes the San Miguel map from everything downloaded to tools/raw/ (see tools/fetch/ and docs/MAPA.md):
+//   the boundary of the Partido de San Miguel (OpenStreetMap), which clips everything else;
 //   OpenStreetMap streets, plazas and parks; Overture buildings (OpenStreetMap + Google + Microsoft footprints),
 //   places, land use, water and the railway; SRTM terrain heights.
 // Each building gets a kind, floors, roof and basement: from the data when it has them, estimated when not
 // (marked `est`). Interiors, stairs and roofs you can walk on are generated from this later, in the game.
+// The area is the rectangle in tools/fetch/area.json (tools/fetch/frame.js), with (0, 0) at its north-west corner.
 // Usage: node tools/bake-map.js            → writes data/map-sanmiguel.js
 'use strict';
 const fs = require('fs'), path = require('path');
 const RAW = path.join(__dirname, 'raw'), OUT = path.join(__dirname, '..', 'data', 'map-sanmiguel.js');
-const lat0 = -34.5368, lon0 = -58.71875, meters = 4750, Q = 2; // coordinates in half meters
-const plaza = { lat: -34.5430, lon: -58.7125 };
-const kx = 111320 * Math.cos(lat0 * Math.PI / 180), ky = 110540;
-const toM = (lon, lat) => [(lon - lon0) * kx + meters / 2, (lat0 - lat) * ky + meters / 2];
+const F = require('./fetch/frame.js');
+const { lat0, lon0, w: W, h: H, toM } = F, plaza = F.area.plaza, Q = 2; // coordinates in half meters
 const q = (v) => Math.round(v * Q);
 
 // ---- Reading ----
@@ -62,10 +62,46 @@ function simplify(pts, tol) {
   }
   return pts.filter((_, i) => keep[i]);
 }
+// A closed ring (first point = last) is simplified in two halves, split at the point farthest from the start.
+function simplifyRing(ring, tol) {
+  let far = 0, fd = -1;
+  ring.forEach((p, i) => { const d = Math.hypot(p[0] - ring[0][0], p[1] - ring[0][1]); if (d > fd) { fd = d; far = i; } });
+  return simplify(ring.slice(0, far + 1), tol).concat(simplify(ring.slice(far), tol).slice(1, -1));
+}
 const flat = (pts) => { const f = []; pts.forEach((p) => f.push(q(p[0]), q(p[1]))); return f; };
 const area = (pts) => { let s = 0; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) s += (pts[j][0] + pts[i][0]) * (pts[j][1] - pts[i][1]); return Math.abs(s / 2); };
 const inside = (pts, x, y) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
-const inSquare = (pts) => pts.some(([x, y]) => x > -100 && x < meters + 100 && y > -100 && y < meters + 100);
+// The boundary of the partido: its outer ways joined into one ring.
+const border = (() => {
+  const rel = JSON.parse(fs.readFileSync(path.join(RAW, 'sm-boundary.json'), 'utf8')).elements.find((e) => e.id === F.area.boundary);
+  const segs = rel.members.filter((m) => m.type === 'way' && m.role === 'outer' && m.geometry).map((m) => m.geometry.map((g) => toM(g.lon, g.lat)));
+  let ring = segs.shift();
+  while (segs.length) {
+    const e = ring[ring.length - 1], near = (p) => Math.hypot(p[0] - e[0], p[1] - e[1]) < 1;
+    const i = segs.findIndex((s) => near(s[0]) || near(s[s.length - 1]));
+    if (i < 0) throw new Error('the boundary does not close');
+    const s = segs.splice(i, 1)[0];
+    ring = ring.concat((near(s[0]) ? s : s.reverse()).slice(1));
+  }
+  return ring;
+})();
+// Kept: what is inside the partido or within MARGIN meters of its edge (drawn beyond the edge, never walked).
+// A 10 m mask of the rectangle makes the test quick.
+const MARGIN = 60, MC = 10, mcols = Math.ceil(W / MC), mrows = Math.ceil(H / MC), mask = new Uint8Array(mcols * mrows);
+(() => {
+  const inner = new Uint8Array(mcols * mrows);
+  for (let j = 0; j < mrows; j++) for (let i = 0; i < mcols; i++) if (inside(border, (i + 0.5) * MC, (j + 0.5) * MC)) inner[j * mcols + i] = 1;
+  const r = Math.ceil(MARGIN / MC);
+  for (let j = 0; j < mrows; j++) for (let i = 0; i < mcols; i++) {
+    if (!inner[j * mcols + i]) continue;
+    for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) {
+      const a = i + di, b = j + dj;
+      if (a >= 0 && b >= 0 && a < mcols && b < mrows && di * di + dj * dj <= r * r) mask[b * mcols + a] = 1;
+    }
+  }
+})();
+const kept = (x, y) => x >= 0 && y >= 0 && x < W && y < H && mask[Math.floor(y / MC) * mcols + Math.floor(x / MC)] === 1;
+const inSquare = (pts) => pts.some(([x, y]) => kept(x, y));
 // Same answer every time for the same building: a hash of its id.
 const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
 
@@ -94,7 +130,7 @@ const [px, py] = toM(plaza.lon, plaza.lat);
 
 // Places: named spots (shops, schools, churches...).
 const places = csv('sm-places.csv').map((p) => { const r = rings(p.wkt)[0]; return r && r[0] ? { name: p.name, cat: p.cat, x: r[0][0], y: r[0][1] } : null; })
-  .filter((p) => p && p.x > 0 && p.x < meters && p.y > 0 && p.y < meters);
+  .filter((p) => p && kept(p.x, p.y));
 
 // Buildings.
 const osmTags = {}; // OpenStreetMap tags by rounded centroid (Overture keeps the shape, not all the tags)
@@ -153,10 +189,10 @@ B.forEach((b) => {
 });
 
 // Terrain: SRTM heights, smoothed once (SRTM sees roofs and trees too), in decimeters.
-const N = dem.n, z = dem.z.map((v) => (v === null ? 25 : v)), zs = [];
-for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+const NX = dem.nx, NY = dem.ny, z = dem.z.map((v) => (v === null ? 25 : Math.max(0, v))), zs = [];
+for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
   let s = 0, c = 0;
-  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = i + di, b2 = j + dj; if (a >= 0 && b2 >= 0 && a < N && b2 < N) { s += z[b2 * N + a]; c++; } }
+  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = i + di, b2 = j + dj; if (a >= 0 && b2 >= 0 && a < NX && b2 < NY) { s += z[b2 * NX + a]; c++; } }
   zs.push(Math.round(s / c * 10));
 }
 
@@ -174,8 +210,10 @@ JSON.parse(fs.readFileSync(path.join(RAW, 'sm-streets.json'), 'utf8')).elements.
 const layer = (file, keep) => csv(file).flatMap((r) => rings(r.wkt).filter((p) => p.length > 1 && inSquare(p)).map((p) => [r.class || r.subtype || '', r.name || '', flat(p)])).filter(keep || (() => true));
 
 const map = {
-  id: 'sanmiguel', name: 'San Miguel', lat: lat0, lon: lon0, meters, unit: 1 / Q, start: flat([[px, py]]),
-  terrain: { n: N, step: meters / N, dm: zs, source: dem.source },
+  id: 'sanmiguel', name: 'San Miguel', lat: lat0, lon: lon0, w: W, h: H, unit: 1 / Q, start: flat([[px, py]]),
+  // The edge of the partido: you can't walk past it, and what lies beyond is dark.
+  border: flat(simplifyRing(border, 2)),
+  terrain: { nx: NX, ny: NY, step: dem.step, dm: zs, source: dem.source },
   roads, parks,
   landuse: layer('sm-landuse.csv'),
   water: layer('sm-water.csv'),
