@@ -146,6 +146,9 @@ el terreno alto y bajo. "Avanzá como vos creas". En este orden:
     edificio.
 42. **Interiores y escaleras** (pasos 3 y 4 de `MAPA.md`): al entrar, el techo desaparece y se ve adentro; las
     escaleras llevan a los pisos de arriba, al sótano y a la terraza. El piso de abajo se ve más oscuro.
+    **(decisión del usuario, 2026-11-24): escaleras fluidas, sin botón.** La escalera es una rampa que se camina: la
+    altura va con lo que avanzaste (a mitad de camino quedás a mitad), la planta de abajo se apaga mientras aparece
+    la de arriba, sobre la escalera solo chocás con la baranda y los bichos suben igual que vos.
 43. **El agua en lo bajo:** el mapa ya tiene la altura real del terreno (0 a 43 m). Con la lluvia, las zonas bajas
     se inundan: el agua frena, corta el paso y obliga a buscar lo alto.
 
