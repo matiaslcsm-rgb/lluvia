@@ -70,6 +70,9 @@ La idea es como Project Zomboid y el SAS: el mapa tiene **niveles** y se ve uno 
 2. **Revisar con el usuario:** recorrer el visor y marcar qué no coincide con la ciudad real (un edificio que
    falta, un tipo equivocado, una calle mal).
 3. Generar los interiores, escaleras, terrazas y sótanos de cada edificio, y verlos en el visor piso por piso.
+   *(empezado)*: las casas ya tienen su planta baja, generada de su contorno con cinco maneras de repartir los
+   cuartos (`js/interiors.js`); se ven en el juego al entrar. Faltan los otros tipos de edificio, las escaleras, los
+   pisos de arriba, las terrazas y los sótanos.
 4. Pasar el mapa al juego. *(hecho, la planta baja)*: el juego usa el mapa real, los edificios son paredes y se
    dibuja igual que en el visor. Falta: niveles, escaleras y entrar a los edificios (después del paso 3).
 5. Alturas reales con Google Open Buildings 2.5D.

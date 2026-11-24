@@ -665,7 +665,38 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - El piso de los pedazos guarda solo la base de cada edificio y su sombra; techos y paredes se dibujan en cada
     cuadro encima de personas y bichos, y debajo de las copas. Un bicho detrás de un edificio queda tapado.
   - Los edificios del otro lado del borde del partido quedan planos, en lo oscuro. El visor del mapa no cambia.
-  - Pendiente: lo prueba el usuario a mano. La altura de cámara (30 m) y el tope (18 m) se ajustan con lo que diga.
+  - Revisado en el navegador: se ven las paredes que miran hacia vos, más anchas en los edificios altos y lejanos.
+    La altura de cámara (30 m) y el tope (18 m) se pueden ajustar.
+- **2026-11-24: casas por dentro, planta baja** (paso 42, primera parte). Pedido del usuario: "que no sean todas
+  iguales, distribuí las habitaciones de maneras diferentes, con coherencia, no copiar y pegar".
+  - **No hay datos públicos de cómo es cada casa por dentro**, así que cada planta se genera del contorno real, del
+    lado que da a la calle y del tamaño (`js/interiors.js`, números en `data/houses.js`). La misma casa siempre sale
+    igual; entre vecinas casi no se repiten (en las pruebas, 45 o más distintas de 60).
+  - **Cinco maneras de repartir los cuartos**, típicas de acá, según la forma del lote:
+    - *Casa chorizo*: galería al costado, living al frente, los cuartos en fila y la cocina al fondo con la puerta
+      al patio. Solo en lotes angostos.
+    - *Pasillo al medio*: living al frente, pasillo con cuartos de los dos lados, cocina (y a veces lavadero) al
+      fondo. Lotes anchos.
+    - *Frente y fondo*: living y cocina adelante, dormitorios y baño atrás, con pasillo si hay dos o más.
+    - *Living integrado*: un living-cocina grande adelante y los cuartos atrás.
+    - *Monoambiente*: un ambiente con el baño en un rincón (casas chicas).
+  - Los dormitorios salen de los metros (hasta 45 m² ninguno, después 1, 2, 3 o 4), a veces uno más o uno menos.
+    Las proporciones cambian un poco en cada casa, y la mitad sale espejada.
+  - **Se camina adentro:** paredes con puertas entre cuartos, puerta de calle (y de atrás desde la cocina). Si frente
+    a la puerta hay otra construcción, la puerta pasa a un costado o al fondo. Los bichos también entran.
+  - Las casas que entran son las de tipo casa de 25 a 320 m²; galpones, negocios y edificios siguen macizos.
+  - **Al entrar**, el techo desaparece: se ven los cuartos con su piso (madera, parquet, cerámica en baño y cocina),
+    las paredes, las puertas y el nombre de cada cuarto, y la ciudad de afuera se oscurece. Desde la calle, un
+    felpudo marca cada puerta.
+  - Cosas que el mapa real obligó a ajustar: muchas casas de San Miguel están giradas respecto de la grilla de
+    paso (las calles van en diagonal), y ahí las paredes ocupan más. Por eso los pasillos tienen 1,8 m (una galería)
+    y las puertas 1,2 m, los cuartos tienen al menos 2,2 m de lado, cada puerta se abre de pared a pared después de
+    levantarlas, y nunca abre hacia la casa de al lado (en los datos, las casas pegadas a veces se pisan un poco).
+  - Pruebas nuevas (`tests/houses.test.js`): misma casa igual y variedad entre vecinas; todos los cuartos con
+    puerta y la de calle mirando a la calle; más metros, más dormitorios; y en 30 casas reales de San Miguel, desde
+    la vereda se llega caminando a cada cuarto y las paredes no se cruzan.
+  - Revisado en el navegador: se entra caminando por la puerta a una casa chorizo y a una de pasillo al medio.
+  - Sigue: muebles, puertas y ventanas dibujadas, y después escaleras y pisos de arriba.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

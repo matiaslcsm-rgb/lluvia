@@ -313,8 +313,10 @@
     ctx.save();
     ctx.translate(-camX, -camY);
 
-    if (g.city) L.drawCity(ctx, g.city, camX, camY, W, H, t);
-    else L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
+    if (g.city) {
+      L.drawCity(ctx, g.city, camX, camY, W, H, t);
+      L.drawCityInterior(ctx, g.city, p.x, p.y); // the house you are in, without its roof
+    } else L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
 
     // Auras under everything.
     p.abilities.forEach(function (a) {

@@ -200,11 +200,36 @@
   }
 
   // Builds one zone of the walk grid: walkable inside the border, then walls where buildings and cars are.
+  // Houses with a floor plan (js/interiors.js) are walkable inside, with their outer walls (open at the doors)
+  // and their inside walls; every other building is solid.
   function buildPage(city, z) {
     var C = L.data.city, P = C.page, x0 = (z % city.pcols) * P, y0 = Math.floor(z / city.pcols) * P, a = new Uint8Array(P * P), M = city.map;
     if (city.border) fillZone(city, a, x0, y0, city.border, null, 1); else a.fill(1);
-    var list = city.zoneB.get(z), cars = city.zoneCars.get(z), i;
-    if (list) for (i = 0; i < list.length; i++) fillZone(city, a, x0, y0, null, M.buildings[list[i]][0], 0);
+    var list = city.zoneB.get(z), cars = city.zoneCars.get(z), houses = [], i;
+    if (list) for (i = 0; i < list.length; i++) {
+      var plan = L.cityHouse ? L.cityHouse(city, list[i]) : null;
+      if (plan) houses.push(plan); else fillZone(city, a, x0, y0, null, M.buildings[list[i]][0], 0);
+    }
+    houses.forEach(function (h) {
+      for (var k = 0; k < h.outline.length; k++) {
+        var q = h.outline[k], r = h.outline[(k + 1) % h.outline.length];
+        stampWall(city, a, x0, y0, q[0], q[1], r[0], r[1], h.exitsPx);
+      }
+      h.wallsPx.forEach(function (w) { stampWall(city, a, x0, y0, w[0], w[1], w[2], w[3], null); });
+    });
+    // Then every doorway is cleared through the whole thickness of its wall (on a turned house the walls near a
+    // corner can close a door's gap), but only inside its own house or outside every building: row houses share
+    // walls, and a front door must not open a hole into the house next door.
+    var others = function (h, x, y) {
+      for (var j = 0; j < list.length; j++) if (list[j] !== h.index && insideFlat(M.buildings[list[j]][0], city.k, x, y)) return true;
+      return false;
+    };
+    // (Footprints of neighbours sometimes overlap a little in the data: a spot inside two houses is never cleared.)
+    houses.forEach(function (h) {
+      var free = function (x, y) { return !others(h, x, y); };
+      h.doorsPx.forEach(function (d) { clearDoor(city, a, x0, y0, d, function (x, y) { return inPolygon(h.outline, x, y) && free(x, y); }); });
+      h.exitSegsPx.forEach(function (d) { clearDoor(city, a, x0, y0, d, free); });
+    });
     if (cars) for (i = 0; i < cars.length; i++) fillZone(city, a, x0, y0, cars[i].pts, null, 0);
     if (city.pages.size >= C.maxPages) city.pages.delete(city.pages.keys().next().value); // the oldest goes
     city.pages.set(z, a);
@@ -232,6 +257,35 @@
         var ca = Math.max(x0, Math.ceil(xs[m] / c - 0.5)), cb = Math.min(x0 + P - 1, city.cols - 1, Math.floor(xs[m + 1] / c - 0.5));
         for (var cx = ca; cx <= cb; cx++) a[(cy - y0) * P + (cx - x0)] = value;
       }
+    }
+  }
+
+  // A wall from (ax, ay) to (bx, by) px into a zone: the cells the line goes through, one cell thick. On a slant
+  // two of its cells may touch only at a corner, which is fine: a body can't squeeze through a corner (L.cityFits
+  // looks around its center). `gaps` ({ x, y, r }) are doorways left open.
+  function stampWall(city, a, x0, y0, ax, ay, bx, by, gaps) {
+    var c = city.cell, P = L.data.city.page, len = Math.hypot(bx - ax, by - ay), steps = Math.max(1, Math.ceil(len / (c / 3)));
+    for (var k = 0; k <= steps; k++) {
+      var x = ax + (bx - ax) * k / steps, y = ay + (by - ay) * k / steps, open = false;
+      if (gaps) for (var g = 0; g < gaps.length; g++) if (Math.hypot(x - gaps[g].x, y - gaps[g].y) < gaps[g].r) { open = true; break; }
+      if (open) continue;
+      var cx = Math.floor(x / c), cy = Math.floor(y / c);
+      if (cx >= x0 && cx < x0 + P && cy >= y0 && cy < y0 + P) a[(cy - y0) * P + (cx - x0)] = 0;
+    }
+  }
+
+  // Makes walkable the cells of a doorway [ax, ay, bx, by] px: along the door (10 cm short of each end) and up to
+  // DOOR_DEPTH cells on both sides of it, where `may(x, y)` allows it.
+  var DOOR_DEPTH = 1.1;
+  function clearDoor(city, a, x0, y0, d, may) {
+    var c = city.cell, P = L.data.city.page, dx = d[2] - d[0], dy = d[3] - d[1], len = Math.hypot(dx, dy), half = DOOR_DEPTH * c;
+    if (!len) return;
+    var ux = dx / len, uy = dy / len, end = 0.1 * city.scale;
+    var cx0 = Math.max(x0, Math.floor((Math.min(d[0], d[2]) - half) / c)), cx1 = Math.min(x0 + P - 1, Math.floor((Math.max(d[0], d[2]) + half) / c));
+    var cy0 = Math.max(y0, Math.floor((Math.min(d[1], d[3]) - half) / c)), cy1 = Math.min(y0 + P - 1, Math.floor((Math.max(d[1], d[3]) + half) / c));
+    for (var cy = cy0; cy <= cy1; cy++) for (var cx = cx0; cx <= cx1; cx++) {
+      var px = (cx + 0.5) * c - d[0], py = (cy + 0.5) * c - d[1], t = px * ux + py * uy, n = Math.abs(px * uy - py * ux);
+      if (t >= end && t <= len - end && n <= half && may((cx + 0.5) * c, (cy + 0.5) * c)) a[(cy - y0) * P + (cx - x0)] = 1;
     }
   }
 

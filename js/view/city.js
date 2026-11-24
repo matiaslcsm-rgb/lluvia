@@ -152,6 +152,69 @@
     return c;
   }
 
+  // ---- Inside a house ----
+  // The house you are in (js/interiors.js) loses its roof: you see its rooms, each with its floor, its walls and
+  // doors, and the rooms' names. Drawn under the people. L.drawCityBuildings then darkens the city outside it.
+  L.drawCityInterior = function (ctx, city, px, py) {
+    var plan = city.map && L.cityHouseAt ? L.cityHouseAt(city, px, py) : null;
+    city._inside = plan;
+    if (!plan) return;
+    var Hd = L.data.houses, s = city.scale, f = plan.frame, cs = plan.cell, W = plan.W;
+    ctx.save(); ctx.scale(s, s);
+    // In the house's own frame, in cells: floors room by room (in rows of cells), then the walls.
+    ctx.save(); ctx.transform(f.ux * cs, f.uy * cs, f.vx * cs, f.vy * cs, f.ox, f.oy);
+    plan.rooms.forEach(function (r, k) {
+      if (!r.cells) return;
+      ctx.fillStyle = (Hd.rooms[r.type] || Hd.rooms.living).floor;
+      ctx.beginPath();
+      for (var y = 0; y < plan.D; y++) {
+        for (var x = 0; x < W;) {
+          if (plan.lab[y * W + x] !== k) { x++; continue; }
+          var x0 = x;
+          while (x < W && plan.lab[y * W + x] === k) x++;
+          ctx.rect(x0 - 0.02, y - 0.02, x - x0 + 0.04, 1.04);
+        }
+      }
+      ctx.fill();
+    });
+    ctx.lineCap = 'square';
+    ctx.beginPath();
+    plan.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });
+    ctx.strokeStyle = Hd.wallEdge; ctx.lineWidth = 0.45; ctx.stroke();
+    ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.28; ctx.stroke();
+    ctx.restore();
+    // The outer wall, then the front and back doorways cut into it.
+    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    plan.outline.forEach(function (q, i) { if (i) ctx.lineTo(q[0] / s, q[1] / s); else ctx.moveTo(q[0] / s, q[1] / s); });
+    ctx.closePath();
+    ctx.strokeStyle = Hd.wallEdge; ctx.lineWidth = 0.34; ctx.stroke();
+    ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.2; ctx.stroke();
+    plan.exits.forEach(function (e) {
+      var a = L.housePoint(plan, e.seg[0], e.seg[1]), b = L.housePoint(plan, e.seg[2], e.seg[3]);
+      ctx.strokeStyle = '#7a5636'; ctx.lineWidth = 0.38; ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    });
+    // Room names, upright.
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 0.42px system-ui, sans-serif'; ctx.fillStyle = 'rgba(40,30,20,0.5)';
+    plan.rooms.forEach(function (r) {
+      var name = (Hd.rooms[r.type] || {}).name;
+      if (!name || r.cells < 12) return;
+      var m = L.housePoint(plan, r.cx, r.cy);
+      ctx.fillText(name, m[0], m[1]);
+    });
+    ctx.restore();
+  };
+
+  // A doormat outside every doorway of a house you can walk into, so you can tell from the street.
+  function doormats(ctx, plan, s) {
+    plan.exitsPx.forEach(function (e) {
+      ctx.save(); ctx.translate(e.x / s + e.nx * 0.35, e.y / s + e.ny * 0.35); ctx.rotate(Math.atan2(e.ny, e.nx));
+      ctx.fillStyle = '#5b4330'; ctx.fillRect(-0.25, -0.55, 0.5, 1.1);
+      ctx.restore();
+    });
+  }
+
   L.drawCityBuildings = function (ctx, city, camX, camY, W, H) {
     if (!city.map) return;
     var s = city.scale, P = L.mapdraw.prepare(city.map), mx = (camX + W / 2) / s, my = (camY + H / 2) / s;
@@ -166,13 +229,15 @@
           seen.add(bd);
           // Past the partido's border buildings stay flat, in the dark.
           if (bd.inBorder === undefined) bd.inBorder = !P.border || insideBorder(P, (bd.b[0] + bd.b[2]) / 2, (bd.b[1] + bd.b[3]) / 2);
-          if (bd.inBorder) list.push(bd);
+          // The house you are in has no roof now (L.drawCityInterior).
+          if (bd.inBorder && !(city._inside && city._inside.index === bd.i)) list.push(bd);
         });
       }
     }
     list.sort(function (a, b) { return L.mapdraw.height(a) - L.mapdraw.height(b); });
     ctx.save(); ctx.scale(s, s);
     ctx.lineJoin = 'round';
+    list.forEach(function (bd) { var plan = L.cityHouse && L.cityHouse(city, bd.i); if (plan) doormats(ctx, plan, s); });
     list.forEach(function (bd) {
       var real = L.mapdraw.height(bd), h = Math.min(MAX_H, real), k = h / (CAMERA_H - h), p = bd.p, n = p.length;
       if (bd.area === undefined) { bd.area = 0; for (var i = 0; i < n; i++) { var q = p[i], r = p[(i + 1) % n]; bd.area += q[0] * r[1] - r[0] * q[1]; } }
@@ -204,6 +269,15 @@
       L.mapdraw.roof(ctx, bd, s * (1 + k));
       ctx.restore();
     });
+    // Inside a house, the city outside it goes darker.
+    var inside = city._inside;
+    if (inside) {
+      ctx.beginPath();
+      ctx.rect(vb[0], vb[1], vb[2] - vb[0], vb[3] - vb[1]);
+      inside.outline.forEach(function (q, i) { if (i) ctx.lineTo(q[0] / s, q[1] / s); else ctx.moveTo(q[0] / s, q[1] / s); });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(8,9,14,0.45)'; ctx.fill('evenodd');
+    }
     ctx.restore();
   };
 
