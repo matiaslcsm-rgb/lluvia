@@ -31,7 +31,7 @@
   // Yards, plazas, sidewalks with their curb, asphalt; then parked cars, buildings with their shadow, and trees.
   // Only what is on screen is drawn: roads by their box, the rest by chunks (js/city.js).
   L.drawCity = function (ctx, city, camX, camY, W, H, t) {
-    var s = L.data.city.scale;
+    var s = city.scale || L.data.city.scale;
     if (!city._boxes) {
       city.roads.forEach(function (r) { r.box = bboxOf(r.pts); });
       city.parks.forEach(function (p) { p.box = bboxOf(p.pts); });
@@ -127,9 +127,9 @@
   function circle(ctx, x, y, r, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
 
   // Minimap (top right): the streets around you, plazas, you in the middle and the zombies close by, plus the
-  // name of the street you are on. `range` is how many pixels of city fit from the center to the edge.
+  // name of the street you are on. `range`: 260 m of city fit from the center to the edge.
   L.drawMinimap = function (ctx, g, W) {
-    var city = g.city, p = g.player, size = 190, range = 2600, k = size / 2 / range, x0 = W - size - 14, y0 = 72;
+    var city = g.city, p = g.player, s = city.scale || L.data.city.scale, size = 190, range = 260 * s, k = size / 2 / range, x0 = W - size - 14, y0 = 72;
     if (!city._boxes) return;
     ctx.save();
     ctx.globalAlpha = 0.88;
@@ -146,7 +146,7 @@
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     city.roads.forEach(function (r) {
       if (!near(r.box)) return;
-      ctx.strokeStyle = r.w >= 12 * L.data.city.scale ? '#c9c2a8' : '#8a877d'; ctx.lineWidth = Math.max(1.5, r.w * k * 1.6);
+      ctx.strokeStyle = r.w >= 12 * s ? '#c9c2a8' : '#8a877d'; ctx.lineWidth = Math.max(1.5, r.w * k * 1.6);
       ctx.beginPath();
       r.pts.forEach(function (q, i) { if (i) ctx.lineTo(mx(q[0]), my(q[1])); else ctx.moveTo(mx(q[0]), my(q[1])); });
       ctx.stroke();
@@ -170,9 +170,9 @@
 
   // Street names under you, for the HUD.
   L.cityStreetAt = function (city, x, y) {
-    var best = null, bd = 200 * 200;
+    var near = 20 * (city.scale || L.data.city.scale), best = null, bd = near * near; // within 20 m
     city.roads.forEach(function (r) {
-      if (!r.name || !r.box || x < r.box[0] - 200 || x > r.box[2] + 200 || y < r.box[1] - 200 || y > r.box[3] + 200) return;
+      if (!r.name || !r.box || x < r.box[0] - near || x > r.box[2] + near || y < r.box[1] - near || y > r.box[3] + near) return;
       for (var i = 1; i < r.pts.length; i++) {
         var a = r.pts[i - 1], b = r.pts[i], dx = b[0] - a[0], dy = b[1] - a[1], len2 = dx * dx + dy * dy || 1;
         var k = L.clamp(((x - a[0]) * dx + (y - a[1]) * dy) / len2, 0, 1), qx = a[0] + dx * k - x, qy = a[1] + dy * k - y;

@@ -600,6 +600,12 @@ Etapas (cada una se puede jugar al terminarla):
   Propuesta, en orden: (1) el mundo en metros con la cámara aparte, a 1:1 (jugador de 0,5 m, se ven unos 25-30 m
   alrededor, como Darkwood); (2) el mapa en zonas de 50 m que se arman cerca del jugador, por la memoria y los
   cuelgues; (3) dibujar cada zona una vez y reusarla; (4) recién ahí interiores y escaleras.
+- **2026-11-24: escala 1:1 en el mapa real** (pasos 1 y 2 de la propuesta de escala).
+  - El mapa real va a 50 px por metro (`mapScale`): el jugador (28 px) mide ~0,55 m y corre a ~4 m/s; la
+  pantalla muestra ~25 m. Las ciudades viejas o inventadas siguen a 10 px/m.
+  - Paredes en celdas de 0,5 m, en zonas de 32 m que se arman cuando alguien se acerca (máximo 3000 zonas,
+  ~12 MB). Se arma en 0,19 s. Los autos se ubican por geometría.
+  - Falta: mirarlo en pantalla (texturas a esta escala), y dibujar por zonas guardadas (paso 3).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

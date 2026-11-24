@@ -36,7 +36,13 @@
     cars: { kinds: ['residential', 'living_street', 'unclassified', 'tertiary'], every: [7, 14], chance: 0.22, length: 4.4, width: 1.9 },
     trees: { every: [9, 15], chance: 0.55, radius: [2.2, 3.4] },
     chunk: 640,          // drawing buckets, in pixels
-    body: 9              // radius used against walls (smaller than the drawing, which also covers the sidewalk)
+    body: 9,             // radius used against walls (smaller than the drawing, which also covers the sidewalk)
+    // The real map (L.cityFromMap) is at 1:1 with the characters: a person (28 px drawn) is ~0.55 m wide, runs at
+    // ~4 m/s, and the screen shows ~25 m. Its walk grid comes in zones built when someone gets near.
+    mapScale: 50,        // px per meter on the real map
+    mapCell: 25,         // its walk cell, in px (0.5 m: doors and narrow passages fit)
+    page: 64,            // cells per side of a walk zone (32 m)
+    maxPages: 3000       // zones kept (~12 MB); the oldest are dropped and built again when needed
   };
 
   // w × h pixels (square when h is left out). `size` is the longer side: the game's play area (g.arena) is square,
@@ -154,72 +160,123 @@
   L.cityStreet = function (kind) { return L.data.city.streets[kind] || [6, 1.5]; };
 
   // ---- The real map (data/map-*.js, made with tools/bake-map.js; see docs/MAPA.md) ----
-  // The whole Partido de San Miguel: inside its border you walk everywhere except through its real buildings (no
-  // house is invented) and the parked cars; past the border you can't go. It is drawn by js/view/mapdraw.js.
-  // Built lean, because the partido is big (a walk grid of ~70 million cells): polygons are filled row by row
-  // straight from the map's numbers, and the footprints aren't kept (the drawing has its own).
-  // Streets keep their real width: `w` is the carriageway, where cars park.
+  // The whole Partido de San Miguel at 1:1 with the characters (\`mapScale\` px per meter): inside its border you walk
+  // everywhere except through its real buildings (no house is invented) and the parked cars; past the border you
+  // can't go. It is drawn by js/view/mapdraw.js.
+  // At that size a single walk grid would have billions of cells, so it comes in zones of \`page\` × \`page\` cells,
+  // each built the first time someone looks at it (from the border, the buildings that touch it and its cars) and
+  // dropped when too many are kept. The footprints stay in the map data; nothing is copied.
+  // Streets keep their real width: \`w\` is the carriageway, where cars park.
   L.cityFromMap = function (M) {
-    var C = L.data.city, s = C.scale, k = M.unit * s, city = makeCity(M.w * s, M.h * s);
+    var C = L.data.city, s = C.mapScale, k = M.unit * s, w = M.w * s, h = M.h * s, cell = C.mapCell, P = C.page;
+    var cols = Math.ceil(w / cell), rows = Math.ceil(h / cell);
+    var city = { size: Math.max(w, h), w: w, h: h, scale: s, k: k, cell: cell, cols: cols, rows: rows, walk: null,
+      pages: new Map(), pcols: Math.ceil(cols / P), zoneB: new Map(), zoneCars: new Map(),
+      roads: [], parks: [], buildings: [], houses: [], cars: [], trees: [], flow: null, flowCell: -1, flowAt: -1 };
     var pts = function (f) { var out = []; for (var i = 0; i + 1 < f.length; i += 2) out.push([f[i] * k, f[i + 1] * k]); return out; };
     M.parks.forEach(function (pk) { city.parks.push({ pts: pts(pk[2]), kind: pk[0], name: pk[1] }); });
     M.roads.forEach(function (r) { city.roads.push({ pts: pts(r[2]), w: L.cityStreet(r[0])[0] * s, kind: r[0], name: r[1] }); });
-    if (M.border) fillFlat(city, M.border, k, 1); else city.walk.fill(1);
-    M.buildings.forEach(function (b) { fillFlat(city, b[0], k, 0); });
-    parkCars(city, L.makeRng(0x5a17));
+    city.border = M.border ? pts(M.border) : null;
+    // Which buildings touch each zone.
+    M.buildings.forEach(function (b, i) {
+      var f = b[0], x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (var j = 0; j + 1 < f.length; j += 2) { x0 = Math.min(x0, f[j]); x1 = Math.max(x1, f[j]); y0 = Math.min(y0, f[j + 1]); y1 = Math.max(y1, f[j + 1]); }
+      eachZone(city, x0 * k, y0 * k, x1 * k, y1 * k, function (z) { var l = city.zoneB.get(z); if (l) l.push(i); else city.zoneB.set(z, [i]); });
+    });
     city.map = M;
     city.name = M.name;
     city.real = true;
     city.start = { x: M.start[0] * k, y: M.start[1] * k };
-    keepReachable(city, city.start.x, city.start.y);
+    parkCars(city, L.makeRng(0x5a17));
     bucket(city);
     return city;
   };
 
-  // Fills a polygon given as flat numbers (x, y, x, y...) times `k` into the walk grid, row by row: a cell takes
-  // `value` when its center is inside. Quick even for the partido's border, with thousands of points.
-  function fillFlat(city, f, k, value) {
-    var c = city.cell, cols = city.cols, n = f.length >> 1, minY = Infinity, maxY = -Infinity, xs = [], i, j;
-    for (i = 1; i < f.length; i += 2) { minY = Math.min(minY, f[i] * k); maxY = Math.max(maxY, f[i] * k); }
-    var y0 = Math.max(0, Math.ceil(minY / c - 0.5)), y1 = Math.min(city.rows - 1, Math.floor(maxY / c - 0.5));
-    for (var cy = y0; cy <= y1; cy++) {
+  // Calls fn(zone index) for every zone a box (in px) touches.
+  function eachZone(city, x0, y0, x1, y1, fn) {
+    var Z = city.cell * L.data.city.page, zr = Math.ceil(city.rows / L.data.city.page);
+    for (var zy = Math.max(0, Math.floor(y0 / Z)); zy <= Math.min(zr - 1, Math.floor(y1 / Z)); zy++)
+      for (var zx = Math.max(0, Math.floor(x0 / Z)); zx <= Math.min(city.pcols - 1, Math.floor(x1 / Z)); zx++) fn(zy * city.pcols + zx);
+  }
+
+  // Builds one zone of the walk grid: walkable inside the border, then walls where buildings and cars are.
+  function buildPage(city, z) {
+    var C = L.data.city, P = C.page, x0 = (z % city.pcols) * P, y0 = Math.floor(z / city.pcols) * P, a = new Uint8Array(P * P), M = city.map;
+    if (city.border) fillZone(city, a, x0, y0, city.border, null, 1); else a.fill(1);
+    var list = city.zoneB.get(z), cars = city.zoneCars.get(z), i;
+    if (list) for (i = 0; i < list.length; i++) fillZone(city, a, x0, y0, null, M.buildings[list[i]][0], 0);
+    if (cars) for (i = 0; i < cars.length; i++) fillZone(city, a, x0, y0, cars[i].pts, null, 0);
+    if (city.pages.size >= C.maxPages) city.pages.delete(city.pages.keys().next().value); // the oldest goes
+    city.pages.set(z, a);
+    return a;
+  }
+
+  // Fills a polygon into a zone, row by row: a cell takes \`value\` when its center is inside. The polygon is either
+  // points in px (\`pts\`) or the map's flat numbers (\`flat\`, times city.k).
+  function fillZone(city, a, x0, y0, pts, flat, value) {
+    var c = city.cell, P = L.data.city.page, k = city.k, n = pts ? pts.length : flat.length >> 1, xs = [], i, j;
+    var X = pts ? function (q) { return pts[q][0]; } : function (q) { return flat[q * 2] * k; };
+    var Y = pts ? function (q) { return pts[q][1]; } : function (q) { return flat[q * 2 + 1] * k; };
+    var minY = Infinity, maxY = -Infinity;
+    for (i = 0; i < n; i++) { minY = Math.min(minY, Y(i)); maxY = Math.max(maxY, Y(i)); }
+    var r0 = Math.max(y0, Math.ceil(minY / c - 0.5)), r1 = Math.min(y0 + P - 1, city.rows - 1, Math.floor(maxY / c - 0.5));
+    for (var cy = r0; cy <= r1; cy++) {
       var py = (cy + 0.5) * c;
       xs.length = 0;
       for (i = 0, j = n - 1; i < n; j = i++) {
-        var yi = f[i * 2 + 1] * k, yj = f[j * 2 + 1] * k;
-        if ((yi > py) !== (yj > py)) { var xi = f[i * 2] * k, xj = f[j * 2] * k; xs.push(xi + (py - yi) * (xj - xi) / (yj - yi)); }
+        var yi = Y(i), yj = Y(j);
+        if ((yi > py) !== (yj > py)) { var xi = X(i), xj = X(j); xs.push(xi + (py - yi) * (xj - xi) / (yj - yi)); }
       }
-      xs.sort(function (a, b) { return a - b; });
+      xs.sort(function (p, q) { return p - q; });
       for (var m = 0; m + 1 < xs.length; m += 2) {
-        var a = Math.max(0, Math.ceil(xs[m] / c - 0.5)), b = Math.min(cols - 1, Math.floor(xs[m + 1] / c - 0.5));
-        for (var cx = a; cx <= b; cx++) city.walk[cy * cols + cx] = value;
+        var ca = Math.max(x0, Math.ceil(xs[m] / c - 0.5)), cb = Math.min(x0 + P - 1, city.cols - 1, Math.floor(xs[m + 1] / c - 0.5));
+        for (var cx = ca; cx <= cb; cx++) a[(cy - y0) * P + (cx - x0)] = value;
       }
     }
   }
 
+  // Is (x, y) inside a building of the real map, or past its border?
+  function blocked(city, x, y) {
+    if (x < 0 || y < 0 || x >= city.w || y >= city.h) return true;
+    if (city.border && !inPolygon(city.border, x, y)) return true;
+    var P = L.data.city.page, z = Math.floor(y / city.cell / P) * city.pcols + Math.floor(x / city.cell / P), list = city.zoneB.get(z);
+    if (!list) return false;
+    for (var i = 0; i < list.length; i++) if (insideFlat(city.map.buildings[list[i]][0], city.k, x, y)) return true;
+    return false;
+  }
+  function insideFlat(f, k, x, y) {
+    var inside = false, n = f.length >> 1;
+    for (var i = 0, j = n - 1; i < n; j = i++) {
+      var xi = f[i * 2] * k, yi = f[i * 2 + 1] * k, xj = f[j * 2] * k, yj = f[j * 2 + 1] * k;
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
   // Parked cars along the curb of the real streets (solid: they block bullets too), never close to a corner, on a
-  // building, past the border or on another car.
+  // building, past the border or on another car. Worked out from the shapes, not the walk grid, so loading the map
+  // doesn't build every zone.
   function parkCars(city, rng) {
-    var C = L.data.city, CR = C.cars, s = C.scale;
+    var C = L.data.city, CR = C.cars, s = city.scale;
     // Corners: points shared by two streets (or twice by one), in a 30 m bucket grid.
     var seen = new Map(), corners = new Map(), B = 30 * s, key = function (p) { return Math.round(p[0]) + ',' + Math.round(p[1]); };
     city.roads.forEach(function (r, ri) {
       r.pts.forEach(function (p) {
-        var kk = key(p), was = seen.get(kk);
-        if (was === undefined) { seen.set(kk, ri); return; }
+        var kk = key(p);
+        if (!seen.has(kk)) { seen.set(kk, ri); return; }
         var bk = Math.floor(p[0] / B) + ',' + Math.floor(p[1] / B);
         if (!corners.has(bk)) corners.set(bk, []);
         corners.get(bk).push(p);
       });
     });
-    var nearCorner = function (x, y, d) {
+    var near = function (grid, x, y, d) {
       for (var gy = Math.floor((y - d) / B); gy <= Math.floor((y + d) / B); gy++) for (var gx = Math.floor((x - d) / B); gx <= Math.floor((x + d) / B); gx++) {
-        var list = corners.get(gx + ',' + gy);
+        var list = grid.get(gx + ',' + gy);
         if (list) for (var i = 0; i < list.length; i++) if (Math.abs(list[i][0] - x) < d && Math.abs(list[i][1] - y) < d) return true;
       }
       return false;
     };
-    var open = function (x, y) { return L.cityWalkable(city, x, y); };
+    var parked = new Map();
     var range = function (a) { return (a[0] + rng() * (a[1] - a[0])) * s; };
     city.roads.forEach(function (r) {
       if (CR.kinds.indexOf(r.kind) < 0 || r.w < 8 * s) return;
@@ -232,49 +289,28 @@
           for (var t = 4 * s + rng() * 6 * s; t < len - 4 * s; t += range(CR.every)) {
             if (rng() > CR.chance) continue;
             var cx = ax + ux * t + nx * (r.w / 2 - 1.3 * s), cy = ay + uy * t + ny * (r.w / 2 - 1.3 * s), hl = CR.length * s / 2, hw = CR.width * s / 2;
-            if (nearCorner(cx, cy, r.w / 2 + 9 * s)) continue;
-            var car = [cx - ux * hl - nx * hw, cy - uy * hl - ny * hw, cx + ux * hl - nx * hw, cy + uy * hl - ny * hw,
-              cx + ux * hl + nx * hw, cy + uy * hl + ny * hw, cx - ux * hl + nx * hw, cy - uy * hl + ny * hw];
-            if (!open(cx, cy) || !open(car[0], car[1]) || !open(car[2], car[3]) || !open(car[4], car[5]) || !open(car[6], car[7])) continue;
-            fillFlat(city, car, 1, 0);
-            city.cars.push({ pts: [[car[0], car[1]], [car[2], car[3]], [car[4], car[5]], [car[6], car[7]]], x: cx, y: cy, ang: Math.atan2(uy, ux), color: Math.floor(rng() * 7) });
+            if (near(corners, cx, cy, r.w / 2 + 9 * s) || near(parked, cx, cy, 4.6 * s)) continue;
+            var car = [[cx - ux * hl - nx * hw, cy - uy * hl - ny * hw], [cx + ux * hl - nx * hw, cy + uy * hl - ny * hw],
+              [cx + ux * hl + nx * hw, cy + uy * hl + ny * hw], [cx - ux * hl + nx * hw, cy - uy * hl + ny * hw]];
+            if (blocked(city, cx, cy) || car.some(function (q) { return blocked(city, q[0], q[1]); })) continue;
+            var it = { pts: car, x: cx, y: cy, ang: Math.atan2(uy, ux), color: Math.floor(rng() * 7) };
+            city.cars.push(it);
+            var pk = Math.floor(cx / B) + ',' + Math.floor(cy / B);
+            if (!parked.has(pk)) parked.set(pk, []);
+            parked.get(pk).push([cx, cy]);
+            eachZone(city, cx - hl - hw, cy - hl - hw, cx + hl + hw, cy + hl + hw, function (z) { var l = city.zoneCars.get(z); if (l) l.push(it); else city.zoneCars.set(z, [it]); });
           }
         }
       }
     });
   }
 
-  // Only what you can reach from (x, y) stays walkable (a yard closed in by houses, a corner cut off by the border
-  // become walls, so nothing spawns where it can never reach you). A scanline flood fill: it marks the reachable
-  // cells with 2 inside the walk grid itself, then turns 2 into walkable and everything else into wall.
-  function keepReachable(city, x, y) {
-    var cols = city.cols, rows = city.rows, w = city.walk, seed = free(city, x, y, false, 400);
-    if (!seed) return;
-    var stack = new Int32Array(4096), top = 0;
-    var push = function (i) {
-      if (top === stack.length) { var bigger = new Int32Array(stack.length * 2); bigger.set(stack); stack = bigger; }
-      stack[top++] = i;
-    };
-    push(Math.floor(seed.y / city.cell) * cols + Math.floor(seed.x / city.cell));
-    while (top) {
-      var i = stack[--top];
-      if (w[i] !== 1) continue;
-      var row = (i / cols) | 0, x0 = i - row * cols, x1 = x0;
-      while (x0 > 0 && w[row * cols + x0 - 1] === 1) x0--;
-      while (x1 < cols - 1 && w[row * cols + x1 + 1] === 1) x1++;
-      for (var cx = x0; cx <= x1; cx++) w[row * cols + cx] = 2;
-      for (var dr = -1; dr <= 1; dr += 2) {
-        var r2 = row + dr;
-        if (r2 < 0 || r2 >= rows) continue;
-        var inRun = false;
-        for (cx = x0; cx <= x1; cx++) {
-          var open = w[r2 * cols + cx] === 1;
-          if (open && !inRun) push(r2 * cols + cx);
-          inRun = open;
-        }
-      }
-    }
-    for (var k = 0; k < w.length; k++) w[k] = w[k] === 2 ? 1 : 0;
+  // One cell of the walk grid (1 = walkable), whichever way the city keeps it: one flat grid, or zones (real map).
+  function cellAt(city, cx, cy) {
+    if (cx < 0 || cy < 0 || cx >= city.cols || cy >= city.rows) return 0;
+    if (!city.pages) return city.walk[cy * city.cols + cx];
+    var P = L.data.city.page, z = Math.floor(cy / P) * city.pcols + Math.floor(cx / P), a = city.pages.get(z) || buildPage(city, z);
+    return a[(cy % P) * P + (cx % P)];
   }
 
   // The home city: the real map if it is baked in, else the older baked streets, else an invented one.
@@ -477,7 +513,7 @@
 
   L.cityWalkable = function (city, x, y) {
     var cx = Math.floor(x / city.cell), cy = Math.floor(y / city.cell);
-    return cx >= 0 && cy >= 0 && cx < city.cols && cy < city.rows && city.walk[cy * city.cols + cx] === 1;
+    return cellAt(city, cx, cy) === 1;
   };
 
   // A circle fits if its center and eight points on its edge are on walkable cells.
@@ -512,7 +548,8 @@
 
   // The nearest walkable cell center to (x, y), searching outward in rings.
   L.cityFree = function (city, x, y) {
-    return free(city, x, y, true, 400) || free(city, x, y, false, Math.max(city.cols, city.rows)) || { x: x, y: y };
+    // On the real map the wider search stops at 2000 cells (1 km): each zone it looks at gets built.
+    return free(city, x, y, true, 400) || free(city, x, y, false, city.pages ? 2000 : Math.max(city.cols, city.rows)) || { x: x, y: y };
   };
 
   // needFit: only spots where a body fits (the middle of a street); searches up to maxRing cells away.
@@ -525,7 +562,7 @@
         var edge = Math.abs(dy) === ring, step = edge || !ring ? 1 : ring * 2;
         for (var dx = -ring; dx <= ring; dx += step) {
           var cx = cx0 + dx, cy = cy0 + dy;
-          if (cx < 0 || cy < 0 || cx >= city.cols || cy >= city.rows || !city.walk[cy * city.cols + cx]) continue;
+          if (!cellAt(city, cx, cy)) continue;
           if (needFit && !fits(city, (cx + 0.5) * c, (cy + 0.5) * c, L.data.city.body)) continue;
           return { x: (cx + 0.5) * c, y: (cy + 0.5) * c };
         }
@@ -545,11 +582,11 @@
     flow.fill(65535);
     flow[R * W + R] = 0; q[tail++] = R * W + R;
     while (head < tail) {
-      var c = q[head++], lx = c % W, ly = (c - lx) / W, d = flow[c] + 1, gx = ox + lx, gy = oy + ly, gi = gy * cols + gx;
-      if (lx > 0 && gx > 0 && city.walk[gi - 1] && flow[c - 1] > d) { flow[c - 1] = d; q[tail++] = c - 1; }
-      if (lx < W - 1 && gx < cols - 1 && city.walk[gi + 1] && flow[c + 1] > d) { flow[c + 1] = d; q[tail++] = c + 1; }
-      if (ly > 0 && gy > 0 && city.walk[gi - cols] && flow[c - W] > d) { flow[c - W] = d; q[tail++] = c - W; }
-      if (ly < W - 1 && gy < city.rows - 1 && city.walk[gi + cols] && flow[c + W] > d) { flow[c + W] = d; q[tail++] = c + W; }
+      var c = q[head++], lx = c % W, ly = (c - lx) / W, d = flow[c] + 1, gx = ox + lx, gy = oy + ly;
+      if (lx > 0 && gx > 0 && cellAt(city, gx - 1, gy) && flow[c - 1] > d) { flow[c - 1] = d; q[tail++] = c - 1; }
+      if (lx < W - 1 && gx < cols - 1 && cellAt(city, gx + 1, gy) && flow[c + 1] > d) { flow[c + 1] = d; q[tail++] = c + 1; }
+      if (ly > 0 && gy > 0 && cellAt(city, gx, gy - 1) && flow[c - W] > d) { flow[c - W] = d; q[tail++] = c - W; }
+      if (ly < W - 1 && gy < city.rows - 1 && cellAt(city, gx, gy + 1) && flow[c + W] > d) { flow[c + W] = d; q[tail++] = c + W; }
     }
     city.flowCell = tcy * cols + tcx;
   };
@@ -574,7 +611,7 @@
         var nx = cx + dx, ny = cy + dy;
         if (nx < 0 || ny < 0 || nx >= cols || ny >= city.rows) continue;
         // Diagonals only when both sides are open, so creatures don't cut wall corners.
-        if (dx && dy && (!city.walk[cy * cols + nx] || !city.walk[ny * cols + cx])) continue;
+        if (dx && dy && (!cellAt(city, nx, cy) || !cellAt(city, cx, ny))) continue;
         var f = flowAt(city, nx, ny);
         if (f < best) { best = f; bx = dx; by = dy; }
       }

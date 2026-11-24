@@ -75,7 +75,7 @@ test('San Miguel viene adentro del juego: arranca en la plaza y se camina', func
 });
 
 test('San Miguel es el partido entero: sus edificios son paredes y no se pasa del borde', function () {
-  var L = Lluvia, c = L.cityHome(1), M = c.map, k = M && M.unit * L.data.city.scale;
+  var L = Lluvia, c = L.cityHome(1), M = c.map, k = M && c.k;
   assert.ok(M && M.border, 'no usa el mapa real con el borde del partido (data/map-sanmiguel.js)');
   assert.ok(M.buildings.length > 100000, 'pocos edificios para el partido: ' + M.buildings.length);
   assert.strictEqual(c.houses.length, 0, 'inventó casas');
