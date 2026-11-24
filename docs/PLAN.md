@@ -567,9 +567,9 @@ Etapas (cada una se puede jugar al terminarla):
     `docs/MAPA.md`). Los arroyos todavía no frenan el paso.
   - `data/city-sanmiguel.js` queda en el repo, pero el juego ya no lo carga.
   - Banco solo (`node tools/solo.js 8 25`, mismas partidas): mediana **7:22**, antes 9:41. La ciudad real es
-    más cerrada (más paredes y esquinas que la vieja) y el bot aguanta un 24% menos. No se tocaron números:
-    (decisión) dejarlo así porque el mapa cambia otra vez con los bordes y Darkwood (recomendada), aflojar la
-    horda ahora, o enseñarle al bot a moverse mejor entre las casas.
+    más cerrada (más paredes y esquinas que la vieja) y el bot aguanta un 24% menos. No se tocaron números.
+    Decidido por el usuario: dejarlo así por ahora; el balance se vuelve a medir después de los bordes y de
+    Darkwood, porque el mapa cambia otra vez.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
