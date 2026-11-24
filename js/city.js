@@ -1,6 +1,7 @@
 // The city: a walkable map built from real streets (OpenStreetMap) or invented when there is no internet.
-// You walk the streets, plazas and parks; the blocks between streets are walls. Buildings are kept for drawing
-// (and, later, to go inside). Everything is in world pixels: `scale` pixels per meter.
+// Streets, sidewalks, plazas, parks and back yards can be walked; buildings, houses and parked cars are solid.
+// Where OpenStreetMap has no building drawn, every block gets houses along its streets (L.cityBuild), so the
+// city looks full, like the towns in SAS or Project Zomboid. Everything is in world pixels: `scale` px per meter.
 // A coarse grid (`cell` pixels) says where you can walk, and a flow field over it lets the horde chase you along
 // the streets instead of through the walls.
 (function (L) {
@@ -20,18 +21,25 @@
     flowEvery: 0.4,      // seconds between flow field updates
     flowRange: 120,      // the flow field covers a square this many cells around you (a whole city is too big)
     home: 'sanmiguel',   // the city you start in (data/city-*.js)
+    // Houses along every street where OpenStreetMap has none (meters). Commercial streets get wider, deeper lots.
+    lots: { kinds: ['residential', 'living_street', 'unclassified', 'tertiary', 'secondary', 'primary', 'trunk'],
+      sidewalk: 2.5, front: [8, 12], depth: [10, 18], wideFront: [10, 16], wideDepth: [14, 22], gap: 0.8,
+      passage: 0.15, passageWidth: 3.5 },
+    cars: { kinds: ['residential', 'living_street', 'unclassified', 'tertiary'], every: [7, 14], chance: 0.22, length: 4.4, width: 1.9 },
+    trees: { every: [9, 15], chance: 0.55, radius: [2.2, 3.4] },
+    chunk: 640,          // drawing buckets, in pixels
     body: 9              // radius used against walls (smaller than the drawing, which also covers the sidewalk)
   };
 
   function makeCity(size) {
     var C = L.data.city, cols = Math.ceil(size / C.cell);
     return { size: size, cell: C.cell, cols: cols, rows: cols, walk: new Uint8Array(cols * cols),
-      roads: [], parks: [], buildings: [], flow: null, flowCell: -1, flowAt: -1 };
+      roads: [], parks: [], buildings: [], houses: [], cars: [], trees: [], flow: null, flowCell: -1, flowAt: -1 };
   }
 
   // ---- Painting the walk grid ----
 
-  function paintSegment(city, ax, ay, bx, by, halfW) {
+  function paintSegment(city, ax, ay, bx, by, halfW, count) {
     var c = city.cell, pad = halfW + c;
     var x0 = Math.max(0, Math.floor((Math.min(ax, bx) - pad) / c)), x1 = Math.min(city.cols - 1, Math.floor((Math.max(ax, bx) + pad) / c));
     var y0 = Math.max(0, Math.floor((Math.min(ay, by) - pad) / c)), y1 = Math.min(city.rows - 1, Math.floor((Math.max(ay, by) + pad) / c));
@@ -41,7 +49,11 @@
         var px = (cx + 0.5) * c, py = (cy + 0.5) * c;
         var t = L.clamp(((px - ax) * dx + (py - ay) * dy) / len2, 0, 1);
         var qx = ax + dx * t - px, qy = ay + dy * t - py;
-        if (qx * qx + qy * qy <= halfW * halfW) city.walk[cy * city.cols + cx] = 1;
+        if (qx * qx + qy * qy <= halfW * halfW) {
+          var k = cy * city.cols + cx;
+          if (count) { if (count[k] < 255 && count.stamp[k] !== count.id) { count[k]++; count.stamp[k] = count.id; } }
+          else city.walk[k] = 1;
+        }
       }
     }
   }
@@ -56,13 +68,14 @@
   }
   L.inPolygon = inPolygon;
 
-  function paintPolygon(city, pts) {
+  function paintPolygon(city, pts, grid, value) {
+    grid = grid || city.walk; value = value === undefined ? 1 : value;
     var c = city.cell, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     pts.forEach(function (p) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]); });
     var x0 = Math.max(0, Math.floor(minX / c)), x1 = Math.min(city.cols - 1, Math.floor(maxX / c));
     var y0 = Math.max(0, Math.floor(minY / c)), y1 = Math.min(city.rows - 1, Math.floor(maxY / c));
     for (var cy = y0; cy <= y1; cy++) {
-      for (var cx = x0; cx <= x1; cx++) if (inPolygon(pts, (cx + 0.5) * c, (cy + 0.5) * c)) city.walk[cy * city.cols + cx] = 1;
+      for (var cx = x0; cx <= x1; cx++) if (inPolygon(pts, (cx + 0.5) * c, (cy + 0.5) * c)) grid[cy * city.cols + cx] = value;
     }
   }
 
@@ -104,7 +117,7 @@
     if (city.roads.length < 5) return null;
     city.name = name || '';
     city.real = true;
-    keepLargestArea(city);
+    L.cityBuild(city, 0x5a17);
     return city;
   };
 
@@ -122,7 +135,7 @@
     city.name = data.name;
     city.real = true;
     city.start = { x: data.start[0] * s, y: data.start[1] * s };
-    keepLargestArea(city);
+    L.cityBuild(city, 0x5a17);
     return city;
   };
 
@@ -169,9 +182,129 @@
     }
     city.name = 'Ciudad sin nombre';
     city.real = false;
-    keepLargestArea(city);
+    L.cityBuild(city, seed, true);
     return city;
   };
+
+  // ---- Filling the blocks ----
+  // Up to here `walk` marks streets, plazas and parks. This turns it around: that becomes `street` (where houses
+  // can't go), every other spot is a yard you can walk, and buildings, houses and parked cars are solid.
+  L.cityBuild = function (city, seed, noLots) {
+    var C = L.data.city, s = C.scale, n = city.walk.length, rng = L.makeRng((seed >>> 0) || 1);
+    var street = city.walk, solid = new Uint8Array(n);
+    var count = new Uint8Array(n); count.stamp = new Uint16Array(n);
+    city.roads.forEach(function (r, i) {
+      count.id = (i % 65535) + 1;
+      for (var k = 1; k < r.pts.length; k++) paintSegment(city, r.pts[k - 1][0], r.pts[k - 1][1], r.pts[k][0], r.pts[k][1], r.w / 2 + C.lots.sidewalk * s, count);
+    });
+    city.buildings.forEach(function (b) { paintPolygon(city, b, solid, 1); });
+    var at = function (grid, x, y) {
+      var cx = Math.floor(x / city.cell), cy = Math.floor(y / city.cell);
+      return cx < 0 || cy < 0 || cx >= city.cols || cy >= city.rows ? 1 : grid[cy * city.cols + cx];
+    };
+    var range = function (a) { return (a[0] + rng() * (a[1] - a[0])) * s; };
+    if (!noLots) {
+      var LT = C.lots;
+      city.roads.forEach(function (r) {
+        if (LT.kinds.indexOf(r.kind) < 0) return;
+        var wide = r.kind === 'primary' || r.kind === 'secondary' || r.kind === 'trunk';
+        for (var k = 1; k < r.pts.length; k++) {
+          var ax = r.pts[k - 1][0], ay = r.pts[k - 1][1], dx = r.pts[k][0] - ax, dy = r.pts[k][1] - ay, len = Math.sqrt(dx * dx + dy * dy);
+          if (len < 6 * s) continue;
+          var ux = dx / len, uy = dy / len;
+          for (var side = -1; side <= 1; side += 2) {
+            var nx = -uy * side, ny = ux * side, off = r.w / 2 + LT.sidewalk * s + 0.3 * s;
+            for (var t = rng() * 3 * s; t < len; ) {
+              var f = range(wide ? LT.wideFront : LT.front), d = range(wide ? LT.wideDepth : LT.depth);
+              var gap = (rng() < LT.passage ? LT.passageWidth : LT.gap) * s;
+              if (t + f > len) break;
+              var x0 = ax + ux * t + nx * off, y0 = ay + uy * t + ny * off, w = f - gap;
+              var q = [[x0, y0], [x0 + ux * w, y0 + uy * w], [x0 + ux * w + nx * d, y0 + uy * w + ny * d], [x0 + nx * d, y0 + ny * d]];
+              var ok = true;
+              // Check the corners, the middle and the edges: no street, no plaza, no other building.
+              for (var a = 0; a <= 2 && ok; a++) for (var b = 0; b <= 2 && ok; b++) {
+                var fa = [0.05, 0.5, 0.95][a], fb = [0.12, 0.5, 0.95][b];
+                var px = x0 + ux * w * fa + nx * d * fb, py = y0 + uy * w * fa + ny * d * fb;
+                if (at(street, px, py) || at(solid, px, py) || at(count, px, py)) ok = false;
+              }
+              if (ok) {
+                paintPolygon(city, q, solid, 1);
+                var long = w >= d;
+                city.houses.push({ pts: q, roof: Math.floor(rng() * 8), shop: wide && rng() < 0.5,
+                  ridge: long ? [x0 + nx * d / 2, y0 + ny * d / 2, x0 + ux * w + nx * d / 2, y0 + uy * w + ny * d / 2]
+                    : [x0 + ux * w / 2, y0 + uy * w / 2, x0 + ux * w / 2 + nx * d, y0 + uy * w / 2 + ny * d] });
+              }
+              t += f;
+            }
+          }
+        }
+      });
+    }
+    // Parked cars along the curb (solid: they block bullets too) and trees on the sidewalks (only drawn).
+    var CR = C.cars, TR = C.trees;
+    city.roads.forEach(function (r) {
+      var parks = CR.kinds.indexOf(r.kind) >= 0 && r.w >= 8 * s, lined = LT_has(r.kind);
+      if (!parks && !lined) return;
+      for (var k = 1; k < r.pts.length; k++) {
+        var ax = r.pts[k - 1][0], ay = r.pts[k - 1][1], dx = r.pts[k][0] - ax, dy = r.pts[k][1] - ay, len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 10 * s) continue;
+        var ux = dx / len, uy = dy / len;
+        for (var side = -1; side <= 1; side += 2) {
+          var nx = -uy * side, ny = ux * side;
+          if (parks) {
+            for (var t = 4 * s + rng() * 6 * s; t < len - 4 * s; t += range(CR.every)) {
+              if (rng() > CR.chance) continue;
+              var cx = ax + ux * t + nx * (r.w / 2 - 1.3 * s), cy = ay + uy * t + ny * (r.w / 2 - 1.3 * s), hl = CR.length * s / 2, hw = CR.width * s / 2;
+              if (at(count, cx + ux * hl, cy + uy * hl) > 1 || at(count, cx - ux * hl, cy - uy * hl) > 1 || at(count, cx, cy) > 1) continue;
+              var car = [[cx - ux * hl - nx * hw, cy - uy * hl - ny * hw], [cx + ux * hl - nx * hw, cy + uy * hl - ny * hw],
+                [cx + ux * hl + nx * hw, cy + uy * hl + ny * hw], [cx - ux * hl + nx * hw, cy - uy * hl + ny * hw]];
+              paintPolygon(city, car, solid, 1);
+              city.cars.push({ pts: car, x: cx, y: cy, ang: Math.atan2(uy, ux), color: Math.floor(rng() * 7) });
+            }
+          }
+          if (lined) {
+            for (var t2 = rng() * 8 * s; t2 < len; t2 += range(TR.every)) {
+              if (rng() > TR.chance) continue;
+              var tx = ax + ux * t2 + nx * (r.w / 2 + 1.3 * s), ty = ay + uy * t2 + ny * (r.w / 2 + 1.3 * s);
+              if (at(count, tx, ty) > 1 || at(solid, tx, ty)) continue;
+              city.trees.push({ x: tx, y: ty, r: range(TR.radius), shade: rng() });
+            }
+          }
+        }
+      }
+    });
+    function LT_has(kind) { return C.lots.kinds.indexOf(kind) >= 0; }
+    // Everything not solid can be walked; then keep only the part that connects to the rest.
+    var walk = new Uint8Array(n);
+    for (var i = 0; i < n; i++) walk[i] = solid[i] ? 0 : 1;
+    city.walk = walk;
+    city.street = street;
+    keepLargestArea(city);
+    bucket(city);
+  };
+
+  // Drawing buckets: which houses, buildings, cars and trees touch each chunk of the map.
+  function bucket(city) {
+    var S = L.data.city.chunk, cols = Math.ceil(city.size / S), b = new Array(cols * cols);
+    var put = function (kind, item, x0, y0, x1, y1) {
+      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(cols - 1, Math.floor(y1 / S)); cy++) {
+        for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
+          var k = cy * cols + cx, slot = b[k] || (b[k] = { houses: [], buildings: [], cars: [], trees: [] });
+          slot[kind].push(item);
+        }
+      }
+    };
+    var box = function (pts) {
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      pts.forEach(function (p) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); });
+      return [x0, y0, x1, y1];
+    };
+    city.houses.forEach(function (h) { var q = box(h.pts); put('houses', h, q[0], q[1], q[2], q[3]); });
+    city.buildings.forEach(function (bd) { var q = box(bd); put('buildings', bd, q[0], q[1], q[2], q[3]); });
+    city.cars.forEach(function (c) { put('cars', c, c.x - 30, c.y - 30, c.x + 30, c.y + 30); });
+    city.trees.forEach(function (t) { put('trees', t, t.x - t.r, t.y - t.r, t.x + t.r, t.y + t.r); });
+    city.chunks = b; city.chunkCols = cols;
+  }
 
   // Streets that don't connect to the rest (a dead end cut by the square's edge) become walls, so nothing spawns
   // where it can never reach you.

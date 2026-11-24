@@ -24,10 +24,14 @@
   var daily = false;
   // After picking a character you start in San Miguel (baked into the game: no internet needed).
   // (L.ui.mapPick + L.loadCity can still download any other place; they are not on the menu for now.)
+  // Building the whole city takes about a second: it is built once and kept for the next matches.
+  var homeCity = null;
   function start(characterId, isDaily) {
     daily = !!isDaily;
     var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
-    begin(characterId, seed, L.cityHome(seed), null);
+    if (homeCity) { begin(characterId, seed, homeCity, null); return; }
+    L.ui.loading('Armando San Miguel...');
+    setTimeout(function () { homeCity = L.cityHome(seed); begin(characterId, seed, homeCity, null); }, 30);
   }
 
   // Movement plus the gun: aim at the mouse (the camera keeps you in the middle), hold the button to shoot.

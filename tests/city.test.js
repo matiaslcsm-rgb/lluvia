@@ -17,14 +17,21 @@ function tinyOSM() {
   return { elements: els };
 }
 
-test('ciudad de OpenStreetMap: las calles y la plaza se caminan, las manzanas son paredes', function () {
+test('ciudad de OpenStreetMap: calles, plazas y patios se caminan; los edificios y las casas son sólidos', function () {
   var L = Lluvia, c = L.cityFromOSM(tinyOSM(), 0, 0, 'Prueba'), s = L.data.city.scale, mid = c.size / 2;
   assert.ok(c, 'no armó la ciudad');
   assert.strictEqual(c.roads.length, 5, 'el sendero peatonal no se deja afuera');
   assert.ok(L.cityWalkable(c, mid, mid), 'la esquina no se camina');
   assert.ok(L.cityWalkable(c, mid + 100 * s, mid + 100 * s), 'la plaza no se camina');
-  assert.ok(!L.cityWalkable(c, mid - 100 * s, mid - 100 * s), 'la manzana se camina');
+  assert.ok(!L.cityWalkable(c, mid - 105 * s, mid + 75 * s), 'el edificio se camina');
   assert.strictEqual(c.buildings.length, 1);
+  assert.ok(c.houses.length > 10, 'no llenó las manzanas de casas: ' + c.houses.length);
+  // Every house is solid and none sits on a street.
+  c.houses.forEach(function (h) {
+    var cx = (h.pts[0][0] + h.pts[2][0]) / 2, cy = (h.pts[0][1] + h.pts[2][1]) / 2;
+    assert.ok(!L.cityWalkable(c, cx, cy), 'una casa se camina');
+    assert.ok(!c.street[Math.floor(cy / c.cell) * c.cols + Math.floor(cx / c.cell)], 'una casa sobre la calle');
+  });
   assert.strictEqual(L.cityFromOSM({ elements: [] }, 0, 0), null, 'sin calles tiene que fallar');
 });
 

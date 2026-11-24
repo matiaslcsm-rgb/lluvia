@@ -508,3 +508,22 @@ Etapas (cada una se puede jugar al terminarla):
     - Antes del ajuste duraba 3 minutos; ahora la mediana es 9:32.
     - Alguien que apunta con el mouse tendría que durar más; falta medirlo jugando.
   - El juego de 8 jugadores con habilidades sigue intacto (el banco de 30 partidas lo usa).
+- **2026-11-24: el mapa lleno, prolijo y con edificios** (pedido: "el mapa completo de mi ciudad, prolijo, con
+  edificios como el SAS, todo a escala"; ver `docs/SHOOTER.md`).
+  - Cada cuadra se llena de casas a lo largo de la vereda. Donde OpenStreetMap ya tiene el edificio, va ese.
+    - Frente de 8-12 m y fondo de 10-18 m; en las avenidas son más grandes y algunas son negocios.
+    - Cada tanto queda un pasillo de 3,5 m para entrar a los patios.
+    - San Miguel: 42.600 casas generadas, además de los 1702 edificios de OpenStreetMap.
+  - Los patios y el fondo de las manzanas se caminan. Las casas, los edificios y los autos son sólidos (también
+    frenan las balas).
+    - Antes la manzana entera era pared; ahora los zombis también pueden venir por los patios, como en Project
+      Zomboid.
+  - Autos estacionados junto al cordón (12.900) y árboles en las veredas (27.000), sin ponerlos en las esquinas.
+  - Dibujo: patios verdes, plazas, vereda clara con cordón, asfalto, líneas punteadas en las avenidas, techos de
+    8 colores con su cumbrera, sombra hacia el sudeste, autos con parabrisas y árboles con copa. Solo se dibuja
+    lo que está en pantalla (la ciudad está partida en cuadros de 64 m): 4 ms por cuadro.
+  - Minimapa arriba a la derecha (unos 520 m alrededor tuyo) con calles, plazas, zombis, cofres y el nombre de
+    la calle donde estás.
+  - La ciudad se arma en alrededor de 1 segundo (pantalla "Armando San Miguel...") y se guarda para las
+    partidas siguientes.
+  - Banco solo (`tools/solo.js`): mediana 9:41, igual que antes.

@@ -18,47 +18,136 @@
     if (close) ctx.closePath();
   }
 
-  // Blocks are walls (dark rooftops); streets, plazas and parks on top. Only what is on screen is drawn.
+  var ROOFS = ['#8c4b3a', '#7a6a58', '#5f6670', '#9a7b55', '#6b4f45', '#56604f', '#8a8a80', '#a0603f'];
+  var SHOPS = ['#c9b79c', '#b8c2c9', '#d1c3a6'];
+  var CARS = ['#b03a3a', '#e6e6e6', '#2f3b52', '#3d3d3d', '#c9a227', '#4f6f8f', '#8a8f96'];
+
+  function poly(ctx, pts) {
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+  }
+
+  // Yards, plazas, sidewalks with their curb, asphalt; then parked cars, buildings with their shadow, and trees.
+  // Only what is on screen is drawn: roads by their box, the rest by chunks (js/city.js).
   L.drawCity = function (ctx, city, camX, camY, W, H, t) {
+    var s = L.data.city.scale;
     if (!city._boxes) {
       city.roads.forEach(function (r) { r.box = bboxOf(r.pts); });
       city.parks.forEach(function (p) { p.box = bboxOf(p.pts); });
-      city._bld = city.buildings.map(function (b) { return { pts: b, box: bboxOf(b) }; });
       city._boxes = true;
     }
-    var x0 = camX - 40, y0 = camY - 40, x1 = camX + W + 40, y1 = camY + H + 40;
+    var x0 = camX - 60, y0 = camY - 60, x1 = camX + W + 60, y1 = camY + H + 60;
     var on = function (b, pad) { return b[2] + pad > x0 && b[0] - pad < x1 && b[3] + pad > y0 && b[1] - pad < y1; };
     ctx.fillStyle = '#0b0c10';
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    ctx.fillStyle = '#2b2622';
+    ctx.fillStyle = '#3c4630'; // back yards: grass and dirt
     ctx.fillRect(Math.max(0, x0), Math.max(0, y0), Math.min(city.size, x1) - Math.max(0, x0), Math.min(city.size, y1) - Math.max(0, y0));
-    // Sidewalks (a wider, lighter stroke) and then the asphalt.
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    city.roads.forEach(function (r) {
-      if (!on(r.box, r.w)) return;
-      ctx.strokeStyle = '#5b574f'; ctx.lineWidth = r.w + 5 * L.data.city.scale; path(ctx, r.pts); ctx.stroke();
-    });
     city.parks.forEach(function (p) {
       if (!on(p.box, 0)) return;
-      ctx.fillStyle = p.kind === 'square' || p.kind === 'plaza' || p.kind === 'pedestrian' ? '#6a6458' : '#2f5a2c';
-      path(ctx, p.pts, true); ctx.fill();
+      var paved = p.kind === 'square' || p.kind === 'plaza' || p.kind === 'pedestrian';
+      ctx.fillStyle = paved ? '#77736a' : '#335e2e'; path(ctx, p.pts, true); ctx.fill();
     });
-    city.roads.forEach(function (r) {
-      if (!on(r.box, r.w)) return;
-      ctx.strokeStyle = ROAD[r.kind] || '#3a3d45'; ctx.lineWidth = r.w; path(ctx, r.pts); ctx.stroke();
-      if (r.w >= 12 * L.data.city.scale) { // center line on the big avenues
-        ctx.strokeStyle = 'rgba(255,214,90,0.35)'; ctx.lineWidth = 3; ctx.setLineDash([30, 30]); path(ctx, r.pts); ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    var visible = city.roads.filter(function (r) { return on(r.box, r.w + 8 * s); });
+    var sw = L.data.city.lots.sidewalk * s;
+    visible.forEach(function (r) { ctx.strokeStyle = '#8c8980'; ctx.lineWidth = r.w + sw * 2; path(ctx, r.pts); ctx.stroke(); });   // sidewalk
+    visible.forEach(function (r) { ctx.strokeStyle = '#5d5b55'; ctx.lineWidth = r.w + 0.5 * s; path(ctx, r.pts); ctx.stroke(); }); // curb
+    visible.forEach(function (r) { ctx.strokeStyle = ROAD[r.kind] || '#3a3c42'; ctx.lineWidth = r.w; path(ctx, r.pts); ctx.stroke(); });
+    ctx.setLineDash([3 * s, 3 * s]); ctx.lineWidth = 0.25 * s; ctx.strokeStyle = 'rgba(240,230,200,0.45)';
+    visible.forEach(function (r) { if (r.w >= 12 * s) { path(ctx, r.pts); ctx.stroke(); } });
+    ctx.setLineDash([]);
+    // Chunks on screen.
+    var S = L.data.city.chunk, cols = city.chunkCols, seen = [];
+    if (city.chunks) {
+      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(cols - 1, Math.floor(y1 / S)); cy++) {
+        for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
+          var c = city.chunks[cy * cols + cx];
+          if (c) seen.push(c);
+        }
+      }
+    }
+    var drawn = new Set();
+    var each = function (kind, fn) { seen.forEach(function (c) { c[kind].forEach(function (it) { if (!drawn.has(it)) { drawn.add(it); fn(it); } }); }); };
+    // Parked cars: body, roof and windshields.
+    each('cars', function (c) {
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.ang);
+      var hl = L.data.city.cars.length * s / 2, hw = L.data.city.cars.width * s / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-hl + 3, -hw + 4, hl * 2, hw * 2);
+      ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl, -hw, hl * 2, hw * 2);
+      ctx.fillStyle = 'rgba(20,28,36,0.85)'; ctx.fillRect(-hl * 0.45, -hw * 0.8, hl * 1.05, hw * 1.6);
+      ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl * 0.25, -hw * 0.8, hl * 0.6, hw * 1.6);
+      ctx.restore();
+    });
+    // Buildings: a shadow to the south-east, the roof, its edge, and a ridge on houses.
+    var sh = 1.2 * s;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    each('houses', function (h) { ctx.save(); ctx.translate(sh, sh); poly(ctx, h.pts); ctx.fill(); ctx.restore(); });
+    each('buildings', function (b) { ctx.save(); ctx.translate(sh * 1.6, sh * 1.6); poly(ctx, b); ctx.fill(); ctx.restore(); });
+    drawn.clear();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#1d1a17';
+    each('buildings', function (b) { ctx.fillStyle = ROOFS[Math.abs(Math.floor(b[0][0] * 7 + b[0][1] * 3)) % ROOFS.length]; poly(ctx, b); ctx.fill(); ctx.stroke(); });
+    each('houses', function (h) {
+      ctx.fillStyle = h.shop ? SHOPS[h.roof % 3] : ROOFS[h.roof]; poly(ctx, h.pts); ctx.fill(); ctx.stroke();
+      if (!h.shop) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(h.ridge[0], h.ridge[1]); ctx.lineTo(h.ridge[2], h.ridge[3]); ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#1d1a17';
       }
     });
-    // Buildings: rooftops a little lighter than the block, with an edge.
-    ctx.lineWidth = 1.5; ctx.strokeStyle = '#1a1714';
-    city._bld.forEach(function (b) {
-      if (!on(b.box, 0)) return;
-      ctx.fillStyle = '#3a332c'; path(ctx, b.pts, true); ctx.fill(); ctx.stroke();
+    // Trees over the sidewalk.
+    each('trees', function (tr) {
+      circle(ctx, tr.x + 0.6 * s, tr.y + 0.8 * s, tr.r, 'rgba(0,0,0,0.3)');
+      circle(ctx, tr.x, tr.y, tr.r, tr.shade < 0.5 ? '#2f5527' : '#3a6a2c');
+      circle(ctx, tr.x - tr.r * 0.3, tr.y - tr.r * 0.3, tr.r * 0.45, 'rgba(140,190,90,0.35)');
     });
     // The yellow sun's glare over everything.
     ctx.fillStyle = 'rgba(255,214,60,' + (0.05 + Math.sin(t * 0.4) * 0.015) + ')';
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  };
+
+  function circle(ctx, x, y, r, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+
+  // Minimap (top right): the streets around you, plazas, you in the middle and the zombies close by, plus the
+  // name of the street you are on. `range` is how many pixels of city fit from the center to the edge.
+  L.drawMinimap = function (ctx, g, W) {
+    var city = g.city, p = g.player, size = 190, range = 2600, k = size / 2 / range, x0 = W - size - 14, y0 = 72;
+    if (!city._boxes) return;
+    ctx.save();
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = '#1b1f17'; ctx.fillRect(x0, y0, size, size);
+    ctx.beginPath(); ctx.rect(x0, y0, size, size); ctx.clip();
+    var mx = function (x) { return x0 + size / 2 + (x - p.x) * k; }, my = function (y) { return y0 + size / 2 + (y - p.y) * k; };
+    var near = function (b) { return b[2] > p.x - range && b[0] < p.x + range && b[3] > p.y - range && b[1] < p.y + range; };
+    city.parks.forEach(function (pk) {
+      if (!near(pk.box)) return;
+      ctx.fillStyle = '#2f5a2a'; ctx.beginPath();
+      pk.pts.forEach(function (q, i) { if (i) ctx.lineTo(mx(q[0]), my(q[1])); else ctx.moveTo(mx(q[0]), my(q[1])); });
+      ctx.fill();
+    });
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    city.roads.forEach(function (r) {
+      if (!near(r.box)) return;
+      ctx.strokeStyle = r.w >= 12 * L.data.city.scale ? '#c9c2a8' : '#8a877d'; ctx.lineWidth = Math.max(1.5, r.w * k * 1.6);
+      ctx.beginPath();
+      r.pts.forEach(function (q, i) { if (i) ctx.lineTo(mx(q[0]), my(q[1])); else ctx.moveTo(mx(q[0]), my(q[1])); });
+      ctx.stroke();
+    });
+    ctx.fillStyle = '#ff5a5a';
+    g.enemies.forEach(function (e) {
+      var ex = mx(e.x), ey = my(e.y);
+      if (ex > x0 && ex < x0 + size && ey > y0 && ey < y0 + size) ctx.fillRect(ex - 1.5, ey - 1.5, e.type.boss ? 6 : 3, e.type.boss ? 6 : 3);
+    });
+    ctx.fillStyle = '#ffd27a';
+    g.chests.forEach(function (c) { var cx = mx(c.x), cy = my(c.y); ctx.fillRect(cx - 2.5, cy - 2.5, 5, 5); });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x0 + size / 2, y0 + size / 2, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,233,168,0.6)'; ctx.lineWidth = 2; ctx.strokeRect(x0, y0, size, size);
+    // The street you are on (checked a few times per second: it walks the nearby streets).
+    if (!g._streetT || g.time - g._streetT > 0.5) { g._streetT = g.time; g._street = L.cityStreetAt(city, p.x, p.y); }
+    ctx.textAlign = 'center'; ctx.font = '700 14px system-ui, sans-serif'; ctx.fillStyle = '#ffe9a8';
+    ctx.fillText(g._street || (city.name || ''), x0 + size / 2, y0 + size + 20);
   };
 
   // Street names under you, for the HUD.

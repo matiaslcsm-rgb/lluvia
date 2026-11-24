@@ -481,6 +481,7 @@
 
     if (m && !m.solo) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
     if (p.gun) gunHud(ctx, g, W, H);
+    if (g.city) L.drawMinimap(ctx, g, W);
 
     // Boss health bar.
     if (g.boss && !g.boss.dead) {
