@@ -390,6 +390,9 @@
     g.projectiles.forEach(function (pr) { L.drawShot(ctx, pr); });
     drawKit(ctx, p);
 
+    // Treetops over the people, see-through around you.
+    if (g.city) L.drawCityOver(ctx, g.city, camX, camY, W, H, p.x, p.y);
+
     // Short-lived effects.
     g.effects.forEach(function (fx) {
       var k = fx.ttl / fx.max;

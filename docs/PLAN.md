@@ -645,6 +645,15 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Revisado en el navegador: veredas, plaza, casas con tejas y chapa, terrazas, autos y árboles; sin cortes entre
     pedazos y sin errores. El visor del mapa se ve igual que antes.
   - Sigue: entrar a los edificios (interiores y escaleras, pasos 3 y 4 de `docs/MAPA.md`).
+- **2026-11-24: capa de arriba** (paso 40 de "Profundidad y altura").
+  - El mapa real se dibuja en dos capas de pedazos: el piso (con las sombras de los árboles) debajo de todo, y las
+    copas de los árboles encima de los personajes, los bichos y las balas (`L.drawCityOver` en
+    `js/view/city.js`, `layer` en `js/view/mapdraw.js`). Los pedazos de arriba sin ningún árbol no guardan imagen.
+  - Alrededor de tu personaje las copas se vuelven transparentes en un círculo suave de 1,8 m, así no te perdés
+    debajo de un árbol. Un bicho debajo de una copa queda tapado: sirve de escondite para los dos.
+  - Los techos siguen en la capa del piso: hoy los edificios son paredes y nadie queda debajo de un techo. Pasan a
+    la capa de arriba en el paso 41, cuando tengan altura.
+  - Revisado en el navegador: el personaje pasa por debajo de un árbol de la plaza y se lo ve; sin errores.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

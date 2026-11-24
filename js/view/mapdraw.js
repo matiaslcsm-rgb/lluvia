@@ -243,8 +243,12 @@
 
   // opt: { view: [x0, y0, x1, y1] in meters, scale: px per meter, terrain: canvas or null, buildings: true,
   //        color: fn(building) → fill (optional, replaces the roof), dim: fn(building) → true to fade it,
-  //        under: fn() called after the streets and before the buildings (the game draws its parked cars there) }
+  //        under: fn() called after the streets and before the buildings (the game draws its parked cars there),
+  //        layer: 'ground' (everything but the treetops, with their shadows) or 'over' (only the treetops, on a
+  //        clear background, so the game can draw people between the two); without it, everything }
+  // Returns how many buildings it drew, or with layer 'over' how many trees.
   L.mapdraw.draw = function (ctx, M, opt) {
+    if (opt.layer === 'over') return drawOver(ctx, M, opt);
     var close = opt.scale >= FINE_FROM, P = L.mapdraw.prepare(M), T = close ? fineTextures() : textures(), vb = opt.view, s = opt.scale, detail = s > 0.7;
     var on = function (b, pad) { return b[2] + pad > vb[0] && b[0] - pad < vb[2] && b[3] + pad > vb[1] && b[1] - pad < vb[3]; };
     var pat = function (c) { var p = ctx.createPattern(c, 'repeat'); if (p.setTransform && typeof DOMMatrix !== 'undefined') p.setTransform(new DOMMatrix().scale(1 / (close ? FINE : 12))); return p; };
@@ -348,13 +352,12 @@
       });
       ctx.globalAlpha = 1;
     }
-    // Trees on top.
+    // Trees on top (in the ground layer, only their shadow: the treetops go in the layer over the people).
     if (s > 0.35) {
       once('trees', function (tr) {
         if (tr.x < vb[0] - 6 || tr.x > vb[2] + 6 || tr.y < vb[1] - 6 || tr.y > vb[3] + 6) return;
         if (detail) { ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.arc(tr.x + tr.r * 0.5, tr.y + tr.r * 0.45, tr.r, 0, Math.PI * 2); ctx.fill(); }
-        ctx.fillStyle = tr.s < 0.5 ? '#2f5a27' : '#3b6b2e'; ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.r, 0, Math.PI * 2); ctx.fill();
-        if (detail) { ctx.fillStyle = 'rgba(150,200,100,0.3)'; ctx.beginPath(); ctx.arc(tr.x - tr.r * 0.3, tr.y - tr.r * 0.3, tr.r * 0.5, 0, Math.PI * 2); ctx.fill(); }
+        if (opt.layer !== 'ground') treetop(ctx, tr, detail);
       });
     }
     // Terrain as a soft relief on top (multiply), not a color of its own.
@@ -379,4 +382,38 @@
     ctx.restore();
     return shown;
   };
+
+  function treetop(ctx, tr, detail) {
+    ctx.fillStyle = tr.s < 0.5 ? '#2f5a27' : '#3b6b2e'; ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.r, 0, Math.PI * 2); ctx.fill();
+    if (detail) { ctx.fillStyle = 'rgba(150,200,100,0.3)'; ctx.beginPath(); ctx.arc(tr.x - tr.r * 0.3, tr.y - tr.r * 0.3, tr.r * 0.5, 0, Math.PI * 2); ctx.fill(); }
+  }
+
+  // The layer over the people: just the treetops. Past the partido's border they are darkened like the ground
+  // (only where there is a treetop: the rest of this layer stays clear).
+  function drawOver(ctx, M, opt) {
+    var P = L.mapdraw.prepare(M), vb = opt.view, s = opt.scale, detail = s > 0.7, n = 0;
+    if (s <= 0.35) return 0;
+    var done = new Set();
+    ctx.save();
+    for (var cy = Math.max(0, Math.floor(vb[1] / P.CH)); cy <= Math.min(P.rows - 1, Math.floor(vb[3] / P.CH)); cy++) {
+      for (var cx = Math.max(0, Math.floor(vb[0] / P.CH)); cx <= Math.min(P.cols - 1, Math.floor(vb[2] / P.CH)); cx++) {
+        var c = P.chunks[cy * P.cols + cx];
+        if (!c) continue;
+        c.trees.forEach(function (tr) {
+          if (done.has(tr) || tr.x < vb[0] - 6 || tr.x > vb[2] + 6 || tr.y < vb[1] - 6 || tr.y > vb[3] + 6) return;
+          done.add(tr); treetop(ctx, tr, detail); n++;
+        });
+      }
+    }
+    if (n && P.border) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.beginPath();
+      ctx.rect(vb[0] - 10, vb[1] - 10, vb[2] - vb[0] + 20, vb[3] - vb[1] + 20);
+      P.border.forEach(function (q, i) { if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(6,7,10,0.86)'; ctx.fill('evenodd');
+    }
+    ctx.restore();
+    return n;
+  }
 })(this.Lluvia = this.Lluvia || {});

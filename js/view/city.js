@@ -53,7 +53,9 @@
   var TILE = 16;
   L.mapTile = TILE;
 
-  function makeTile(city, tx, ty) {
+  // A tile of one layer: 'ground' (everything under the people) or 'over' (the treetops). An 'over' tile with no
+  // treetop is just `false`, to keep no empty picture.
+  function makeTile(city, tx, ty, layer) {
     var s = city.scale, size = Math.ceil(TILE * s), X = tx * TILE, Y = ty * TILE, pad = 20;
     var c = document.createElement('canvas');
     c.width = c.height = size + 2; // a pixel of overlap on every side, so no seam shows between tiles
@@ -61,53 +63,83 @@
     x.translate(1, 1); x.scale(s, s); x.translate(-X, -Y);
     // Things just outside the tile still reach into it (a shadow, a tree), so the drawing looks a bit around it.
     var each = chunkWalker(city, (X - pad) * s, (Y - pad) * s, (X + TILE + pad) * s, (Y + TILE + pad) * s);
-    L.mapdraw.draw(x, city.map, { view: [X - pad, Y - pad, X + TILE + pad, Y + TILE + pad], scale: s, terrain: L.mapdraw.terrain(city.map),
+    var drawn = L.mapdraw.draw(x, city.map, { layer: layer, view: [X - pad, Y - pad, X + TILE + pad, Y + TILE + pad], scale: s, terrain: L.mapdraw.terrain(city.map),
       under: function () { x.save(); x.scale(1 / s, 1 / s); drawCars(x, each, s); x.restore(); } });
-    return c;
+    return layer === 'over' && !drawn ? false : c;
+  }
+
+  function tileCache(city, layer) {
+    var all = city._tiles || (city._tiles = {});
+    return all[layer] || (all[layer] = new Map()); // Map order = least recently used first
   }
 
   // Tiles around the screen are made ahead between frames, when the browser is idle, at most one every
   // AHEAD_EVERY ms: making one takes about 16 ms, and walking across a whole tile takes about 4 s.
   var AHEAD_EVERY = 200, aheadAt = 0, aheadQueued = false;
-  function makeAhead(city, cols, missing) {
+  function makeAhead(city, layer, key, tx, ty) {
     var now = Date.now();
     if (aheadQueued || now - aheadAt < AHEAD_EVERY) return;
     aheadQueued = true; aheadAt = now;
     var run = function () {
       aheadQueued = false;
-      if (!city._tiles.has(missing[1] * cols + missing[0])) city._tiles.set(missing[1] * cols + missing[0], makeTile(city, missing[0], missing[1]));
+      var tiles = tileCache(city, layer);
+      if (!tiles.has(key)) tiles.set(key, makeTile(city, tx, ty, layer));
     };
     if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 1000 }); else setTimeout(run, 0);
   }
 
-  // Draws the tiles that cover the screen (camera in px) and asks for one missing tile around it. Returns how
-  // many tiles had to be made right away this frame.
-  L.drawMapTiles = function (ctx, city, camX, camY, W, H) {
-    var s = city.scale, T = TILE * s, tiles = city._tiles || (city._tiles = new Map()); // Map order = least recently used first
+  // Draws one layer's tiles that cover the screen (camera in px) and asks for one missing tile around it.
+  // Returns how many tiles had to be made right away this frame.
+  L.drawMapTiles = function (ctx, city, camX, camY, W, H, layer) {
+    layer = layer || 'ground';
+    var s = city.scale, T = TILE * s, tiles = tileCache(city, layer);
     var cols = Math.ceil(city.map.w / TILE), rows = Math.ceil(city.map.h / TILE);
     var tx0 = Math.floor(camX / T), ty0 = Math.floor(camY / T), tx1 = Math.floor((camX + W) / T), ty1 = Math.floor((camY + H) / T);
     var made = 0;
-    var get = function (tx, ty, build) {
+    var get = function (tx, ty) {
       var key = ty * cols + tx, c = tiles.get(key);
-      if (c) { tiles.delete(key); tiles.set(key, c); return c; }
-      if (!build) return null;
-      c = makeTile(city, tx, ty); made++;
+      if (c !== undefined) { tiles.delete(key); tiles.set(key, c); return c; }
+      c = makeTile(city, tx, ty, layer); made++;
       tiles.set(key, c);
       return c;
     };
     for (var ty = Math.max(0, ty0); ty <= Math.min(rows - 1, ty1); ty++) {
-      for (var tx = Math.max(0, tx0); tx <= Math.min(cols - 1, tx1); tx++) ctx.drawImage(get(tx, ty, true), tx * T - 1, ty * T - 1);
+      for (var tx = Math.max(0, tx0); tx <= Math.min(cols - 1, tx1); tx++) {
+        var c = get(tx, ty);
+        if (c) ctx.drawImage(c, tx * T - 1, ty * T - 1);
+      }
     }
     // One tile ahead, from the ring around the screen.
     search: for (ty = Math.max(0, ty0 - 1); ty <= Math.min(rows - 1, ty1 + 1); ty++) {
       for (tx = Math.max(0, tx0 - 1); tx <= Math.min(cols - 1, tx1 + 1); tx++) {
-        if (!tiles.has(ty * cols + tx)) { makeAhead(city, cols, [tx, ty]); break search; }
+        if (!tiles.has(ty * cols + tx)) { makeAhead(city, layer, ty * cols + tx, tx, ty); break search; }
       }
     }
     // Keep the screen, its ring and a few more (each tile is about 2.5 MB at 1:1).
     var keep = (tx1 - tx0 + 3) * (ty1 - ty0 + 3) + 6;
     while (tiles.size > keep) tiles.delete(tiles.keys().next().value);
     return made;
+  };
+
+  // The layer over the people (treetops), with a soft see-through circle around (px, py): under a tree you still
+  // see yourself. Drawn into a screen-sized picture first, so the circle only clears the treetops.
+  var SEE_THROUGH = 1.8; // meters
+  var overCanvas = null;
+  L.drawCityOver = function (ctx, city, camX, camY, W, H, px, py) {
+    if (!city.map) return;
+    if (!overCanvas) overCanvas = document.createElement('canvas');
+    if (overCanvas.width !== W || overCanvas.height !== H) { overCanvas.width = W; overCanvas.height = H; }
+    var o = overCanvas.getContext('2d'), r = SEE_THROUGH * city.scale;
+    o.setTransform(1, 0, 0, 1, 0, 0);
+    o.clearRect(0, 0, W, H);
+    o.translate(-camX, -camY);
+    L.drawMapTiles(o, city, camX, camY, W, H, 'over');
+    o.globalCompositeOperation = 'destination-out';
+    var hole = o.createRadialGradient(px, py, r * 0.55, px, py, r);
+    hole.addColorStop(0, 'rgba(0,0,0,0.85)'); hole.addColorStop(1, 'rgba(0,0,0,0)');
+    o.fillStyle = hole; o.fillRect(px - r, py - r, r * 2, r * 2);
+    o.globalCompositeOperation = 'source-over';
+    ctx.drawImage(overCanvas, camX, camY);
   };
 
   // Yards, plazas, sidewalks with their curb, asphalt; then parked cars, buildings with their shadow, and trees.
