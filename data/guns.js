@@ -10,7 +10,9 @@
   // solo: no rivals, duels or bets. gunsOnly: no automatic abilities or ulti; level-ups improve you and the gun.
   // horde: with only a gun the horde is gentler and slower to grow (like Risk of Rain: it builds up).
   //   pace: how fast the difficulty clock runs (0.5 = one step every 2 minutes); the rest multiply the horde.
-  L.data.mode = { solo: true, gunsOnly: true, startGun: 'glock',
+  // explore: building the map (2026-11-24, the user's call): no enemies, waves, chests, shrines or weather, no clock
+  //   on screen; you just walk the city. Set it to false to bring the horde back.
+  L.data.mode = { solo: true, gunsOnly: true, startGun: 'glock', explore: true,
     horde: { pace: 0.5, hpMul: 0.65, dpsMul: 0.5, spawnMul: 0.5, bossFirst: 300, miniFirst: 450, waveFirst: 240 } };
 
   L.data.guns = [

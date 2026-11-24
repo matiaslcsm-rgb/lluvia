@@ -25,7 +25,8 @@
       pacts: opts.pacts || [],          // Pactos del Cielo turned on
       rival: null, grudge: {},          // your rival and how many duels each rival has won against you
       solo: !!opts.solo,                // just you: no rivals, duels or bets
-      forecast: opts.forecast !== undefined ? opts.forecast : L.pickForecast(seed) // same weather in every arena
+      explore: !!opts.explore,          // just the map: no horde, waves or weather (L.data.mode.explore)
+      forecast: opts.explore ? null : opts.forecast !== undefined ? opts.forecast : L.pickForecast(seed) // same weather in every arena
     };
     for (var i = 0; i < (m.solo ? 1 : 8); i++) {
       var isHuman = i === 0;
@@ -37,7 +38,7 @@
         game: L.createGame({
           seed: (seed + i * 7919) >>> 0, characterId: charId, listen: isHuman && !opts.humanBot,
           viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720, storm: m.storm, pacts: m.pacts, forecast: m.forecast,
-          city: isHuman ? opts.city : null,
+          city: isHuman ? opts.city : null, explore: isHuman && m.explore, noSpawn: isHuman && m.explore,
           gunsOnly: isHuman && !!opts.gunsOnly, gun: isHuman ? opts.gun : null
         }),
         // Rivals get a spread of skills so some fall early and some go far.

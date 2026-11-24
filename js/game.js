@@ -34,7 +34,8 @@
   // The difficulty clock: one step every minute, the same for everyone. Starts at 1.
   L.difficulty = function (g) { return 1 + Math.floor(g.time * (g.pace || 1) / 60); };
 
-  // opts: { seed, characterId, viewW, viewH, noSpawn, lives, listen } — listen: keep events for screen and sound
+  // opts: { seed, characterId, viewW, viewH, noSpawn, explore, lives, listen } — listen: keep events for screen and sound;
+  // explore: only the map (no horde, shrines or errands; the screen hides the clock)
   L.createGame = function (opts) {
     opts = opts || {};
     var h = L.data.horde;
@@ -50,6 +51,7 @@
       choice: null,        // the 3 options on screen after a level up, or null
       pendingLevels: 0,
       spawning: !opts.noSpawn,
+      explore: !!opts.explore,
       spawnAcc: 0,
       nextBoss: h.bossFirst,
       boss: null,
@@ -242,7 +244,7 @@
     removeDead(g);
     updateGems(g, dt);
     L.updateChests(g);
-    L.updateShrines(g, dt);
+    if (!g.explore) L.updateShrines(g, dt);
     updateTimed(g.effects, dt);
     updateTimed(g.toasts, dt);
     var regen = p.stats.regen + p.stats.stillRegen * (p.still || 0);

@@ -588,6 +588,18 @@ Etapas (cada una se puede jugar al terminarla):
     aguantaron los 25 minutos con más de 6000 bajas, cosa que antes no pasaba. Lo más probable es que hayan
     llegado a los campos abiertos de Campo de Mayo, donde es fácil escaparse. Se mira cuando se ajuste el balance
     (el usuario decidió no tocarlo por ahora).
+- **2026-11-24: modo mapa, sin enemigos** (pedido: "sacá todo lo que son los enemigos por ahora, también el tiempo de
+  oleadas; vamos a solo armar el mapa").
+  - `L.data.mode.explore` (en `data/guns.js`): sin horda, jefes, oleadas, cofres, santuarios, encargos ni clima, y
+  la pantalla no muestra el reloj, la dificultad, las bajas ni el oro. Solo se recorre la ciudad.
+  - Nada se borró: con `explore: false` vuelve todo como estaba. Las pruebas y los bancos no usan este modo.
+  - Decidido también: por ahora no se prueba la jugabilidad; el mapa se revisa en el visor y con las pruebas de
+  la ciudad.
+- **2026-11-24: la escala** (el usuario: "los edificios muy pequeños, el jugador muy grande; tiene que ser 1:1").
+  Hoy el mundo va a 10 px por metro y el jugador mide 2,8 m de ancho y corre a 21 m/s, unas 5 veces de más.
+  Propuesta, en orden: (1) el mundo en metros con la cámara aparte, a 1:1 (jugador de 0,5 m, se ven unos 25-30 m
+  alrededor, como Darkwood); (2) el mapa en zonas de 50 m que se arman cerca del jugador, por la memoria y los
+  cuelgues; (3) dibujar cada zona una vez y reusarla; (4) recién ahí interiores y escaleras.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
