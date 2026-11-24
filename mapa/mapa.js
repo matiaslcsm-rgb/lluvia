@@ -162,6 +162,7 @@
     else if (by === 'roof') Object.keys(ROOF_COLORS).forEach(function (k) { add(ROOF_COLORS[k], k); });
     else SRC.forEach(function (n, i) { add(SRC_COLORS[i], n); });
     html += '<div style="margin-top:6px;color:#9a9db0">Terreno: ' + (zmin / 10).toFixed(0) + ' a ' + (zmax / 10).toFixed(0) + ' m, curvas cada 2 m</div>';
+    html += '<div style="margin-top:8px;color:#7d8090;font-size:11px;display:block">Datos: © OpenStreetMap (ODbL), Overture Maps (ODbL), Google Open Buildings (CC BY 4.0), Microsoft (ODbL), SRTM/NASA.</div>';
     $('legend').innerHTML = html;
   }
 
