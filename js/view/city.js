@@ -121,6 +121,92 @@
     return made;
   };
 
+  // ---- Buildings standing up ----
+  // Seen from a camera CAMERA_H meters over the middle of the screen (m), a point h meters up lands at
+  // m + (point - m) × CAMERA_H / (CAMERA_H - h): the roof is the footprint grown from the middle of the screen,
+  // and you see the walls that face you. Lower buildings go first, so taller ones cover them.
+  // 30 m reads well on screen: a two-floor house shows a wall of about a third of its distance to you.
+  var CAMERA_H = 30, MAX_H = 0.6 * CAMERA_H, FLOOR_H = 3;
+  var WALLS = {
+    house: ['#d8cdb9', '#cbbfa8', '#e2d8c6', '#bfae94', '#9c5a3f', '#d9c7a3'], // whitewash and some brick
+    concrete: ['#c9c4bb', '#b9b4ab', '#d2cdc2'],
+    metal: ['#9aa0a3', '#8a9094', '#a8adb0']
+  };
+  var LIGHT = [-Math.SQRT1_2, -Math.SQRT1_2]; // sun from the north-west, like the shadows
+
+  function wallColor(bd) {
+    var set = /galp|indus|garage|estaci/.test(bd.kind) ? WALLS.metal : /depart|edificio|oficina|salud|escuela|p[uú]blico/.test(bd.kind) ? WALLS.concrete : WALLS.house;
+    return set[bd.i % set.length];
+  }
+
+  function shade(hex, k) {
+    var n = parseInt(hex.slice(1), 16);
+    return 'rgb(' + Math.round((n >> 16) * k) + ',' + Math.round(((n >> 8) & 255) * k) + ',' + Math.round((n & 255) * k) + ')';
+  }
+
+  function insideBorder(P, x, y) {
+    var p = P.border, c = false;
+    for (var i = 0, j = p.length - 1; i < p.length; j = i++) {
+      if ((p[i][1] > y) !== (p[j][1] > y) && x < (p[j][0] - p[i][0]) * (y - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0]) c = !c;
+    }
+    return c;
+  }
+
+  L.drawCityBuildings = function (ctx, city, camX, camY, W, H) {
+    if (!city.map) return;
+    var s = city.scale, P = L.mapdraw.prepare(city.map), mx = (camX + W / 2) / s, my = (camY + H / 2) / s;
+    // A tall building whose base is off screen can still lean into it: look a bit around the screen.
+    var pad = 30, vb = [camX / s - pad, camY / s - pad, (camX + W) / s + pad, (camY + H) / s + pad], list = [], seen = new Set();
+    for (var cy = Math.max(0, Math.floor(vb[1] / P.CH)); cy <= Math.min(P.rows - 1, Math.floor(vb[3] / P.CH)); cy++) {
+      for (var cx = Math.max(0, Math.floor(vb[0] / P.CH)); cx <= Math.min(P.cols - 1, Math.floor(vb[2] / P.CH)); cx++) {
+        var c = P.chunks[cy * P.cols + cx];
+        if (!c) continue;
+        c.buildings.forEach(function (bd) {
+          if (seen.has(bd) || bd.b[2] < vb[0] || bd.b[0] > vb[2] || bd.b[3] < vb[1] || bd.b[1] > vb[3]) return;
+          seen.add(bd);
+          // Past the partido's border buildings stay flat, in the dark.
+          if (bd.inBorder === undefined) bd.inBorder = !P.border || insideBorder(P, (bd.b[0] + bd.b[2]) / 2, (bd.b[1] + bd.b[3]) / 2);
+          if (bd.inBorder) list.push(bd);
+        });
+      }
+    }
+    list.sort(function (a, b) { return L.mapdraw.height(a) - L.mapdraw.height(b); });
+    ctx.save(); ctx.scale(s, s);
+    ctx.lineJoin = 'round';
+    list.forEach(function (bd) {
+      var real = L.mapdraw.height(bd), h = Math.min(MAX_H, real), k = h / (CAMERA_H - h), p = bd.p, n = p.length;
+      if (bd.area === undefined) { bd.area = 0; for (var i = 0; i < n; i++) { var q = p[i], r = p[(i + 1) % n]; bd.area += q[0] * r[1] - r[0] * q[1]; } }
+      var sign = bd.area > 0 ? 1 : -1, base = wallColor(bd);
+      // Where a point at height `part` of the wall lands (part 1 = the roof).
+      var up = function (v, part) { return [v[0] + (v[0] - mx) * k * part, v[1] + (v[1] - my) * k * part]; };
+      // The walls that face the middle of the screen, lit by how much they face the sun.
+      for (i = 0; i < n; i++) {
+        var a = p[i], b = p[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+        if (len < 0.05) continue;
+        var nx = sign * dy / len, ny = -sign * dx / len;
+        if (nx * ((a[0] + b[0]) / 2 - mx) + ny * ((a[1] + b[1]) / 2 - my) >= 0) continue;
+        var at = up(a, 1), bt = up(b, 1);
+        ctx.fillStyle = shade(base, 0.7 + 0.3 * Math.max(0, nx * LIGHT[0] + ny * LIGHT[1]));
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(bt[0], bt[1]); ctx.lineTo(at[0], at[1]); ctx.closePath();
+        ctx.fill();
+        // A line at every floor, so a tall building reads as tall.
+        if (bd.floors > 1) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 0.12; ctx.beginPath();
+          for (var f = 1; f < bd.floors; f++) {
+            var t = Math.min(1, f * FLOOR_H / real), af = up(a, t), bf = up(b, t);
+            ctx.moveTo(af[0], af[1]); ctx.lineTo(bf[0], bf[1]);
+          }
+          ctx.stroke();
+        }
+      }
+      // The roof: the footprint grown from the middle of the screen.
+      ctx.save(); ctx.translate(mx, my); ctx.scale(1 + k, 1 + k); ctx.translate(-mx, -my);
+      L.mapdraw.roof(ctx, bd, s * (1 + k));
+      ctx.restore();
+    });
+    ctx.restore();
+  };
+
   // The layer over the people (treetops), with a soft see-through circle around (px, py): under a tree you still
   // see yourself. Drawn into a screen-sized picture first, so the circle only clears the treetops.
   var SEE_THROUGH = 1.8; // meters

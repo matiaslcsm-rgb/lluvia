@@ -244,8 +244,9 @@
   // opt: { view: [x0, y0, x1, y1] in meters, scale: px per meter, terrain: canvas or null, buildings: true,
   //        color: fn(building) → fill (optional, replaces the roof), dim: fn(building) → true to fade it,
   //        under: fn() called after the streets and before the buildings (the game draws its parked cars there),
-  //        layer: 'ground' (everything but the treetops, with their shadows) or 'over' (only the treetops, on a
-  //        clear background, so the game can draw people between the two); without it, everything }
+  //        layer: 'ground' (everything under the people: no treetops, and buildings only as their footprint and
+  //        shadow) or 'over' (only the treetops, on a clear background); without it, everything flat, as the
+  //        viewer shows it }
   // Returns how many buildings it drew, or with layer 'over' how many trees.
   L.mapdraw.draw = function (ctx, M, opt) {
     if (opt.layer === 'over') return drawOver(ctx, M, opt);
@@ -322,32 +323,19 @@
         ctx.fillStyle = 'rgba(0,0,0,0.28)';
         list.forEach(function (bd) {
           if (opt.dim && opt.dim(bd)) return;
-          var h = Math.min(40, bd.floors * 3 + (bd.roof === 'tejas' ? 1.5 : 0.6)), d = h * 0.45;
+          var h = Math.min(40, L.mapdraw.height(bd)), d = h * 0.45;
           ctx.save(); ctx.translate(d, d * 0.8); path(ctx, bd.p, true); ctx.fill(); ctx.restore();
         });
       }
       list.forEach(function (bd) {
         var faded = opt.dim && opt.dim(bd);
-        ctx.globalAlpha = faded ? 0.25 : 1;
-        if (opt.color) ctx.fillStyle = opt.color(bd);
-        else ctx.fillStyle = detail ? pat(T[bd.roof] || T.terraza) : ROOF[bd.roof][0];
-        path(ctx, bd.p, true); ctx.fill();
-        // Flat roofs vary: whitewashed, grey concrete, reddish waterproofing, dark tar.
-        if (detail && !opt.color && bd.roof === 'terraza') {
-          var tint = TERRACE_TINTS[bd.i % TERRACE_TINTS.length];
-          if (tint) { ctx.fillStyle = tint; ctx.fill(); }
+        if (opt.layer === 'ground') {
+          // The game draws walls and roof itself, standing up (L.drawCityBuildings): here only its footprint.
+          ctx.fillStyle = '#4a443d'; path(ctx, bd.p, true); ctx.fill();
+        } else {
+          ctx.globalAlpha = faded ? 0.25 : 1;
+          drawRoof(ctx, bd, T, pat, detail, s, opt.color);
         }
-        if (detail) {
-          // Edge: parapet on terraces, eaves on pitched roofs.
-          ctx.strokeStyle = bd.roof === 'terraza' ? '#8f887b' : 'rgba(0,0,0,0.45)'; ctx.lineWidth = bd.roof === 'terraza' ? 0.45 : 0.25;
-          ctx.stroke();
-          // Terraces get a water tank (black or grey), like every roof in town.
-          if (bd.roof === 'terraza' && !opt.color && (bd.b[2] - bd.b[0]) > 6) {
-            var tx = bd.b[0] + (bd.b[2] - bd.b[0]) * (0.25 + (bd.i % 5) * 0.1), ty = bd.b[1] + (bd.b[3] - bd.b[1]) * (0.3 + (bd.i % 3) * 0.15);
-            ctx.fillStyle = bd.i % 3 ? '#2a2a2a' : '#8a9096';
-            ctx.beginPath(); ctx.arc(tx, ty, 0.6 + Math.min(0.6, bd.floors * 0.1), 0, Math.PI * 2); ctx.fill();
-          }
-        } else if (s > 0.3) { ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1 / s; ctx.stroke(); }
         if (!faded) shown++;
       });
       ctx.globalAlpha = 1;
@@ -381,6 +369,39 @@
     }
     ctx.restore();
     return shown;
+  };
+
+  // One roof: its texture (or `color(bd)`), the tint of flat roofs, the edge and the water tank.
+  function drawRoof(ctx, bd, T, pat, detail, s, color) {
+    if (color) ctx.fillStyle = color(bd);
+    else ctx.fillStyle = detail ? pat(T[bd.roof] || T.terraza) : ROOF[bd.roof][0];
+    path(ctx, bd.p, true); ctx.fill();
+    // Flat roofs vary: whitewashed, grey concrete, reddish waterproofing, dark tar.
+    if (detail && !color && bd.roof === 'terraza') {
+      var tint = TERRACE_TINTS[bd.i % TERRACE_TINTS.length];
+      if (tint) { ctx.fillStyle = tint; ctx.fill(); }
+    }
+    if (detail) {
+      // Edge: parapet on terraces, eaves on pitched roofs.
+      ctx.strokeStyle = bd.roof === 'terraza' ? '#8f887b' : 'rgba(0,0,0,0.45)'; ctx.lineWidth = bd.roof === 'terraza' ? 0.45 : 0.25;
+      ctx.stroke();
+      // Terraces get a water tank (black or grey), like every roof in town.
+      if (bd.roof === 'terraza' && !color && (bd.b[2] - bd.b[0]) > 6) {
+        var tx = bd.b[0] + (bd.b[2] - bd.b[0]) * (0.25 + (bd.i % 5) * 0.1), ty = bd.b[1] + (bd.b[3] - bd.b[1]) * (0.3 + (bd.i % 3) * 0.15);
+        ctx.fillStyle = bd.i % 3 ? '#2a2a2a' : '#8a9096';
+        ctx.beginPath(); ctx.arc(tx, ty, 0.6 + Math.min(0.6, bd.floors * 0.1), 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (s > 0.3) { ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1 / s; ctx.stroke(); }
+  }
+
+  // How tall a building stands, in meters: 3 m per floor, plus the slope of a pitched roof.
+  L.mapdraw.height = function (bd) { return bd.floors * 3 + (bd.roof === 'tejas' ? 1.5 : 0.6); };
+
+  // Draws one building's roof in meters (the caller sets the transform), for the game's standing buildings.
+  L.mapdraw.roof = function (ctx, bd, scale) {
+    var close = scale >= FINE_FROM, T = close ? fineTextures() : textures();
+    var pat = function (c) { var p = ctx.createPattern(c, 'repeat'); if (p.setTransform && typeof DOMMatrix !== 'undefined') p.setTransform(new DOMMatrix().scale(1 / (close ? FINE : 12))); return p; };
+    drawRoof(ctx, bd, T, pat, scale > 0.7, scale, null);
   };
 
   function treetop(ctx, tr, detail) {

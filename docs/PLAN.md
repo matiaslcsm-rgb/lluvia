@@ -654,6 +654,18 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Los techos siguen en la capa del piso: hoy los edificios son paredes y nadie queda debajo de un techo. Pasan a
     la capa de arriba en el paso 41, cuando tengan altura.
   - Revisado en el navegador: el personaje pasa por debajo de un árbol de la plaza y se lo ve; sin errores.
+- **2026-11-24: edificios con altura** (paso 41 de "Profundidad y altura").
+  - Los edificios se paran (`L.drawCityBuildings` en `js/view/city.js`): como vistos desde una cámara a 30 m sobre
+    el centro de la pantalla, el techo es el contorno agrandado desde el centro según la altura del edificio, y se
+    ven las paredes que miran hacia vos. Al caminar, los altos "se inclinan". La altura sale de los pisos (3 m cada
+    uno, más el techo); los muy altos se topean en 18 m para que no tapen media pantalla.
+  - Paredes de revoque o ladrillo en las casas, hormigón en edificios, oficinas, escuelas y salud, y chapa en
+    galpones, industrias, garages y estaciones. Más claras las que miran al sol (del noroeste, como las sombras), y
+    con una raya en cada piso para que se lea la altura.
+  - El piso de los pedazos guarda solo la base de cada edificio y su sombra; techos y paredes se dibujan en cada
+    cuadro encima de personas y bichos, y debajo de las copas. Un bicho detrás de un edificio queda tapado.
+  - Los edificios del otro lado del borde del partido quedan planos, en lo oscuro. El visor del mapa no cambia.
+  - Pendiente: lo prueba el usuario a mano. La altura de cámara (30 m) y el tope (18 m) se ajustan con lo que diga.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
