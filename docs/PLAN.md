@@ -778,6 +778,24 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     salud, oficina) se entra por la puerta y se llega caminando a cada cuarto.
   - Revisado en el navegador: un negocio, una escuela y una fábrica.
   - Sigue: muebles, puertas y ventanas dibujadas; mirar los pisos en el visor del mapa.
+- **2026-11-24: pruebas rápidas con un mapa de prueba** (pedido del usuario: "un mapa base de prueba que contenga
+  todo lo necesario... así no tardan tanto las pruebas; lo viejo de Lluvia no lo usamos, no hagas pruebas de eso").
+  - **Mapa de prueba** (`tests/fixtures/map-prueba.js`, 111 KB contra 9,7 MB del real): un recorte del San Miguel
+    real, el centro de 600 m alrededor de la plaza (818 edificios, 230 calles), más 27 lotes copiados de otras
+    partes para los tipos que en el centro hay pocos (fábricas, oficinas, escuelas, iglesias, edificios públicos,
+    garages, estaciones). Tiene borde, terreno y lugares, como el real. Lo arma `node tools/make-test-map.js`
+    desde el mapa real; hay que volver a correrlo si se rehace el mapa.
+  - Las pruebas usan ese mapa. Con `REAL=1` usan el partido entero (lento), para una revisión de vez en cuando.
+  - **Las pruebas del juego viejo** (duelos, apuestas, 8 jugadores, habilidades, cofres, temporada 2) pasaron a
+    `tests/clasico/` y no se corren; con `CLASICO=1` se corren igual. Quedan 20 pruebas: ciudad, casas y edificios,
+    y el modo solo con la Glock.
+  - **Antes tardaban de 10 minutos a una hora; ahora, unos 30 segundos.**
+  - El mapa de prueba encontró dos problemas en edificios del centro que las pruebas de antes no miraban:
+    - una casa en L tenía las puertas del baño y de un dormitorio sobre una franja del living de un metro, que las
+      paredes se comen. Ahora una puerta va donde de los dos lados hay lugar para pararse (1,5 × 1,5 m); si no hay,
+      el cuarto se conecta por otro lado;
+    - un edificio con otro pegado al frente no podía tener la puerta de calle en el hall y la ponía en un
+      departamento. Ahora, si pasa eso, el edificio prueba con el frente hacia otro lado.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

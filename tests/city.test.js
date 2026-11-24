@@ -64,7 +64,7 @@ test('en la ciudad no atravesás paredes y los bichos te buscan por las calles',
 test('San Miguel viene adentro del juego: arranca en la plaza y se camina', function () {
   var L = Lluvia, c = L.cityHome(1);
   assert.strictEqual(c.name, 'San Miguel');
-  assert.ok(c.roads.length > 1000, 'pocas calles: ' + c.roads.length);
+  assert.ok(c.roads.length > (c.map.test ? 100 : 1000), 'pocas calles: ' + c.roads.length);
   var fr = L.cityFree(c, c.start.x, c.start.y);
   assert.ok(Math.hypot(fr.x - c.start.x, fr.y - c.start.y) < 120, 'la plaza quedó lejos de una calle');
   var g = L.createGame({ seed: 2, characterId: 'brasa', city: c });
@@ -77,7 +77,7 @@ test('San Miguel viene adentro del juego: arranca en la plaza y se camina', func
 test('San Miguel es el partido entero: sus edificios son paredes y no se pasa del borde', function () {
   var L = Lluvia, c = L.cityHome(1), M = c.map, k = M && c.k;
   assert.ok(M && M.border, 'no usa el mapa real con el borde del partido (data/map-sanmiguel.js)');
-  assert.ok(M.buildings.length > 100000, 'pocos edificios para el partido: ' + M.buildings.length);
+  assert.ok(M.buildings.length > (M.test ? 500 : 100000), 'pocos edificios para el partido: ' + M.buildings.length);
   assert.strictEqual(c.houses.length, 0, 'inventó casas');
   var pts = function (f) { var out = []; for (var i = 0; i + 1 < f.length; i += 2) out.push([f[i] * k, f[i + 1] * k]); return out; };
   // The middle of the biggest building near the plaza is a wall.

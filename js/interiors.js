@@ -276,7 +276,7 @@
   }
 
   // pts: the footprint in meters; toStreet: unit vector toward its street; seed: the same seed, the same house;
-  // opts.canExit(x, y): optional, false where a door can't lead (a point in cells of the plan's frame);
+  // opts.canExit(x, y): optional, false where a door can't lead (a point on the map, in meters);
   // opts.layout and opts.spec: a building that isn't a house (a key of SPECIAL and its entry in data/houses.js);
   // opts.floors: how many floors the house has (with 2 or more it gets a stair and an upper floor); opts.roof
   // ('terraza': a flat roof you can go up to) and opts.basement (true: a stair down to a cellar).
@@ -400,9 +400,19 @@
     // Doors: one per link, in the middle of the longest stretch of shared wall; then any room still cut off gets
     // a door to a room you can reach.
     var doorLen = cells(H().door), doors = [], opened = new Set(), reach = new Set();
-    var open = function (a, b) {
+    // Cells with room to stand: part of a 1.5 × 1.5 m block of their room. A door goes where both sides have it, not
+    // onto a thin arm of a room (an L-shaped house leaves some): on a turned house the walls eat those.
+    var roomyCell = new Uint8Array(W * D);
+    for (y = 0; y + 2 < D; y++) for (x = 0; x + 2 < W; x++) {
+      var r0 = lab[y * W + x], full = r0 >= 0;
+      for (var by = 0; by < 3 && full; by++) for (var bx = 0; bx < 3 && full; bx++) if (lab[(y + by) * W + x + bx] !== r0) full = false;
+      if (full) for (by = 0; by < 3; by++) for (bx = 0; bx < 3; bx++) roomyCell[(y + by) * W + x + bx] = 1;
+    }
+    var standable = function (e) { return e.o === 'v' ? roomyCell[e.y * W + e.x - 1] && roomyCell[e.y * W + e.x] : roomyCell[(e.y - 1) * W + e.x] && roomyCell[e.y * W + e.x]; };
+    var open = function (a, b, loose) {
       var list = pairs.get(Math.min(a, b) * 1000 + Math.max(a, b));
-      if (!list) return false;
+      if (list && !loose) list = list.filter(standable);
+      if (!list || !list.length) return false;
       var runs = runsOf(list).sort(function (r1, r2) { return r2.length - r1.length; }), d = middle(runs[0], doorLen);
       if (!d) return false;
       d.forEach(function (e) { opened.add(e.o + e.x + ',' + e.y); });
@@ -425,17 +435,20 @@
       }
     };
     spread();
-    for (var fixed = true; fixed;) {
-      fixed = false;
-      for (i = 0; i < p.rooms.length && !fixed; i++) {
-        if (!count[i] || reach.has(i)) continue;
-        // A room left cut off opens into the hub first (a building's palier), else into any room you can reach.
-        for (var j0 = -1; j0 < p.rooms.length && !fixed; j0++) {
-          var j = j0 < 0 ? p.hub : j0;
-          if (j >= 0 && reach.has(j) && open(i, j)) { spread(); fixed = true; }
+    // A room left cut off opens into the hub first (a building's palier), else into any room you can reach; only
+    // where there is room to stand on both sides, and only if nothing else works, anywhere.
+    [false, true].forEach(function (loose) {
+      for (var fixed = true; fixed;) {
+        fixed = false;
+        for (i = 0; i < p.rooms.length && !fixed; i++) {
+          if (!count[i] || reach.has(i)) continue;
+          for (var j0 = -1; j0 < p.rooms.length && !fixed; j0++) {
+            var j = j0 < 0 ? p.hub : j0;
+            if (j >= 0 && reach.has(j) && open(i, j, loose)) { spread(); fixed = true; }
+          }
         }
       }
-    }
+    });
     // Inside walls: every edge between two rooms that is not a door.
     var wallEdges = [];
     pairs.forEach(function (list) { list.forEach(function (e) { if (!opened.has(e.o + e.x + ',' + e.y)) wallEdges.push(e); }); });
@@ -443,6 +456,7 @@
     // Front door from the entry room (or any room on the front), back door from the kitchen. `canExit(x, y)` (in
     // cells, the spot 80 cm out of a door) can turn a side down: then the front door goes on a side, or the back.
     var exitLen = cells(H().exit), exits = [];
+    var ok = function (cx, cy) { var m = L.housePoint({ frame: fr, cell: cs }, cx, cy); return canExit(m[0], m[1]); };
     var SIDES = { front: [0, -1], back: [0, 1], left: [-1, 0], right: [1, 0] };
     var exitFrom = function (room, side) {
       var sd = SIDES[side], edges = [], o = sd[0] ? 'v' : 'h';
@@ -460,8 +474,8 @@
         var sg = segment(d), mx = (sg[0] + sg[2]) / 2, my = (sg[1] + sg[3]) / 2, step = 0.8 / cs, near = 0.3 / cs;
         // Free 80 cm out of its middle, and right outside its middle and both ends (in the city's dense blocks the
         // footprints of neighbours touch and overlap a little).
-        if (canExit && !(canExit(mx + sd[0] * step, my + sd[1] * step) && canExit(mx + sd[0] * near, my + sd[1] * near) &&
-          canExit(sg[0] + sd[0] * near, sg[1] + sd[1] * near) && canExit(sg[2] + sd[0] * near, sg[3] + sd[1] * near))) continue;
+        if (canExit && !(ok(mx + sd[0] * step, my + sd[1] * step) && ok(mx + sd[0] * near, my + sd[1] * near) &&
+          ok(sg[0] + sd[0] * near, sg[1] + sd[1] * near) && ok(sg[2] + sd[0] * near, sg[3] + sd[1] * near))) continue;
         exits.push({ x: mx, y: my, side: side === 'front' ? -1 : side === 'back' ? 1 : 0, dir: sd, room: d[0].room, seg: sg });
         return true;
       }
@@ -725,8 +739,19 @@
   // to the palier. The ground floor has the entrance hall from the street to the palier; on top, a flat roof with
   // the stair's machine room; below, if it has one, a basement. Every floor is the same, as in a real building.
   // Same arguments and result as L.housePlan, plus `lanes` (the two flights' rectangles), or null if no core fits.
+  // If the street door can't go on the entrance hall (another building stands against that side), the building
+  // tries with its front on another side, so you always come in by the hall.
   L.buildingPlan = function (pts, toStreet, seed, opts) {
-    opts = opts || {};
+    var dirs = [toStreet, [-toStreet[1], toStreet[0]], [toStreet[1], -toStreet[0]], [-toStreet[0], -toStreet[1]]], first = null;
+    for (var k = 0; k < dirs.length; k++) {
+      var plan = buildingOnce(pts, dirs[k], seed, opts || {});
+      if (plan && plan.exits.some(function (e) { return plan.rooms[e.room].type === 'hall'; })) return plan;
+      first = first || plan;
+    }
+    return first;
+  };
+
+  function buildingOnce(pts, toStreet, seed, opts) {
     var Hd = H(), B = Hd.building, cs = Hd.cell, fr = L.houseFrame(pts, toStreet), W = Math.round(fr.w / cs), D = Math.round(fr.d / cs);
     var rng = L.makeRng((seed * 2654435761) >>> 0 || 1), lw = cells(B.lane), ll = cells(B.flight), land = cells(B.landing), side = cells(B.side);
     var cw = 2 * lw + 2 * side, cl = ll + 2 * land;
@@ -817,7 +842,7 @@
     finishLevels(plan);
     plan.floorsUp = floors;
     return plan;
-  };
+  }
 
   // Floors that repeat share their rooms; each gets its own walls (the railings change from floor to floor).
   function copyLevel(level) { var o = {}; for (var k in level) o[k] = level[k]; return o; }
@@ -886,18 +911,17 @@
       var area = areaOf(pts);
       var range = isBuilding ? Hd.building.area : sp ? sp.area : Hd.area;
       if (pts.length >= 3 && area >= range[0] && area <= range[1]) {
-        var s = city.scale, cx = 0, cy = 0, frameOf = null;
+        var s = city.scale, cx = 0, cy = 0;
         pts.forEach(function (q) { cx += q[0]; cy += q[1]; });
         // A door can't lead into another building or past the partido's border.
-        var canExit = function (x, y) {
-          var q = L.housePoint(frameOf, x, y), wx = q[0] * s, wy = q[1] * s;
+        var canExit = function (mx, my) {
+          var wx = mx * s, wy = my * s;
           if (city.border && !inside(city.border, wx, wy)) return false;
           var P = L.data.city.page, z = Math.floor(wy / city.cell / P) * city.pcols + Math.floor(wx / city.cell / P), list = city.zoneB.get(z) || [];
           for (var k = 0; k < list.length; k++) if (list[k] !== i && insideFlat(M.buildings[list[k]][0], M.unit * s, wx, wy)) return false;
           return true;
         };
         var street = toStreet(city, cx / pts.length * s, cy / pts.length * s);
-        frameOf = { frame: L.houseFrame(pts, street), cell: Hd.cell };
         var o = { canExit: canExit, floors: b[2], roof: M.roofs ? M.roofs[b[3]] : null, basement: !!b[4] };
         if (isBuilding) {
           o.fill = Hd.building.kinds[kind];

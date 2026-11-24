@@ -25,7 +25,9 @@ La idea y las capas que vienen están en [`docs/SHOOTER.md`](docs/SHOOTER.md); e
 la marca `lluvia-clasico`.
 
 ## Para desarrollar
-- Pruebas: `node tests/run.js` (o `ONLY=texto node tests/run.js` para correr solo algunas).
+- Pruebas: `node tests/run.js` (unos 30 segundos; `ONLY=texto` corre solo algunas). Usan un mapa de prueba chico,
+  un recorte de San Miguel (`tests/fixtures/map-prueba.js`, se rehace con `node tools/make-test-map.js`); con
+  `REAL=1` usan el partido entero. Las del juego viejo están en `tests/clasico/` y se corren con `CLASICO=1`.
 - Cuánto aguanta un bot en el modo solo: `node tools/solo.js [partidas] [minutos]`.
 - Hornear otra ciudad desde OpenStreetMap: `node tools/bake-city.js` (las instrucciones están en el archivo).
 
