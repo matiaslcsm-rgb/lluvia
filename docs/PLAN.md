@@ -133,6 +133,29 @@ Etapas (cada una se puede jugar al terminarla):
 39. **El Sol Amarillo:** historia, mutantes, personajes, textos, pantalla de inicio y arte nuevos (reemplaza
     lluvias y paraguas). Los campeones, la Hidra y el Avatar se renombran acá.
 
+### Profundidad y altura del mapa
+Pedido del usuario (2026-11-24): que edificios, casas, árboles y estructuras tengan profundidad (hoy el personaje
+pasa por encima de los árboles, como si estuvieran en el piso), poder subir escaleras a los pisos de arriba y usar
+el terreno alto y bajo. "Avanzá como vos creas". En este orden:
+
+40. **Capa de arriba:** el mapa se dibuja en dos capas, el piso (calles, veredas, pasto, autos) debajo de los
+    personajes y lo que está en alto (copas de árboles, techos) encima. Alrededor de tu personaje lo de arriba se
+    vuelve transparente, para no perderte de vista.
+41. **Edificios con altura:** cada edificio muestra sus paredes, y el techo se corre según su altura y dónde está
+    respecto del centro de la pantalla, así los altos "se inclinan" al caminar. Sale de los pisos que ya tiene cada
+    edificio.
+42. **Interiores y escaleras** (pasos 3 y 4 de `MAPA.md`): al entrar, el techo desaparece y se ve adentro; las
+    escaleras llevan a los pisos de arriba, al sótano y a la terraza. El piso de abajo se ve más oscuro.
+43. **El agua en lo bajo:** el mapa ya tiene la altura real del terreno (0 a 43 m). Con la lluvia, las zonas bajas
+    se inundan: el agua frena, corta el paso y obliga a buscar lo alto.
+
+### Más adelante: autos y vehículos
+Idea del usuario (2026-11-24): que algún día el juego tenga autos y vehículos. Hoy los autos estacionados son
+obstáculos. Lo que ya ayuda: las calles tienen su ancho real y están conectadas, así que se puede manejar por
+ellas. Cuando llegue: subir y bajar de un auto, manejarlo (velocidad, frenada, choques), atropellar, que se rompa y
+se quede sin nafta, y otros vehículos (moto, colectivo, camioneta). Las cosas que se hagan antes (paredes, capas,
+alturas) se piensan para que un auto pueda moverse más rápido que una persona sin atravesar nada.
+
 ## Hecho
 - **2026-11-20:** carpeta creada con `CLAUDE.md`, `docs/DISENO.md` y este plan.
 - **2026-11-20: etapas 0 y 1.** Se juega abriendo `index.html` (o con un servidor local). Hay 3 personajes (Brasa,
