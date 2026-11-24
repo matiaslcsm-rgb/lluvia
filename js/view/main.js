@@ -14,6 +14,7 @@
   L.saveProfile = function () { try { localStorage.setItem('lluvia.profile', JSON.stringify(L.profile)); } catch (e) { /* not saved */ } };
 
   function game() { return match && match.human.game; }
+  L.currentGame = game; // for looking at the running game from the browser console
 
   function resize() {
     canvas.width = innerWidth;

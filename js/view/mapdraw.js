@@ -29,7 +29,71 @@
   }
   function rng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
 
-  var tex = null;
+  // Two sets: the coarse one (12 texture pixels per meter) for the viewer zoomed out, and a fine one (FINE pixels
+  // per meter) for close up, where the game plays at 1:1 and a sidewalk tile or a roof tile is its real size.
+  var FINE = 50, FINE_FROM = 20;
+  var tex = null, fine = null;
+  function fineTextures() {
+    if (fine) return fine;
+    var r = rng(11), m = FINE;
+    var speckle = function (base, colors, n, rmin, rmax, alpha, clumps) {
+      return function (c, size) {
+        noise(c, size, base, { n: clumps || 0, colors: colors, r: [rmin * 4, rmax * 5] }, alpha * 0.35, r);
+        for (var i = 0; i < n; i++) {
+          c.globalAlpha = alpha * (0.4 + r() * 0.6);
+          c.fillStyle = colors[Math.floor(r() * colors.length)];
+          var s = rmin + r() * (rmax - rmin);
+          c.fillRect(r() * size, r() * size, s, s);
+        }
+        c.globalAlpha = 1;
+      };
+    };
+    // Baldosas: 40 cm tiles with a thin joint, each a shade lighter or darker.
+    var tiles = function (base, step, joint) {
+      return function (c, n) {
+        c.fillStyle = base; c.fillRect(0, 0, n, n);
+        for (var y = 0; y < n; y += step) for (var x = 0; x < n; x += step) {
+          var v = r();
+          c.fillStyle = v < 0.5 ? 'rgba(0,0,0,' + (v * 0.08) + ')' : 'rgba(255,255,255,' + ((v - 0.5) * 0.12) + ')';
+          c.fillRect(x, y, step, step);
+        }
+        c.fillStyle = joint;
+        for (var i = 0; i < n; i += step) { c.fillRect(i, 0, 1, n); c.fillRect(0, i, n, 1); }
+      };
+    };
+    fine = {
+      grass: pattern(5 * m, speckle('#4f6b38', ['#5d7a42', '#43602f', '#6b8a4a', '#57703c', '#3e5a2c'], 9000, 1, 3, 0.75, 120)),
+      park: pattern(5 * m, speckle('#4d7a3a', ['#5a8a44', '#447033', '#62944a', '#3f6a30'], 9000, 1, 3, 0.75, 120)),
+      asphalt: pattern(5 * m, speckle('#3d3f45', ['#45474e', '#35373c', '#4a4c52', '#2f3135'], 12000, 0.6, 1.6, 0.7, 60)),
+      sidewalk: pattern(Math.round(3.2 * m), tiles('#a9a59c', Math.round(0.4 * m), 'rgba(0,0,0,0.16)')),
+      paving: pattern(Math.round(2 * m), tiles('#b9ae98', Math.round(0.2 * m), 'rgba(80,60,40,0.22)')),
+      tejas: pattern(Math.round(3 * m), function (c, n) {
+        // Rows of tiles 30 cm apart, each row offset by half a tile, with the shadow of the row above.
+        var row = Math.round(0.3 * m), w = Math.round(0.25 * m);
+        c.fillStyle = ROOF.tejas[0]; c.fillRect(0, 0, n, n);
+        for (var y = 0, k = 0; y < n; y += row, k++) {
+          for (var x = (k % 2) * w / 2 - w; x < n; x += w) {
+            c.fillStyle = 'rgba(' + (r() < 0.5 ? '255,200,170,' : '60,20,10,') + (r() * 0.12) + ')'; c.fillRect(x + 1, y, w - 1, row);
+            c.fillStyle = 'rgba(60,20,10,0.3)'; c.fillRect(x, y, 1, row);
+          }
+          c.fillStyle = 'rgba(60,20,10,0.35)'; c.fillRect(0, y, n, 2);
+        }
+      }),
+      chapa: pattern(Math.round(1 * m), function (c, n) {
+        // Corrugated sheet: a ridge every 10 cm.
+        var step = Math.round(0.1 * m);
+        c.fillStyle = ROOF.chapa[0]; c.fillRect(0, 0, n, n);
+        for (var x = 0; x < n; x += step) { c.fillStyle = 'rgba(255,255,255,0.2)'; c.fillRect(x, 0, 1.5, n); c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(x + step / 2, 0, 1.5, n); }
+      }),
+      terraza: pattern(5 * m, function (c, n) {
+        // Concrete slab: fine speckle and a joint every meter.
+        speckle(ROOF.terraza[0], ['#bdb6a8', '#d3ccbe', '#aca595'], 3000, 0.8, 2, 0.5, 40)(c, n);
+        c.fillStyle = 'rgba(90,80,70,0.12)';
+        for (var i = 0; i < n; i += m) { c.fillRect(i, 0, 1, n); c.fillRect(0, i, n, 1); }
+      })
+    };
+    return fine;
+  }
   function textures() {
     if (tex) return tex;
     var r = rng(7);
@@ -181,9 +245,9 @@
   //        color: fn(building) → fill (optional, replaces the roof), dim: fn(building) → true to fade it,
   //        under: fn() called after the streets and before the buildings (the game draws its parked cars there) }
   L.mapdraw.draw = function (ctx, M, opt) {
-    var P = L.mapdraw.prepare(M), T = textures(), vb = opt.view, s = opt.scale, detail = s > 0.7;
+    var close = opt.scale >= FINE_FROM, P = L.mapdraw.prepare(M), T = close ? fineTextures() : textures(), vb = opt.view, s = opt.scale, detail = s > 0.7;
     var on = function (b, pad) { return b[2] + pad > vb[0] && b[0] - pad < vb[2] && b[3] + pad > vb[1] && b[1] - pad < vb[3]; };
-    var pat = function (c) { var p = ctx.createPattern(c, 'repeat'); if (p.setTransform && typeof DOMMatrix !== 'undefined') p.setTransform(new DOMMatrix().scale(1 / 12)); return p; };
+    var pat = function (c) { var p = ctx.createPattern(c, 'repeat'); if (p.setTransform && typeof DOMMatrix !== 'undefined') p.setTransform(new DOMMatrix().scale(1 / (close ? FINE : 12))); return p; };
     ctx.save();
     // Everything stays inside the map's square.
     ctx.beginPath(); ctx.rect(0, 0, P.w, P.h); ctx.clip();

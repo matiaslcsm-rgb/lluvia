@@ -28,6 +28,88 @@
     ctx.closePath();
   }
 
+  // Calls fn(item) once for every item of a kind (houses, cars, trees...) in the chunks that touch a box (in px).
+  // One walker shares its "already drawn" list across kinds, like a frame does.
+  function chunkWalker(city, x0, y0, x1, y1) {
+    var S = L.data.city.chunk, cols = city.chunkCols, seen = [];
+    if (city.chunks) {
+      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(city.chunkRows - 1, Math.floor(y1 / S)); cy++) {
+        for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
+          var c = city.chunks[cy * cols + cx];
+          if (c) seen.push(c);
+        }
+      }
+    }
+    var drawn = new Set();
+    var each = function (kind, fn) { seen.forEach(function (c) { c[kind].forEach(function (it) { if (!drawn.has(it)) { drawn.add(it); fn(it); } }); }); };
+    each.clear = function () { drawn.clear(); };
+    return each;
+  }
+
+  // ---- The real map, drawn once per tile ----
+  // At 1:1 a screen of the real map is hundreds of paths and textures, too slow to paint every frame. So each
+  // TILE × TILE meters is drawn once into its own picture (ground, streets, parked cars, roofs, trees, relief) and
+  // then only copied. The tiles around the screen are made ahead, one per frame, and the oldest are dropped.
+  var TILE = 16;
+  L.mapTile = TILE;
+
+  function makeTile(city, tx, ty) {
+    var s = city.scale, size = Math.ceil(TILE * s), X = tx * TILE, Y = ty * TILE, pad = 20;
+    var c = document.createElement('canvas');
+    c.width = c.height = size + 2; // a pixel of overlap on every side, so no seam shows between tiles
+    var x = c.getContext('2d');
+    x.translate(1, 1); x.scale(s, s); x.translate(-X, -Y);
+    // Things just outside the tile still reach into it (a shadow, a tree), so the drawing looks a bit around it.
+    var each = chunkWalker(city, (X - pad) * s, (Y - pad) * s, (X + TILE + pad) * s, (Y + TILE + pad) * s);
+    L.mapdraw.draw(x, city.map, { view: [X - pad, Y - pad, X + TILE + pad, Y + TILE + pad], scale: s, terrain: L.mapdraw.terrain(city.map),
+      under: function () { x.save(); x.scale(1 / s, 1 / s); drawCars(x, each, s); x.restore(); } });
+    return c;
+  }
+
+  // Tiles around the screen are made ahead between frames, when the browser is idle, at most one every
+  // AHEAD_EVERY ms: making one takes about 16 ms, and walking across a whole tile takes about 4 s.
+  var AHEAD_EVERY = 200, aheadAt = 0, aheadQueued = false;
+  function makeAhead(city, cols, missing) {
+    var now = Date.now();
+    if (aheadQueued || now - aheadAt < AHEAD_EVERY) return;
+    aheadQueued = true; aheadAt = now;
+    var run = function () {
+      aheadQueued = false;
+      if (!city._tiles.has(missing[1] * cols + missing[0])) city._tiles.set(missing[1] * cols + missing[0], makeTile(city, missing[0], missing[1]));
+    };
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 1000 }); else setTimeout(run, 0);
+  }
+
+  // Draws the tiles that cover the screen (camera in px) and asks for one missing tile around it. Returns how
+  // many tiles had to be made right away this frame.
+  L.drawMapTiles = function (ctx, city, camX, camY, W, H) {
+    var s = city.scale, T = TILE * s, tiles = city._tiles || (city._tiles = new Map()); // Map order = least recently used first
+    var cols = Math.ceil(city.map.w / TILE), rows = Math.ceil(city.map.h / TILE);
+    var tx0 = Math.floor(camX / T), ty0 = Math.floor(camY / T), tx1 = Math.floor((camX + W) / T), ty1 = Math.floor((camY + H) / T);
+    var made = 0;
+    var get = function (tx, ty, build) {
+      var key = ty * cols + tx, c = tiles.get(key);
+      if (c) { tiles.delete(key); tiles.set(key, c); return c; }
+      if (!build) return null;
+      c = makeTile(city, tx, ty); made++;
+      tiles.set(key, c);
+      return c;
+    };
+    for (var ty = Math.max(0, ty0); ty <= Math.min(rows - 1, ty1); ty++) {
+      for (var tx = Math.max(0, tx0); tx <= Math.min(cols - 1, tx1); tx++) ctx.drawImage(get(tx, ty, true), tx * T - 1, ty * T - 1);
+    }
+    // One tile ahead, from the ring around the screen.
+    search: for (ty = Math.max(0, ty0 - 1); ty <= Math.min(rows - 1, ty1 + 1); ty++) {
+      for (tx = Math.max(0, tx0 - 1); tx <= Math.min(cols - 1, tx1 + 1); tx++) {
+        if (!tiles.has(ty * cols + tx)) { makeAhead(city, cols, [tx, ty]); break search; }
+      }
+    }
+    // Keep the screen, its ring and a few more (each tile is about 2.5 MB at 1:1).
+    var keep = (tx1 - tx0 + 3) * (ty1 - ty0 + 3) + 6;
+    while (tiles.size > keep) tiles.delete(tiles.keys().next().value);
+    return made;
+  };
+
   // Yards, plazas, sidewalks with their curb, asphalt; then parked cars, buildings with their shadow, and trees.
   // Only what is on screen is drawn: roads by their box, the rest by chunks (js/city.js).
   L.drawCity = function (ctx, city, camX, camY, W, H, t) {
@@ -41,28 +123,13 @@
     var on = function (b, pad) { return b[2] + pad > x0 && b[0] - pad < x1 && b[3] + pad > y0 && b[1] - pad < y1; };
     ctx.fillStyle = '#0b0c10';
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    // Chunks on screen.
-    var S = L.data.city.chunk, cols = city.chunkCols, seen = [];
-    if (city.chunks) {
-      for (var cy = Math.max(0, Math.floor(y0 / S)); cy <= Math.min(city.chunkRows - 1, Math.floor(y1 / S)); cy++) {
-        for (var cx = Math.max(0, Math.floor(x0 / S)); cx <= Math.min(cols - 1, Math.floor(x1 / S)); cx++) {
-          var c = city.chunks[cy * cols + cx];
-          if (c) seen.push(c);
-        }
-      }
-    }
-    var drawn = new Set();
-    var each = function (kind, fn) { seen.forEach(function (c) { c[kind].forEach(function (it) { if (!drawn.has(it)) { drawn.add(it); fn(it); } }); }); };
-    // The real map is drawn like the viewer (js/view/mapdraw.js, in meters), with the parked cars under the roofs
-    // and the trees.
+    // The real map is drawn like the viewer (js/view/mapdraw.js, in meters), in tiles made once.
     if (city.map) {
-      ctx.save(); ctx.scale(s, s);
-      L.mapdraw.draw(ctx, city.map, { view: [x0 / s, y0 / s, x1 / s, y1 / s], scale: s, terrain: L.mapdraw.terrain(city.map),
-        under: function () { ctx.save(); ctx.scale(1 / s, 1 / s); drawCars(ctx, each, s); ctx.restore(); } });
-      ctx.restore();
+      L.drawMapTiles(ctx, city, camX, camY, W, H);
       sunGlare(ctx, x0, y0, x1, y1, t);
       return;
     }
+    var each = chunkWalker(city, x0, y0, x1, y1);
     ctx.fillStyle = '#3c4630'; // back yards: grass and dirt
     ctx.fillRect(Math.max(0, x0), Math.max(0, y0), Math.min(city.size, x1) - Math.max(0, x0), Math.min(city.size, y1) - Math.max(0, y0));
     city.parks.forEach(function (p) {
@@ -85,7 +152,7 @@
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     each('houses', function (h) { ctx.save(); ctx.translate(sh, sh); poly(ctx, h.pts); ctx.fill(); ctx.restore(); });
     each('buildings', function (b) { ctx.save(); ctx.translate(sh * 1.6, sh * 1.6); poly(ctx, b); ctx.fill(); ctx.restore(); });
-    drawn.clear();
+    each.clear();
     ctx.lineWidth = 2; ctx.strokeStyle = '#1d1a17';
     each('buildings', function (b) { ctx.fillStyle = ROOFS[Math.abs(Math.floor(b[0][0] * 7 + b[0][1] * 3)) % ROOFS.length]; poly(ctx, b); ctx.fill(); ctx.stroke(); });
     each('houses', function (h) {
@@ -110,7 +177,7 @@
     each('cars', function (c) {
       ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.ang);
       var hl = L.data.city.cars.length * s / 2, hw = L.data.city.cars.width * s / 2;
-      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-hl + 3, -hw + 4, hl * 2, hw * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-hl + 0.3 * s, -hw + 0.4 * s, hl * 2, hw * 2); // shadow 30-40 cm off
       ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl, -hw, hl * 2, hw * 2);
       ctx.fillStyle = 'rgba(20,28,36,0.85)'; ctx.fillRect(-hl * 0.45, -hw * 0.8, hl * 1.05, hw * 1.6);
       ctx.fillStyle = CARS[c.color]; ctx.fillRect(-hl * 0.25, -hw * 0.8, hl * 0.6, hw * 1.6);

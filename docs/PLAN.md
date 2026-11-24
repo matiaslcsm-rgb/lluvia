@@ -606,6 +606,22 @@ Etapas (cada una se puede jugar al terminarla):
   - Paredes en celdas de 0,5 m, en zonas de 32 m que se arman cuando alguien se acerca (máximo 3000 zonas,
   ~12 MB). Se arma en 0,19 s. Los autos se ubican por geometría.
   - Falta: mirarlo en pantalla (texturas a esta escala), y dibujar por zonas guardadas (paso 3).
+- **2026-11-24: escala 1:1 terminada** (pedido: "terminar la escala 1:1"; paso 3 de la propuesta de escala).
+  - **Dibujar el mapa era lento.** El "menos de 1 ms" de antes medía solo el tiempo de mandar las órdenes de
+    dibujo, no el de pintarlas. Pintando de verdad, una pantalla de 1920 × 1080 del mapa real tardaba 60-90 ms
+    (unos 11-16 cuadros por segundo). Lo más caro eran las texturas y las formas grandes.
+  - **Ahora el mapa va en pedazos de 16 m** (`L.drawMapTiles` en `js/view/city.js`). Cada pedazo se dibuja una
+    vez, con el piso, las calles, los autos, los techos, los árboles y el relieve, y después solo se copia. Copiar
+    una pantalla tarda unos 12 ms en la misma medición, que es la peor (en la placa de video es casi nada).
+    Armar un pedazo tarda unos 16 ms; los de alrededor de la pantalla se preparan cuando el navegador está libre,
+    uno cada 0,2 s como mucho. Se guardan los de la pantalla, su borde y algunos más (unos 2,5 MB cada uno).
+  - **Texturas finas a escala real** (`js/view/mapdraw.js`): baldosas de vereda de 40 cm, adoquines de 20 cm en
+    las plazas, tejas en filas de 30 cm, chapa acanalada cada 10 cm, losas de terraza con junta cada metro, y pasto
+    y asfalto con grano fino. Se usan de cerca (20 px por metro o más); el visor alejado sigue con las de antes.
+  - La sombra de los autos pasó a medirse en metros (antes eran 3-4 px fijos, que a 1:1 no se veían).
+  - Revisado en el navegador: veredas, plaza, casas con tejas y chapa, terrazas, autos y árboles; sin cortes entre
+    pedazos y sin errores. El visor del mapa se ve igual que antes.
+  - Sigue: entrar a los edificios (interiores y escaleras, pasos 3 y 4 de `docs/MAPA.md`).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
