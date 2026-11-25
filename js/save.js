@@ -14,7 +14,7 @@
     gun: 1, asleep: 1, hurt: 1, invuln: 1, aiming: 1, running: 1, blocking: 1, wasHurt: 1, stairOn: 1 };
   // Game fields copied as they are.
   var GAME = ['seed', 'time', 'slept', 'kills', 'deaths', 'gold', 'pendingLevels', 'nextBoss', 'nextMini', 'nextWave',
-    'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies', 'barrierSeen'];
+    'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies', 'barrierSeen', 'barricades'];
 
   function copy(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
 
@@ -62,6 +62,7 @@
     g.searched = new Set(data.searched || []);
     g.leftover = new Map(data.leftover || []);
     if (data.explored && L.unpackExplored) L.unpackExplored(g, data.explored);
+    if (g.barricades && L.useBarricades) L.useBarricades(g); // the walk grid with this game's barricades
     g.enemies = []; g.projectiles = []; g.enemyShots = []; g.throws = []; g.fires = []; g.toasts = [];
     g.choice = g.pendingLevels > 0 && L.makeChoices ? L.makeChoices(g) : null;
     return true;

@@ -187,7 +187,9 @@
       ctx.fill();
     });
     var searched = city._searched, left = city._leftover;
+    var bar = city._bar;
     (level.furniture || []).forEach(function (q, k) {
+      if (!fl && bar && bar[plan.index + ':f:' + k]) return; // dragged to a door, or broken (js/barricade.js)
       var key = plan.index + ':' + fl + ':' + k, done = searched && searched.has(key) && !(left && left.has(key));
       if (done) ctx.globalAlpha *= 0.55; // searched: emptied, faded
       drawPiece(ctx, q, cs);
@@ -222,10 +224,39 @@
     });
     // Windows: a pane of glass in the outer wall, with its frame.
     ctx.lineCap = 'butt';
-    (level.windows || []).forEach(function (w) {
+    (level.windows || []).forEach(function (w, i) {
+      var b = !upper && bar && bar[plan.index + ':w:' + i];
       ctx.beginPath(); ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]);
       ctx.strokeStyle = '#f2efe8'; ctx.lineWidth = 0.3; ctx.stroke();
-      ctx.strokeStyle = '#8fc3d8'; ctx.lineWidth = 0.1; ctx.stroke();
+      if (b && b.broken) {
+        // Broken: an empty frame with a few shards left.
+        ctx.strokeStyle = '#1c1b19'; ctx.lineWidth = 0.14; ctx.stroke();
+        ctx.fillStyle = '#8fc3d8';
+        [0.15, 0.8].forEach(function (f) { var x = w[0] + (w[2] - w[0]) * f, y = w[1] + (w[3] - w[1]) * f; ctx.fillRect(x - 0.05, y - 0.05, 0.1, 0.1); });
+      } else { ctx.strokeStyle = '#8fc3d8'; ctx.lineWidth = 0.1; ctx.stroke(); }
+    });
+    // Barricades (js/barricade.js): planks nailed across, or a piece of furniture against the doorway.
+    if (!upper && bar && L.planOpenings) L.planOpenings(plan).forEach(function (o) {
+      var b = bar[o.key];
+      if (!b || (b.planks <= 0 && b.furn < 0)) return;
+      var q = o.seg.map(function (v) { return v / s; }), dx = q[2] - q[0], dy = q[3] - q[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l;
+      if (b.furn >= 0) {
+        // Inside, against the doorway.
+        var cx = (q[0] + q[2]) / 2 - o.nx * 0.4, cy = (q[1] + q[3]) / 2 - o.ny * 0.4;
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(Math.atan2(uy, ux));
+        ctx.fillStyle = '#5e4632'; ctx.fillRect(-l / 2 - 0.15, -0.3, l + 0.3, 0.6);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 0.06; ctx.strokeRect(-l / 2 - 0.15, -0.3, l + 0.3, 0.6);
+        ctx.restore();
+      }
+      for (var j = 0; j < b.planks; j++) {
+        var off = (j - (b.planks - 1) / 2) * 0.22, tilt = (j % 2 ? 1 : -1) * 0.12;
+        var ox = o.nx * 0.12, oy = o.ny * 0.12;
+        ctx.beginPath();
+        ctx.moveTo(q[0] - ux * 0.2 + ox + o.nx * (off - tilt), q[1] - uy * 0.2 + oy + o.ny * (off - tilt));
+        ctx.lineTo(q[2] + ux * 0.2 + ox + o.nx * (off + tilt), q[3] + uy * 0.2 + oy + o.ny * (off + tilt));
+        ctx.strokeStyle = '#3e2e1e'; ctx.lineWidth = 0.2; ctx.lineCap = 'butt'; ctx.stroke();
+        ctx.strokeStyle = '#9a7650'; ctx.lineWidth = 0.14; ctx.stroke();
+      }
     });
     // Room names, upright.
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 0.42px system-ui, sans-serif'; ctx.fillStyle = 'rgba(40,30,20,0.5)';

@@ -234,9 +234,10 @@
     // The ground floor's furniture is solid too (js/furnish.js).
     // A small or thin piece may cover no cell's center: its middle line is stamped too. Low furniture (most of it:
     // data/sight.js, tall) blocks bodies but you see over it: value 2, see-through.
-    var tall = L.data.sight ? L.data.sight.tall : [];
+    var tall = L.data.sight ? L.data.sight.tall : [], bar = city._bar;
     houses.forEach(function (h) {
       (h.solidPx || []).forEach(function (o, k) {
+        if (bar && bar[h.index + ':f:' + k]) return; // dragged to a door, or broken (js/barricade.js)
         var v = tall.indexOf(h.furniture[k].t) >= 0 ? 0 : 2, only = v ? 1 : undefined;
         fillZone(city, a, x0, y0, o.pts, null, v, only);
         var long = o.hw >= o.hd, ux = long ? o.ax : o.fx, uy = long ? o.ay : o.fy, half = long ? o.hw : o.hd;
@@ -246,6 +247,17 @@
       // Stair railings and windows: still in the way, but you see through them.
       (h.railsPx || []).forEach(function (w) { stampWall(city, a, x0, y0, w[0], w[1], w[2], w[3], null, 2, 1); });
       (h.windows || []).forEach(function (w) { stampWall(city, a, x0, y0, w[0] * city.scale, w[1] * city.scale, w[2] * city.scale, w[3] * city.scale, null, 2, 0); });
+    });
+    // Barricades (js/barricade.js): planks close a doorway or a window (you see between them), a piece of furniture
+    // closes a doorway; a broken window lets bodies through.
+    if (bar && L.planOpenings) houses.forEach(function (h) {
+      L.planOpenings(h).forEach(function (o) {
+        var b = bar[o.key], q = o.seg;
+        if (!b) return;
+        if (b.furn >= 0) stampWall(city, a, x0, y0, q[0], q[1], q[2], q[3], null, 0);
+        else if (b.planks > 0) stampWall(city, a, x0, y0, q[0], q[1], q[2], q[3], null, 2);
+        else if (o.kind === 'window' && b.broken) stampWall(city, a, x0, y0, q[0], q[1], q[2], q[3], null, 1, 2);
+      });
     });
     // Parked cars: in the way, but you see over them.
     if (cars) for (i = 0; i < cars.length; i++) fillZone(city, a, x0, y0, cars[i].pts, null, 2, 1);
@@ -586,6 +598,14 @@
     flood(best, keep);
     for (var k = 0; k < n; k++) if (!keep[k]) city.walk[k] = 0;
   }
+
+  // Forgets the zones of the walk grid a box (px) touches, so they are built again (a barricade went up or came
+  // down, js/barricade.js), and the way to you is worked out again.
+  L.cityForget = function (city, x0, y0, x1, y1) {
+    if (!city.pages) return;
+    eachZone(city, x0, y0, x1, y1, function (z) { city.pages.delete(z); });
+    city.flowCell = -1;
+  };
 
   // ---- Using it ----
 

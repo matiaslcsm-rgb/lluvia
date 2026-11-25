@@ -1245,6 +1245,18 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     tu vista, con un gemido y una nube oscura.
   - La primera vez que te acercás te avisa qué es; eso se guarda con la partida.
   - Pruebas: 69 (nuevas: dónde está y que se guarda; más zombis cerca y que salen de ella).
+- **2026-11-25: etapa 66, refugio y barricadas** (`data/barricade.js`, `js/barricade.js`).
+  - En una puerta o ventana de planta baja: **E clava una tabla** (hace falta 1 tabla, 2 clavos y un martillo; hace
+    ruido y atrae zombis). Entran 3 tablas en una puerta y 2 en una ventana. **X saca una tabla** con el martillo
+    (recuperás la tabla, los clavos no).
+  - Sin tablas, **E traba la puerta corriendo un mueble pesado** que esté cerca (ropero, heladera, estante, sillón,
+    mesa...). X lo vuelve a su lugar. El mueble trabando no se puede revisar.
+  - **Los zombis golpean**: los que te persiguen o vienen por un ruido que oyeron adentro van a la puerta o ventana
+    cerrada más cercana y le pegan hasta romperla: primero las tablas (de a una), el mueble (queda roto) o el vidrio.
+    Por una ventana rota se pasa (ellos y vos). Al golpear hacen ruido y llaman a otros.
+  - Todo se guarda con la partida; una partida nueva arranca sin barricadas.
+  - Decisión mía: las ventanas sanas ya no dejaban pasar a nadie; ahora los zombis pueden romperlas.
+  - Pruebas: 73 (nuevas: clavar y sacar tablas, trabar con un mueble, zombis que rompen tablas y vidrios, guardar).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

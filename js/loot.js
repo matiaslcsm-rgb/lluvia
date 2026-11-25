@@ -343,6 +343,7 @@
     var empties = L.packCount(g, 'botella') > 0;
     lv.solidPx.forEach(function (o, k) {
       var t = lv.furniture[k].t, key = plan.index + ':' + f + ':' + k;
+      if (!f && g.barricades && g.barricades[plan.index + ':f:' + k]) return; // dragged to a door, or broken
       // A sink already searched: with empty bottles, E fills them (the user: refill at a tap).
       var fill = empties && D().sinks.indexOf(t) >= 0 && g.searched.has(key) && !g.leftover.has(key);
       if (!fill && (!D().pieces[t] || g.searched.has(key) && !g.leftover.has(key))) return;
@@ -377,6 +378,8 @@
       return;
     }
     g.useHeld = !!(input && input.use);
+    // At a doorway or a window: E nails a plank or drags furniture against it, X undoes it (js/barricade.js).
+    if (L.updateBarricadeWork && L.updateBarricadeWork(g, dt, input)) { g.lootTarget = null; g.search = null; useBandageKey(g, input); return; }
     var tg = L.searchTarget(g);
     g.lootTarget = tg;
     if (input && input.use && tg && !g.respawn) {

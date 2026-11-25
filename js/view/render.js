@@ -166,7 +166,7 @@
       x += spec.slots * (sz + 3) + 12;
     });
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText('I inventario · K estado · E revisar/juntar · H venda · Z dormir · Tab fabricar', 18, y0 - 19);
+    ctx.fillText('I inventario · K estado · E revisar/juntar/trabar · X destrabar · H venda · Z dormir · Tab fabricar', 18, y0 - 19);
     ctx.globalAlpha = 1;
     if (g.bodyTarget >= 0) {
       ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
@@ -185,6 +185,21 @@
       if (g.search) {
         ctx.strokeStyle = C.ammo; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, g.search.t / Dl.search)); ctx.stroke();
+      }
+    }
+    // At a doorway or a window (js/barricade.js): E nails a plank or drags furniture, X undoes; or what is missing.
+    var bt = g.barTarget;
+    if (bt && g.bodyTarget < 0 && g.groundTarget < 0) {
+      var by = p.y - camY - p.r - (tg ? 28 : 14), parts = [];
+      if (bt.add) parts.push('E: ' + bt.addLabel);
+      if (bt.rem) parts.push('X: ' + bt.remLabel);
+      ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif';
+      if (g.barWork) { ctx.fillStyle = C.text; ctx.fillText(/pry|back/.test(g.barWork.key) ? 'Sacando...' : 'Trabando...', p.x - camX, by); }
+      else if (parts.length) { ctx.fillStyle = C.text; ctx.fillText(parts.join(' · '), p.x - camX, by); }
+      else if (bt.need) { ctx.fillStyle = C.dim; ctx.fillText(bt.need, p.x - camX, by); }
+      if (g.barWork) {
+        ctx.strokeStyle = '#c9a46a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, g.barWork.t / g.barWork.need)); ctx.stroke();
       }
     }
   }
