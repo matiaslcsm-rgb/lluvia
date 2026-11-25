@@ -65,7 +65,7 @@ test('cubrirse: con Espacio un golpe de adelante lastima menos y gasta aire; una
   assert.ok(cover < open * 0.7 && p.air < L.data.melee.air.max, 'cubrirse no frena el golpe: ' + cover.toFixed(2) + ' de ' + open.toFixed(2));
   // A sink: empty bottles become water.
   g.enemies = [];
-  L.packAdd(g, 'botella', 2);
+  L.wear(g, 'mochila'); L.packAdd(g, 'botella', 2);
   var orig = L.searchTarget;
   L.searchTarget = function () { return { plan: { index: 1 }, f: 0, k: 0, t: 'pileta', key: '1:0:0', fill: true }; };
   try { L.updateLoot(g, L.data.loot.search + 0.01, { use: true }); } finally { L.searchTarget = orig; }

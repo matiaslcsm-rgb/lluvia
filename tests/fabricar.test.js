@@ -12,16 +12,17 @@ test('fabricar: vendas con trapos, puños vendados, botella rota; balas solo en 
     assert.ok(m.indexOf('w:') === 0 ? L.findById(L.data.melee.weapons, m.slice(2)) : L.data.loot.items[m], rc.id + ' hace algo que no existe');
   });
   assert.ok(L.craftBlock(g, r('venda')), 'hace una venda sin trapos');
+  L.wear(g, 'rinonera'); // the pockets hold the pistol and the bullets
   L.packAdd(g, 'trapos', 3);
   assert.ok(L.craft(g, r('venda')));
   assert.strictEqual(L.packCount(g, 'vendas'), 1); assert.strictEqual(L.packCount(g, 'trapos'), 1);
   assert.ok(L.craft(g, r('vendados')));
-  assert.strictEqual(p.melee.id, 'vendados', 'los puños vendados no quedan en la mano');
+  assert.strictEqual(L.mainDef(p).id, 'vendados', 'los puños vendados no quedan en la mano');
   L.packAdd(g, 'chatarra', 4);
   assert.ok(/taller/.test(L.craftBlock(g, r('balas')) || ''), 'hace balas lejos de un taller');
   // Molotov: botella, trapo y nafta; G lo tira y prende fuego a lo que está ahí.
   L.packAdd(g, 'botella', 1);
-  assert.strictEqual(L.packAdd(g, 'nafta', 1), 1, 'un bidón de nafta entra en un bolsillo');
+  assert.strictEqual(L.packAdd(g, 'nafta', 1), 1, 'un bidón de nafta entra en una riñonera');
   L.wear(g, 'mochila'); L.packAdd(g, 'nafta', 1);
   assert.ok(L.craft(g, r('molotov')));
   var z = L.spawnEnemy(g, 'rastrero', p.x + Math.cos(g.player.aim || 0) * 3 * city.scale, p.y + Math.sin(g.player.aim || 0) * 3 * city.scale);

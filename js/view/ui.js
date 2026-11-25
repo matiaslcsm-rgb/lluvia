@@ -46,7 +46,7 @@
   L.ui = {
     current: null,
 
-    hide: function () { overlay.classList.add('hidden'); overlay.classList.remove('sunny'); overlay.innerHTML = ''; L.ui.current = null; },
+    hide: function () { var cm = document.querySelector('.ctxmenu'); if (cm) cm.remove(); overlay.classList.add('hidden'); overlay.classList.remove('sunny'); overlay.innerHTML = ''; L.ui.current = null; },
 
     // A short message in the corner (sound on/off and the like).
     flash: function (text) {
@@ -221,35 +221,55 @@
       L.ui.current = 'choice';
     },
 
-    // Your inventory (js/loot.js): your hands, your pockets and each bag, with what is in every slot. A click uses
-    // it (a bandage heals, a weapon goes to your hand); the ✕ throws it away.
+    // Your inventory (js/loot.js): your two hands, your pockets and each bag, with what is in every slot. A click
+    // does the first thing it can (drink the water, take a weapon to your hand); the right click opens the menu of
+    // everything it can do (docs/CUERPO.md section 3: "si es agua: Tomar, Equipar o Tirar").
     inventory: function (g, onClose) {
-      var p = g.player, Dl = L.data.loot, wrap = el('div', 'inv');
-      var hands = el('div', 'invbox');
-      hands.appendChild(el('div', 'invtitle', 'En las manos'));
-      hands.appendChild(el('div', 'invline', (p.gun ? p.gun.def.name + ' · ' + p.gun.ammo + ' en el cargador' : 'Sin arma de fuego')));
-      var md = L.meleeDef(p.melee.id);
-      hands.appendChild(el('div', 'invline', md.name + (md.dur ? ' · ' + Math.round(p.melee.dur / md.dur * 100) + '% de vida' : '')));
-      wrap.appendChild(hands);
+      var p = g.player, Dl = L.data.loot, wrap = el('div', 'inv'), h = p.hands || {};
+      var again = function () { L.ui.inventory(g, onClose); };
+      var row = function (box, ref, sl) {
+        var r = el('div', 'invrow');
+        var acts = L.slotActions(g, ref);
+        var use = button(L.slotName(sl), function () { if (acts[0] && acts[0].run()) again(); }, 'btn slot');
+        use.title = 'Clic: ' + (acts[0] ? acts[0].label.toLowerCase() : '—') + ' · Clic derecho: más opciones';
+        use.addEventListener('contextmenu', function (ev) { ev.preventDefault(); menu(ev, acts); });
+        r.appendChild(use);
+        box.appendChild(r);
+      };
+      var menu = function (ev, acts) {
+        var old = document.querySelector('.ctxmenu'); if (old) old.remove();
+        var m = el('div', 'ctxmenu');
+        acts.forEach(function (a) { m.appendChild(button(a.label, function () { m.remove(); a.run(); again(); }, 'btn ghost small')); });
+        m.appendChild(button('Cancelar', function () { m.remove(); }, 'btn ghost small'));
+        m.style.left = Math.min(ev.clientX, window.innerWidth - 180) + 'px'; m.style.top = Math.min(ev.clientY, window.innerHeight - 40 * (acts.length + 1)) + 'px';
+        document.body.appendChild(m);
+      };
+      // Your hands.
+      var hb = el('div', 'invbox');
+      hb.appendChild(el('div', 'invtitle', 'Manos' + (p.hand === 'gun' ? ' · con la pistola (lo demás espera)' : '')));
+      if (h.l && h.l === h.r) { hb.appendChild(el('div', 'invline', 'Las dos manos:')); row(hb, { hand: 'r' }, h.r); }
+      else ['r', 'l'].forEach(function (s) {
+        hb.appendChild(el('div', 'invline', s === 'r' ? 'Derecha (clic izq.):' : 'Izquierda (clic der.):'));
+        if (h[s]) row(hb, { hand: s }, h[s]); else hb.appendChild(el('div', 'invempty', 'Puño'));
+      });
+      if (p.gun) hb.appendChild(el('div', 'invline', p.gun.def.name + ' · ' + p.gun.ammo + ' en el cargador'));
+      wrap.appendChild(hb);
+      // Pockets and bags.
+      var st = L.suppliesTime(g);
       g.pack.places.forEach(function (pl) {
         var spec = Dl.containers[pl.id], box = el('div', 'invbox');
         box.appendChild(el('div', 'invtitle', spec.name + ' · ' + pl.slots.length + '/' + spec.slots + (spec.big ? '' : ' · solo cosas chicas')));
-        pl.slots.forEach(function (sl, i) {
-          var row = el('div', 'invrow'), wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
-          var name = wd ? wd.name + (wd.dur ? ' (' + Math.round(sl.dur / wd.dur * 100) + '%)' : '') : L.lootText([[sl.id, sl.n]]);
-          var use = button(name, function () { if (L.packUse(g, pl, i)) L.ui.inventory(g, onClose); }, 'btn slot');
-          var drop = button('✕', function () { L.packDrop(g, pl, i); L.ui.inventory(g, onClose); }, 'btn ghost small');
-          drop.title = 'Tirar';
-          row.appendChild(use); row.appendChild(drop);
-          box.appendChild(row);
-        });
+        if (spec.supplies && pl === g.pack.places.filter(function (q) { return Dl.containers[q.id].supplies; })[0])
+          box.appendChild(el('div', 'invline', 'Agua para ' + st.agua + ' h · comida para ' + st.comida + ' h'));
+        pl.slots.forEach(function (sl, i) { row(box, { pl: pl, i: i }, sl); });
         for (var k = pl.slots.length; k < spec.slots; k++) box.appendChild(el('div', 'invempty', '—'));
         wrap.appendChild(box);
       });
       var kg = L.packWeight(g), cap = Dl.carry.cap;
+      var cm0 = document.querySelector('.ctxmenu'); if (cm0) cm0.remove();
       show([el('h2', null, 'Inventario'), el('p', kg > cap ? 'warn' : null, 'Peso: ' + kg.toFixed(1) + ' de ' + cap + ' kg' + (kg > cap ? ' · vas pesado: caminás más lento y te cansás más' : '')),
         wrap, button('Cerrar (I)', onClose, 'btn ghost'),
-        el('p', 'hint', 'Clic en algo para usarlo (una venda cura, la comida y el agua se consumen, un arma va a la mano) · ✕ para tirarlo · Las cosas grandes van en un bolso o una mochila')]);
+        el('p', 'hint', 'Clic: lo primero que se puede hacer · Clic derecho: todas las opciones (tomar, llevar en la mano, tirar...) · Lo que tirás queda en el piso y se junta con E · La comida y el agua van en una mochila o bolso')]);
       L.ui.current = 'inventory';
     },
 

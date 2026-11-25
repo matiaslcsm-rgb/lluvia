@@ -673,7 +673,7 @@
           var B = L.data.melee.block, aimB = p.aim !== undefined ? p.aim : Math.atan2(p.dirY || 0, p.dirX || 1);
           var diffB = Math.abs(((Math.atan2(e.y - p.y, e.x - p.x) - aimB) % TAU + 3 * Math.PI) % TAU - Math.PI);
           if (diffB < B.arc * Math.PI / 360) {
-            var kind = p.hand === 'melee' && p.melee ? L.meleeDef(p.melee.id).skill : 'gun', stop = bite * B[kind];
+            var kind = p.hand === 'melee' && p.hands ? L.mainDef(p).skill : 'gun', stop = bite * B[kind];
             bite -= stop; p.air = Math.max(0, p.air - stop * B.air); p.airRest = L.data.melee.air.rest;
           }
         }

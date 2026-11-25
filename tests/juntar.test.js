@@ -15,12 +15,15 @@ test('inventario: solo los bolsillos al empezar; lo grande va en bolso o mochila
     var id = row[0];
     assert.ok(id === 'i:' || id.indexOf('w:') === 0 || id.indexOf('c:') === 0 && D.containers[id.slice(2)] || D.items[id], t + ' da algo que no existe: ' + id);
   }); });
+  // The 2 pockets: the pistol and the spare bullets fill them (docs/CUERPO.md section 4).
+  assert.deepStrictEqual(g.pack.places[0].slots.map(function (sl) { return sl.id; }), ['gun', 'balas'], 'los bolsillos no tienen la pistola y las balas');
+  assert.strictEqual(L.packAdd(g, 'trapos', 3), 3, 'entra algo en los bolsillos llenos');
+  assert.ok(L.wear(g, 'rinonera') && !L.wear(g, 'rinonera'), 'se pone dos riñoneras');
   assert.strictEqual(L.packAdd(g, 'trapos', 12), 0);
   var trapos = 0;
   g.pack.places.forEach(function (pl) { pl.slots.forEach(function (sl) { if (sl.id === 'trapos') trapos++; }); });
   assert.strictEqual(trapos, 2, '12 trapos no ocupan 2 casilleros');
-  assert.strictEqual(L.packAdd(g, 'tablas', 2), 2, 'una tabla entra en un bolsillo');
-  assert.ok(L.wear(g, 'rinonera') && !L.wear(g, 'rinonera'), 'se pone dos riñoneras');
+  assert.strictEqual(L.packAdd(g, 'tablas', 2), 2, 'una tabla entra en una riñonera');
   assert.ok(L.wear(g, 'mochila'));
   assert.strictEqual(L.packAdd(g, 'tablas', 2), 0, 'en la mochila no entran tablas');
   var rest = L.packAdd(g, 'clavos', 10000);
@@ -45,6 +48,7 @@ test('revisar muebles: con E al lado de un ropero, una sola vez, siempre lo mism
   }
   assert.ok(found, 'no hay un ropero al que acercarse');
   p.x = found.x; p.y = found.y; p.floor = 0;
+  L.wear(g, 'mochila'); // the pockets are full with the pistol and the bullets
   var tg = L.searchTarget(g);
   assert.ok(tg && tg.k === found.k && tg.t === 'ropero', 'al lado del ropero no se puede revisar');
   var expect = L.lootOf(found.plan, 0, found.k, 'ropero');

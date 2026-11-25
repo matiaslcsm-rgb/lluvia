@@ -29,7 +29,7 @@ test('armas de mano: datos completos; matar a piñas cuesta mucho, con un hacha 
 
 test('armas de mano: el golpe pega adelante y no atrás, gasta aire, el arma se gasta y se rompe; 1 y 2 cambian de mano', function () {
   var L = Lluvia, g = meleeGame(), p = g.player, s = g.city.scale;
-  assert.strictEqual(p.melee.id, 'pinas'); assert.strictEqual(p.hand, 'gun');
+  assert.strictEqual(L.mainDef(p).id, 'pinas'); assert.strictEqual(p.hand, 'gun');
   L.updateMelee(g, 0.016, { slot2: true }); L.updateMelee(g, 0.016, {});
   assert.strictEqual(p.hand, 'melee', '2 no saca el arma de mano');
   var front = L.spawnEnemy(g, 'rastrero', p.x + 0.6 * s, p.y), back = L.spawnEnemy(g, 'rastrero', p.x - 0.6 * s, p.y);
@@ -39,19 +39,20 @@ test('armas de mano: el golpe pega adelante y no atrás, gasta aire, el arma se 
   assert.ok(front.hp < hp && back.hp === back.maxHp, 'le pegó al de atrás');
   assert.ok(p.air < air, 'pegar no gasta aire');
   // A fragile one breaks.
-  p.melee = { id: 'palita', dur: 2 };
-  L.swing(g); L.swing(g);
-  assert.strictEqual(p.melee.id, 'pinas', 'la palita no se rompe');
+  L.holdWeapon(g, 'palita', 2);
+  L.swing(g); p.swingCd = 0; L.swing(g);
+  assert.strictEqual(L.mainDef(p).id, 'pinas', 'la palita no se rompe');
   // A found weapon goes to the hand (only fists) or the backpack; 2 again swaps them.
   assert.ok(L.giveMelee(g, 'barra'));
-  assert.strictEqual(p.melee.id, 'barra');
+  assert.strictEqual(L.mainDef(p).id, 'barra');
+  assert.ok(p.hands.l === p.hands.r, 'la barra no ocupa las dos manos');
   assert.ok(!L.giveMelee(g, 'hacha'), 'un hacha entra en un bolsillo');
   L.wear(g, 'mochila');
   assert.ok(L.giveMelee(g, 'hacha'));
   var carried = function (id) { return L.packWeapons(g).some(function (w) { return w.place.slots[w.i].id === id; }); };
   assert.ok(carried('w:hacha'), 'la segunda arma no va a la mochila');
   L.updateMelee(g, 0.016, { slot2: true }); L.updateMelee(g, 0.016, {});
-  assert.strictEqual(p.melee.id, 'hacha', '2 no cambia de arma');
+  assert.strictEqual(L.mainDef(p).id, 'hacha', '2 no cambia de arma');
   assert.ok(carried('w:barra'), 'la barra no vuelve a la mochila');
   L.updateMelee(g, 0.016, { slot1: true });
   assert.strictEqual(p.hand, 'gun', '1 no vuelve a la pistola');

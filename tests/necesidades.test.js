@@ -29,7 +29,7 @@ test('peso: todo pesa, de más te frena; una sola vida; la experiencia llega sol
 
 test('comer y tomar: solo cuando hace falta y si tenés; sin comer el malestar crece; nervioso te podés desmayar', function () {
   var L = Lluvia, N = L.data.needs, K = L.data.clock, g = needsGame(), p = g.player, hour = K.hour;
-  L.packAdd(g, 'agua', 1); L.packAdd(g, 'comida', 1);
+  L.wear(g, 'mochila'); L.packAdd(g, 'agua', 1); L.packAdd(g, 'comida', 1);
   L.updateNeeds(g, (N.drink.every - 0.5) * hour);
   assert.strictEqual(L.packCount(g, 'agua'), 1, 'toma agua antes de tiempo');
   L.updateNeeds(g, hour);
@@ -66,7 +66,7 @@ test('objetos raros en los muebles; el golpe preparado pega más fuerte', functi
   try { L.updateLoot(g, L.data.loot.search + 0.01, { use: true }); } finally { L.searchTarget = orig; }
   assert.ok(Object.keys(p.items).length > items, 'el objeto raro no se suma');
   // Readied blow.
-  p.hand = 'melee'; p.melee = { id: 'barra', dur: 300 };
+  L.holdWeapon(g, 'barra', 300);
   var z = L.spawnEnemy(g, 'rastrero', p.x + 0.9 * s, p.y); z.floor = 0; z.hp = z.maxHp = 1000;
   L.swing(g); var plain = 1000 - z.hp; z.hp = 1000; p.swingCd = 0;
   g.time = 5;

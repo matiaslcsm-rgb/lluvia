@@ -47,8 +47,8 @@
     ctx.strokeStyle = coat; ctx.lineWidth = r * 0.42; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(0, -r * 0.8); ctx.lineTo(r * 1.15, -r * 0.12); ctx.moveTo(0, r * 0.8); ctx.lineTo(r * 1.15, r * 0.12); ctx.stroke();
     // A hand weapon out: swung across in front of you while you hit (js/melee.js).
-    if (f.hand === 'melee' && f.melee) {
-      var wd = L.meleeDef(f.melee.id), k = f.swingT > 0 ? 1 - f.swingT / (f.swingMax || 1) : 0, sw = (k > 0 ? -1 + 2 * k : 0.3) * 0.9;
+    if (f.hand === 'melee' && f.hands) {
+      var wd = L.mainDef(f), k = f.swingT > 0 ? 1 - f.swingT / (f.swingMax || 1) : 0, sw = (k > 0 ? -1 + 2 * k : 0.3) * 0.9;
       var hx = r * 1.05 * Math.cos(sw), hy = r * 1.05 * Math.sin(sw);
       if (wd.len) {
         var lpx = wd.len * 50 * (r / 10) * 0.6; // looks about its size

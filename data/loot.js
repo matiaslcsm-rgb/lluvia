@@ -10,11 +10,15 @@
     // `slow`: how much it slows you down (a bolso in your hand gets in the way). You find bags in the furniture
     // and put them on if you don't have one of that kind yet.
     containers: {
-      bolsillos: { name: 'Bolsillos', slots: 4, big: false, slow: 0, kg: 0 },
-      rinonera: { name: 'Riñonera', slots: 4, big: false, slow: 0, kg: 0.3 },
-      bolso: { name: 'Bolso', slots: 8, big: true, slow: 0.06, kg: 0.8 },
-      mochila: { name: 'Mochila', slots: 12, big: true, slow: 0.03, kg: 1 }
+      // 2 pockets for small things of quick use (the user, docs/CUERPO.md section 4: the Glock, a stone, a knife).
+      // `supplies`: whether food and water go in it (the user: "siempre van a la mochila"; the other bags too:
+      // my call).
+      bolsillos: { name: 'Bolsillos', slots: 2, big: false, slow: 0, kg: 0, supplies: false },
+      rinonera: { name: 'Riñonera', slots: 4, big: false, slow: 0, kg: 0.3, supplies: true },
+      bolso: { name: 'Bolso', slots: 8, big: true, slow: 0.06, kg: 0.8, supplies: true },
+      mochila: { name: 'Mochila', slots: 12, big: true, slow: 0.03, kg: 1, supplies: true }
     },
+    supplies: ['comida', 'agua'], // what counts as food and water (shown as the time it lasts you)
     wearing: ['bolsillos'], // what you start with: only your pockets (the user's answer 1)
     // Weight (the user's answer 3: "lugares y peso; lo que más lo restringe es ir pesado"). Everything weighs (`kg`
     // per unit, weapons in data/melee.js, the gun `gun`). Up to `cap` kg you go as usual; past it every kg slows you

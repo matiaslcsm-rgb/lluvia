@@ -1,6 +1,8 @@
 // Hand weapons (data/melee.js): what you hold, a blow in front of you, the damage by kind and skill, wear, air.
-// You carry a gun and a hand weapon; 1 takes the gun, 2 the hand weapon (again: the next one in the backpack).
-// Without anything else you have your fists, which never break.
+// Two hands (js/loot.js, p.hands): the left button hits with the right hand, the right button with the left hand;
+// an empty hand is a fist (it never breaks), a hand holding something else (water, a can) doesn't hit. A long weapon
+// takes both hands: the left button hits and the right one readies the blow. 1 takes the gun out (both hands: what
+// you held waits aside), 2 puts it away; 2 again takes the next weapon you carry.
 (function (L) {
   'use strict';
 
@@ -9,17 +11,17 @@
 
   L.makeHands = function (g) {
     var p = g.player;
-    p.melee = { id: 'pinas', dur: 0 };
+    p.hands = p.hands || { l: null, r: null };
     p.air = D().air.max; p.airRest = 0; p.swingCd = 0; p.swingT = 0;
     p.hand = p.gun ? 'gun' : 'melee';
   };
 
-  // A weapon found: into your hand if you only have your fists, else into the backpack (a slot of its own).
+  // A weapon found: into your hands if both are empty, else into a pocket or bag (a slot of its own).
   // Returns false if there is no room.
   L.giveMelee = function (g, id, dur) {
-    var p = g.player, def = L.meleeDef(id);
+    var p = g.player, def = L.meleeDef(id), h = p.hands || {};
     if (dur === undefined) dur = def.dur;
-    if (p.melee.id === 'pinas') { p.melee = { id: id, dur: dur }; return true; }
+    if (!h.l && !h.r) { L.putInHands(g, { id: 'w:' + id, n: 1, dur: dur }, 'r'); return true; }
     return L.packAddWeapon(g, id, dur);
   };
 
@@ -32,8 +34,9 @@
       else {
         var ws = L.packWeapons(g);
         if (ws.length) {
-          L.packUse(g, ws[0].place, ws[0].i); // the one you held goes where it fits
-          L.toast(g, 'En la mano: ' + L.meleeDef(p.melee.id).name + '.', '#cfc6a8');
+          var sl = ws[0].place.slots.splice(ws[0].i, 1)[0];
+          L.putInHands(g, sl, 'r'); // the one you held goes where it fits
+          L.toast(g, 'En la mano: ' + L.mainDef(p).name + '.', '#cfc6a8');
         }
       }
     }
@@ -69,10 +72,17 @@
     return best;
   }
 
-  // A blow. With fists, `hand` says which one ('left' or 'right'): each hand has its own pace, so punching with both
-  // in turn is faster.
+  // A blow. `hand` is the mouse button ('left', the default: your right hand; 'right': your left hand). Each hand
+  // has its own pace, so hitting with both in turn is faster. Returns the zombie hit, or null.
+  function sideOf(p, hand) {
+    var h = p.hands || {};
+    if (h.l && h.l === h.r) return 'r'; // a two-hand weapon
+    return hand === 'right' ? 'l' : 'r';
+  }
   L.swing = function (g, hand) {
-    var p = g.player, A = D().air, def = L.meleeDef(p.melee.id), n = L.data.skills.levels;
+    var p = g.player, A = D().air, side = sideOf(p, hand), def = L.handDef(p, side), n = L.data.skills.levels;
+    if (!def) return null; // that hand holds something else
+    var held = p.hands && p.hands[side];
     var t = L.skillLevel(p, def.skill) / n, tc = L.skillLevel(p, 'cuerpo') / n;
     var time = 1 / (def.speed * (1 + 0.4 * t)) * (p.air < A.low ? A.slow : 1);
     // A readied blow (right button held with a long weapon) hurts more and drops more.
@@ -100,9 +110,13 @@
       if (!(g.hurtToastAt > g.time - 5)) { g.hurtToastAt = g.time; L.toast(g, 'Te lastimaste las manos.', '#c26a4a'); }
     }
     // Wear: a fragile thing breaks soon.
-    if (def.dur) {
-      p.melee.dur--;
-      if (p.melee.dur <= 0) { L.toast(g, 'Se rompió: ' + def.name + '.', '#c26a4a'); L.emit(g, 'break', p.x, p.y); p.melee = { id: 'pinas', dur: 0 }; }
+    if (def.dur && held) {
+      held.dur--;
+      if (held.dur <= 0) {
+        L.toast(g, 'Se rompió: ' + def.name + '.', '#c26a4a'); L.emit(g, 'break', p.x, p.y);
+        if (p.hands.l === held) p.hands.l = null;
+        if (p.hands.r === held) p.hands.r = null;
+      }
     }
     return e;
   };
@@ -137,7 +151,7 @@
   L.updateMelee = function (g, dt, input) {
     var p = g.player, A = D().air, P = D().push;
     input = input || {};
-    if (!p.melee) L.makeHands(g);
+    if (!p.hands) L.makeHands(g);
     switchHand(g, input);
     if (p.swingCd > 0) p.swingCd -= dt;
     if (p.swingCdR > 0) p.swingCdR -= dt;
@@ -153,12 +167,12 @@
     p.heldL = !!input.fire; p.heldR = !!input.aiming;
     var both = input.fire && input.aiming && Math.abs((p.downL || 0) - (p.downR || 0)) <= P.both;
     if (both) { if (!(p.pushCd > 0)) L.shove(g); return; }
-    var skill = L.meleeDef(p.melee.id).skill, fists = skill === 'mano';
+    var two = p.hands && p.hands.l && p.hands.l === p.hands.r;
     // A long weapon: holding the right button readies the blow (the user's answer 5).
-    if (skill === 'media') { if (input.aiming && !input.fire) p.ready = Math.min(1, (p.ready || 0) + dt / D().ready); }
+    if (two) { if (input.aiming && !input.fire) p.ready = Math.min(1, (p.ready || 0) + dt / D().ready); }
     else p.ready = 0;
-    p.readying = skill === 'media' && !!input.aiming && !input.fire;
+    p.readying = !!two && !!input.aiming && !input.fire;
     if (input.fire && !(p.swingCd > 0) && g.time - (p.downL || 0) > P.both) L.swing(g, 'left');
-    if (fists && input.aiming && !(p.swingCdR > 0) && g.time - (p.downR || 0) > P.both) L.swing(g, 'right');
+    if (!two && input.aiming && !(p.swingCdR > 0) && g.time - (p.downR || 0) > P.both) L.swing(g, 'right');
   };
 })(this.Lluvia = this.Lluvia || {});

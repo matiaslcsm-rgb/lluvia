@@ -112,18 +112,22 @@
 
   // The hand weapon out (js/melee.js), bottom right: its name, how worn it is, and a small sight.
   function meleeHud(ctx, g, p, W, H) {
-    var C = L.data.look.hud, def = L.meleeDef(p.melee.id), x = W - 20, y = H - 26;
+    var C = L.data.look.hud, def = L.mainDef(p), sl = L.mainSlot(p), x = W - 20, y = H - 26, h = p.hands || {};
+    // What each button does: the left one, your right hand; the right one, your left hand (or readies a long blow).
+    var nameOf = function (s) { var q = h[s]; return !q ? 'Puño' : q.id.indexOf('w:') === 0 ? L.meleeDef(q.id.slice(2)).name : L.slotName(q); };
+    var text = h.l && h.l === h.r ? def.name + ' (dos manos)' : 'Clic izq.: ' + nameOf('r') + ' · Clic der.: ' + nameOf('l');
     ctx.textAlign = 'right'; ctx.font = '700 15px system-ui, sans-serif'; ctx.fillStyle = C.ammo;
-    ctx.fillText(def.name, x, y);
+    ctx.fillText(text, x, y);
     ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.dim;
-    ctx.fillText((L.data.skills.list[def.skill] || {}).name + ' ' + L.skillLevel(p, def.skill) + ' · 1: arma · 2: mano', x, y - 20);
-    if (def.dur) bar(ctx, x - 120, y + 7, 120, 3, p.melee.dur / def.dur, p.melee.dur / def.dur < 0.25 ? C.low : C.ammo);
+    ctx.fillText((L.data.skills.list[def.skill] || {}).name + ' ' + L.skillLevel(p, def.skill) + ' · 1: pistola · 2: manos', x, y - 20);
+    if (def.dur && sl) bar(ctx, x - 120, y + 7, 120, 3, sl.dur / def.dur, sl.dur / def.dur < 0.25 ? C.low : C.ammo);
     var ms = L.input && L.input.mouse;
     if (ms && !L.ui.current) { ctx.fillStyle = 'rgba(217,207,166,0.8)'; ctx.beginPath(); ctx.arc(ms.x, ms.y, 2.5, 0, Math.PI * 2); ctx.fill(); }
   }
 
   // One slot's thing: a colored mark (a slanted bar for a weapon) and how many.
   function slotIcon(ctx, sl, x, y, sz, C) {
+    if (sl.id === 'gun') { ctx.fillStyle = '#151515'; ctx.fillRect(x + 4, y + sz / 2 - 3, sz - 8, 5); ctx.fillRect(x + 5, y + sz / 2, 4, 7); return; } // the pistol
     var wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
     ctx.fillStyle = wd ? wd.color : L.data.loot.items[sl.id].color;
     if (wd) { ctx.save(); ctx.translate(x + sz / 2, y + sz / 2); ctx.rotate(-0.7); ctx.fillRect(-sz * 0.38, -2, sz * 0.76, 4); ctx.restore(); }
@@ -136,22 +140,39 @@
   function packHud(ctx, g, p, camX, camY, W, H) {
     var C = L.data.look.hud, Dl = L.data.loot, sz = 22, x = 18, y0 = H - 18 - sz;
     ctx.globalAlpha = 0.85;
+    var box = function (sx, sl) {
+      ctx.fillStyle = 'rgba(12,11,9,0.62)'; ctx.fillRect(sx, y0, sz, sz);
+      ctx.strokeStyle = 'rgba(207,198,168,0.22)'; ctx.lineWidth = 1; ctx.strokeRect(sx + 0.5, y0 + 0.5, sz - 1, sz - 1);
+      if (sl) slotIcon(ctx, sl, sx, y0, sz, C);
+    };
+    // Your two hands (left, right): a long weapon spans both; with the gun out they wait aside (dimmed).
+    var h = p.hands || {};
+    ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
+    ctx.fillText(p.hand === 'gun' ? 'Manos (pistola)' : 'Manos', x, y0 - 5);
+    if (p.hand === 'gun') ctx.globalAlpha = 0.4;
+    box(x, h.l === h.r ? null : h.l); box(x + sz + 3, h.l === h.r ? null : h.r);
+    if (h.l && h.l === h.r) { ctx.save(); ctx.translate(x + sz + 1.5, y0 + sz / 2); ctx.rotate(-0.35); ctx.fillStyle = L.mainDef(p).color; ctx.fillRect(-sz * 0.85, -2, sz * 1.7, 4); ctx.restore(); }
+    ctx.globalAlpha = 0.85;
+    x += 2 * (sz + 3) + 12;
+    // Food and water as the time they last you (the user: not as loose cans).
+    var st = L.suppliesTime(g);
+    ctx.fillStyle = C.dim; ctx.fillText('Agua para ' + st.agua + ' h · comida para ' + st.comida + ' h', 18, y0 - 33);
     // Each place you carry things (pockets, riñonera, bolso, mochila), its name over its slots.
     g.pack.places.forEach(function (pl) {
       var spec = Dl.containers[pl.id];
       ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
       ctx.fillText(spec.name, x, y0 - 5);
-      for (var i = 0; i < spec.slots; i++) {
-        var sl = pl.slots[i], sx = x + i * (sz + 3);
-        ctx.fillStyle = 'rgba(12,11,9,0.62)'; ctx.fillRect(sx, y0, sz, sz);
-        ctx.strokeStyle = 'rgba(207,198,168,0.22)'; ctx.lineWidth = 1; ctx.strokeRect(sx + 0.5, y0 + 0.5, sz - 1, sz - 1);
-        if (sl) slotIcon(ctx, sl, sx, y0, sz, C);
-      }
+      for (var i = 0; i < spec.slots; i++) box(x + i * (sz + 3), pl.slots[i]);
       x += spec.slots * (sz + 3) + 12;
     });
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
     ctx.fillText('I inventario · E revisar · H venda · Tab fabricar · G molotov', 18, y0 - 19);
     ctx.globalAlpha = 1;
+    // Something on the floor within reach (js/loot.js): E picks it up.
+    if (g.groundTarget >= 0 && g.ground[g.groundTarget]) {
+      ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
+      ctx.fillText('E: juntar ' + L.slotName(g.ground[g.groundTarget].slot), p.x - camX, p.y - camY - p.r - 14);
+    }
     var tg = g.lootTarget;
     if (tg) {
       var sx = p.x - camX, sy = p.y - camY - p.r - 14;
@@ -541,6 +562,14 @@
       circle(ctx, s.x, s.y, s.r, s.hail ? '#e8f6ff' : '#8aa04a');
     });
     g.projectiles.forEach(function (pr) { L.drawShot(ctx, pr); });
+    // Things on the floor (js/loot.js): what you threw away, where you can see it.
+    (g.ground || []).forEach(function (it) {
+      if ((it.floor || 0) !== (p.floor || 0) || sees && !sees(it.x, it.y, it.floor || 0)) return;
+      var sl = it.slot, wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(it.x + 1.5, it.y + 2, 7, 4, 0, 0, TAU); ctx.fill();
+      if (wd) { ctx.save(); ctx.translate(it.x, it.y); ctx.rotate((it.x * 7 + it.y) % 3); ctx.fillStyle = wd.color; var ln = Math.max(8, (wd.len || 0.15) * 40); ctx.fillRect(-ln / 2, -1.5, ln, 3); ctx.restore(); }
+      else { ctx.fillStyle = sl.id === 'gun' ? '#151515' : L.data.loot.items[sl.id].color; ctx.fillRect(it.x - 4, it.y - 4, 8, 8); ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.strokeRect(it.x - 4, it.y - 4, 8, 8); }
+    });
     // Molotov fires (flickering) and bottles in the air (js/craft.js).
     (g.fires || []).forEach(function (f) {
       if ((f.floor || 0) !== (p.floor || 0)) return;
@@ -673,7 +702,7 @@
 
     if (m && !m.solo) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
     if (p.gun && p.hand !== 'melee') gunHud(ctx, g, W, H);
-    else if (p.melee) meleeHud(ctx, g, p, W, H);
+    else if (p.hands) meleeHud(ctx, g, p, W, H);
     if (g.pack) packHud(ctx, g, p, camX, camY, W, H);
     if (g.city) L.drawMinimap(ctx, g, W);
 
