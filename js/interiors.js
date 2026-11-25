@@ -1029,6 +1029,21 @@
     return out;
   };
 
+  // The nearest spot to `ent` where its body fits on the floor it is on (searching up to 4 m around), or null.
+  // For getting someone out of a wall (js/game.js, L.unstick).
+  L.cityLevelFree = function (city, ent, r) {
+    var plan = ent.house, f = ent.floor || 0, level = f && plan ? L.planLevel(plan, f) : null, s = city.scale;
+    r = Math.min(r, L.data.city.body);
+    if (!level) { var fr = L.cityFree(city, ent.x, ent.y); return L.cityFits(city, fr.x, fr.y, r) ? fr : null; }
+    for (var d = 0.1; d <= 4; d += 0.1) {
+      for (var a = 0; a < 16; a++) {
+        var x = ent.x + Math.cos(a * Math.PI / 8) * d * s, y = ent.y + Math.sin(a * Math.PI / 8) * d * s;
+        if (upperFits(plan, x, y, r, level)) return { x: x, y: y };
+      }
+    }
+    return null;
+  };
+
   // The stair to take in a building to go from floor `from` toward floor `to`: up the one leaving `from`, or down
   // the one arriving at it. Or null.
   L.stairToward = function (plan, from, to) {

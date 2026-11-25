@@ -16,7 +16,16 @@
   var GAME = ['seed', 'time', 'slept', 'kills', 'deaths', 'gold', 'pendingLevels', 'nextBoss', 'nextMini', 'nextWave',
     'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies', 'barrierSeen', 'barricades'];
 
-  function copy(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+  function copy(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v, noPlans)); }
+  // A building's plan (the house you, your bed or your body are in) is saved as its number and found again on load:
+  // the plan is big, and it points to itself.
+  function noPlans(k, v) { return v && typeof v === 'object' && v.frame && v.lab && v.index !== undefined ? { plan: v.index } : v; }
+  function plans(g, v) {
+    if (!v || typeof v !== 'object') return v;
+    if (v.plan !== undefined && Object.keys(v).length === 1) return g.city && L.cityHouse ? L.cityHouse(g.city, v.plan) : null;
+    Object.keys(v).forEach(function (k) { v[k] = plans(g, v[k]); });
+    return v;
+  }
 
   L.saveGame = function (g) {
     var p = g.player, pl = {};
@@ -51,13 +60,13 @@
     if (data.gun) { L.giveGun(g, data.gun.id); p.gun.level = data.gun.level; p.gun.ammo = data.gun.ammo; }
     else p.gun = null;
     // You, as you were.
-    Object.keys(data.player).forEach(function (k) { p[k] = copy(data.player[k]); });
+    Object.keys(data.player).forEach(function (k) { p[k] = plans(g, copy(data.player[k])); });
     if (data.bothHands && p.hands) p.hands.l = p.hands.r;
     p.asleep = null; p.invuln = 0; p.hurt = 0;
     L.recalcStats(g);
     p.hp = Math.min(data.player.hp, p.stats.maxHp);
     // The world.
-    GAME.forEach(function (k) { if (data[k] !== undefined) g[k] = copy(data[k]); });
+    GAME.forEach(function (k) { if (data[k] !== undefined) g[k] = plans(g, copy(data[k])); });
     g.pack = copy(data.pack);
     g.searched = new Set(data.searched || []);
     g.leftover = new Map(data.leftover || []);

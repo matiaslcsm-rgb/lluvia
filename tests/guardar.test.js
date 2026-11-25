@@ -52,3 +52,18 @@ test('guardar: al acostarte en una cama se guarda; al seguir vuelve todo como es
     delete L.store; L.bedNear = realBed;
   }
 });
+
+test('guardar: acostado en una casa (arriba o abajo), la casa vuelve a ser la misma al seguir', function () {
+  var L = Lluvia, city = L.cityHome(1), plan = null;
+  for (var i = 0; i < city.map.buildings.length && !plan; i++) { var pl = L.cityHouse(city, i); if (pl && pl.upper) plan = pl; }
+  assert.ok(plan, 'no hay una casa de dos pisos');
+  L.planOpenings(plan); // the barricades' openings point back to the plan
+  var g = L.createGame({ seed: 141, city: city, explore: true, noSpawn: true, night: true, gunsOnly: true, gun: 'glock', viewW: 1280, viewH: 720 });
+  var p = g.player;
+  p.house = plan; p.floor = 1; p.z = 1; p.bed = { x: p.x, y: p.y, floor: 1, house: plan };
+  var data = JSON.parse(JSON.stringify(L.saveGame(g)));
+  var g2 = L.createGame({ seed: 141, city: city, explore: true, noSpawn: true, night: true, gunsOnly: true, gun: 'glock', viewW: 1280, viewH: 720 });
+  L.applySave(g2, data);
+  assert.strictEqual(g2.player.house, plan, 'la casa donde estabas no es la misma');
+  assert.strictEqual(g2.player.bed.house, plan, 'la casa de tu cama no es la misma');
+});

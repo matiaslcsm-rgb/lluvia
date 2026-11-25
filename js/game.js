@@ -306,6 +306,27 @@
   }
   L.stepPlayer = stepPlayer;
 
+  // Can the player still move a little in any of 8 directions? (Pressing against a wall is fine: some other way is
+  // open.) Nothing moves: this only looks.
+  L.canMove = function (g) {
+    var p = g.player, city = g.city, out = {}, step = 0.3 * (city ? city.scale : 50);
+    if (!city) return true;
+    for (var a = 0; a < 8; a++) {
+      var ang = a * Math.PI / 4, save = { floor: p.floor, z: p.z, house: p.house, stairOn: p.stairOn };
+      L.cityLevelMove(city, p, p.x + Math.cos(ang) * step, p.y + Math.sin(ang) * step, p.r, out);
+      p.floor = save.floor; p.z = save.z; p.house = save.house; p.stairOn = save.stairOn;
+      if (Math.hypot(out.x - p.x, out.y - p.y) > step * 0.15) return true;
+    }
+    return false;
+  };
+  // Stuck in a wall (the user got stuck while playing): out to the nearest spot where you fit. True if it moved you.
+  L.unstick = function (g) {
+    var p = g.player, fr = g.city && L.cityLevelFree(g.city, p, p.r);
+    if (!fr) return false;
+    p.x = fr.x; p.y = fr.y; p.stuckT = 0;
+    return true;
+  };
+
   function movePlayer(g, dt, input) {
     var p = g.player, x = input.x || 0, y = input.y || 0;
     // Fainted (js/needs.js): you can't move.
@@ -336,7 +357,13 @@
     var slow = (g.pack ? 1 - L.packSlow(g) : 1) * run; // a bolso in your hand gets in the way (js/loot.js)
     if (g.weather) slow *= 1 - L.floodSlow(g, p.x, p.y);  // wading in flood water (js/weather.js)
     if (p.bluntSlow) slow *= 1 - p.bluntSlow;              // hard blows slow you down until paracetamol (js/health.js)
+    var x0 = p.x, y0 = p.y;
     stepPlayer(g, x * p.stats.speed * slow * dt, y * p.stats.speed * slow * dt);
+    // Trying to walk and not moving for a while: if no way at all is open, you are stuck in a wall; out you go.
+    if (g.city && len > 0.2 && slow > 0.05 && p.x === x0 && p.y === y0) {
+      p.stuckT = (p.stuckT || 0) + dt;
+      if (p.stuckT > 0.8) { p.stuckT = 0; if (!L.canMove(g) && L.unstick(g)) L.emit(g, 'unstuck', p.x, p.y); }
+    } else p.stuckT = 0;
   }
 
   // ---- Horde ----
