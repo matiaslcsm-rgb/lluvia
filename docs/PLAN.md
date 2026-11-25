@@ -970,6 +970,17 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Los números están en `data/senses.js` y en `data/guns.js` (`nights`).
   - Pruebas nuevas (`tests/sentidos.test.js`, se corren en el momento de prueba): no te ven de espaldas; de día sí
     a 9 m; de noche no sin luz, con linterna sí; oyen un tiro a 20 m y no tus pasos; el gruñido llama a otros.
+- **2026-11-25: tiro a la cabeza y Puntería** (etapa 48c; `docs/ZOMBOID.md`, sección 3).
+  - A los zombis normales solo los mata una bala que pasa por su cabeza (el círculo de piel del lado hacia donde
+    miran). Un tiro en el cuerpo los frena 1 s, a veces los tira al piso (más de cerca) o los hace tambalear, y
+    después van hacia donde vino el tiro.
+  - **Apuntar:** con el clic derecho apretado te quedás quieto y la mira se cierra de a poco; caminar la abre, y cada
+    tiro la abre un poco. El círculo de la mira muestra hasta dónde pueden ir las balas.
+  - **Puntería** (primera habilidad, `data/skills.js`): 10 niveles. Un tiro en la cabeza da 10 de experiencia, uno en
+    el cuerpo, 2. Cada nivel cierra la mira más rápido y más chica, y agranda la cabeza para tus balas hasta 1,6
+    veces. Se ve arriba a la izquierda, al lado de la hora.
+  - Pruebas nuevas (`tests/punteria.test.js`, para el momento de prueba): la Puntería sube y se frena en 10; apuntar
+    cierra, caminar abre, más nivel cierra más; la bala tiene que pasar por la cabeza y la Puntería la agranda.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

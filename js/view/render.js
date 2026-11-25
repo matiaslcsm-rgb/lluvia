@@ -154,6 +154,12 @@
       var k = L.clockOf(g), icon = k.phase === 'noche' ? '☾' : k.phase === 'dia' ? '☀' : '◐';
       ctx.fillStyle = C.text;
       ctx.fillText(icon + ' Día ' + k.day + ' · ' + (k.hh < 10 ? '0' : '') + k.hh + ':' + (k.mm < 10 ? '0' : '') + k.mm, x, y + 38);
+      // Your aim (js/skills.js): its level and how far to the next.
+      if (L.skillOf && g.night) {
+        var sk = L.skillOf(p, 'punteria'), need = L.data.skills.need[sk.level];
+        ctx.fillStyle = C.dim; ctx.fillText('Puntería ' + sk.level, x + 120, y + 38);
+        if (need) bar(ctx, x + 182, y + 33, 40, 3, sk.xp / need, C.xp);
+      }
       var fl = p.flashlight;
       if (fl && (fl.on || fl.battery < 1 || k.light < 0.5)) {
         ctx.fillStyle = C.dim; ctx.fillText(fl.on ? 'Linterna' : 'Linterna (F)', x, y + 53);
@@ -175,10 +181,13 @@
     if (gun.reload > 0) bar(ctx, x - 160, y + 8, 160, C ? 3 : 5, 1 - gun.reload / (gun.def.reload * Math.max(0.4, g.player.stats.cooldownMul)), C ? C.ammo : '#ffe9a8');
     var ms = L.input && L.input.mouse;
     if (ms && !L.ui.current) {
-      ctx.strokeStyle = C ? 'rgba(217,207,166,0.75)' : 'rgba(255,233,168,0.9)'; ctx.lineWidth = C ? 1.5 : 2;
-      ctx.beginPath(); ctx.arc(ms.x, ms.y, 9, 0, Math.PI * 2);
-      ctx.moveTo(ms.x - 15, ms.y); ctx.lineTo(ms.x - 5, ms.y); ctx.moveTo(ms.x + 5, ms.y); ctx.lineTo(ms.x + 15, ms.y);
-      ctx.moveTo(ms.x, ms.y - 15); ctx.lineTo(ms.x, ms.y - 5); ctx.moveTo(ms.x, ms.y + 5); ctx.lineTo(ms.x, ms.y + 15);
+      // The sight's circle shows where the bullets may go: it closes while you aim (js/skills.js).
+      var cr = 9;
+      if (g.night && g.player.spread !== undefined) cr = Math.max(5, Math.hypot(ms.x - W / 2, ms.y - H / 2) * Math.tan((gun.def.spread + g.player.spread) / 2));
+      ctx.strokeStyle = C ? (g.player.aiming ? 'rgba(230,220,180,0.95)' : 'rgba(217,207,166,0.75)') : 'rgba(255,233,168,0.9)'; ctx.lineWidth = C ? 1.5 : 2;
+      ctx.beginPath(); ctx.arc(ms.x, ms.y, cr, 0, Math.PI * 2);
+      ctx.moveTo(ms.x - cr - 6, ms.y); ctx.lineTo(ms.x - cr + 4, ms.y); ctx.moveTo(ms.x + cr - 4, ms.y); ctx.lineTo(ms.x + cr + 6, ms.y);
+      ctx.moveTo(ms.x, ms.y - cr - 6); ctx.lineTo(ms.x, ms.y - cr + 4); ctx.moveTo(ms.x, ms.y + cr - 4); ctx.lineTo(ms.x, ms.y + cr + 6);
       ctx.stroke();
     }
   }
@@ -461,10 +470,11 @@
       // One on another floor (below you or above) shows faded.
       var otherFloor = g.city && (e.floor || 0) !== (p.floor || 0);
       if (otherFloor) ctx.globalAlpha = 0.3;
+      else if (e.downT > 0) ctx.globalAlpha = 0.65; // knocked down
       // A zombie that thinks for itself looks where it is going (js/senses.js); the rest look at you.
       if (e.face !== undefined) L.drawCreature(ctx, e, e.x + Math.cos(e.face) * 100, e.y + Math.sin(e.face) * 100, t);
       else L.drawCreature(ctx, e, p.x, p.y, t);
-      if (otherFloor) ctx.globalAlpha = 1;
+      if (otherFloor || e.downT > 0) ctx.globalAlpha = 1;
       if (e.fuse > 0) { ctx.globalAlpha = 0.25; circle(ctx, e.x, e.y, e.type.bomb.radius, '#ff5a3d'); ctx.globalAlpha = 1; }
       if (e.mode === 'wind') {
         // The Leviatán shows where it is about to charge.

@@ -64,17 +64,19 @@
       tx = input.aimX; ty = input.aimY;
     }
     // Shots fired this frame (a fast gun can fire more than once per frame).
-    var dmg = L.gunDamage(g, gun), base = Math.atan2(ty - p.y, tx - p.x);
+    var dmg = L.gunDamage(g, gun), base = Math.atan2(ty - p.y, tx - p.x), extra = p.spread || 0; // aiming (js/skills.js)
     while (gun.cd <= 0 && gun.ammo > 0) {
       gun.cd += 1 / def.rate;
       gun.ammo--;
       for (var i = 0; i < def.pellets; i++) {
-        var ang = base + (g.rng() - 0.5) * def.spread, sp = def.speed * (def.flame ? 0.8 + g.rng() * 0.4 : 1);
+        var ang = base + (g.rng() - 0.5) * (def.spread + extra), sp = def.speed * (def.flame ? 0.8 + g.rng() * 0.4 : 1);
         g.projectiles.push({ x: p.x + Math.cos(base) * p.r, y: p.y + Math.sin(base) * p.r, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
           r: def.size, proc: def.flame ? 0.1 : 0.4, damage: dmg, pierce: def.pierce, life: def.range / sp, hit: [], color: def.color,
-          dead: false, bullet: true, flame: !!def.flame });
+          dead: false, bullet: true, flame: !!def.flame, ox: p.x, oy: p.y, range: def.range,
+          knock: def.knock !== undefined ? def.knock : 0.15, stagger: def.stagger !== undefined ? def.stagger : 0.4 });
       }
       p.dirX = Math.cos(base); p.dirY = Math.sin(base);
+      if (p.spread !== undefined) p.spread += L.data.skills.aim.recoil; // the kick opens the sight
       if (!def.flame || gun.ammo % 4 === 0) L.emit(g, 'shot', p.x, p.y);
       if (L.makeNoise) L.makeNoise(g, p.x, p.y, L.data.senses.noise.shot, p.floor, p); // heard far (js/senses.js)
     }

@@ -282,6 +282,8 @@
 
   function movePlayer(g, dt, input) {
     var p = g.player, x = input.x || 0, y = input.y || 0;
+    // Aiming (right button) you stand still; the sight closes (js/skills.js).
+    if (g.night && p.gun && L.updateAim) { if (input.aiming) { x = 0; y = 0; } L.updateAim(g, dt, input, !!(x || y)); }
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
     if ((x || y) && !(p.gun && input.aimX !== undefined)) { p.dirX = x; p.dirY = y; } // the way you face (with a gun: where you aim)
@@ -522,6 +524,7 @@
       // Stunned enemies stand still; slowed ones move at half speed.
       var sp = (e.stun > 0 ? 0 : e.slow > 0 ? e.speed * 0.5 : e.speed) * mul;
       if (e.stun > 0) e.stun -= dt;
+      if (e.downT > 0) e.downT -= dt; // on the floor (drawn lying, js/view/render.js)
       if (e.slow > 0) e.slow -= dt;
       var t = e.type;
       if (t.phase && !e.phased && e.hp < e.maxHp * t.phase.at) enterPhase(g, e);
@@ -901,7 +904,10 @@
           var rr = pr.r + e.r, dx = e.x - pr.x, dy = e.y - pr.y;
           if (dx * dx + dy * dy >= rr * rr) continue;
           pr.hit.push(e.id);
-          L.hit(g, e, pr.damage, pr.proc);
+          // A plain zombie that thinks (js/senses.js) only dies from a bullet through its head; one in the body stops
+          // it a second and may drop it or make it reel (docs/ZOMBOID.md, answers 10 and 12).
+          if (g.night && pr.bullet && e.face !== undefined) bodyOrHead(g, e, pr, dt);
+          else L.hit(g, e, pr.damage, pr.proc);
           if (pr.pierce <= 0) { pr.dead = true; break; }
           pr.pierce--;
         }
@@ -909,6 +915,23 @@
       if (!pr.dead) g.projectiles[n++] = pr;
     }
     g.projectiles.length = n;
+  }
+
+  function bodyOrHead(g, e, pr, dt) {
+    if (L.headHit(g, e, pr, pr.x - pr.vx * dt, pr.y - pr.vy * dt)) {
+      L.applyHit(g, e, e.hp + 1, 0, 0);
+      L.gainSkill(g, 'punteria', L.data.skills.list.punteria.headshot);
+      L.emit(g, 'headshot', e.x, e.y);
+      return;
+    }
+    var close = 1 - L.clamp(Math.hypot(e.x - pr.ox, e.y - pr.oy) / (pr.range || 600), 0, 1);
+    e.flash = 0.1;
+    e.stun = Math.max(e.stun || 0, 1);
+    if (g.rng() < pr.knock * (0.5 + close)) { e.stun = Math.max(e.stun, 2.5); e.downT = 2.5; }
+    else if (g.rng() < pr.stagger) e.slow = Math.max(e.slow || 0, 1.5);
+    // It knows where the shot came from now.
+    e.mind = 'investigate'; e.goX = pr.ox; e.goY = pr.oy; e.linger = 4; e.look = 0;
+    L.gainSkill(g, 'punteria', L.data.skills.list.punteria.body);
   }
 
   // ---- Experience ----

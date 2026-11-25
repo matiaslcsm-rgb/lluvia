@@ -5,11 +5,15 @@
   addEventListener('keydown', function (e) { keys[e.code] = true; });
   addEventListener('keyup', function (e) { keys[e.code] = false; });
   addEventListener('blur', function () { keys = {}; });
-  var mouse = { x: 0, y: 0, down: false };
+  var mouse = { x: 0, y: 0, down: false, right: false };
   addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-  addEventListener('mousedown', function (e) { if (e.button === 0 && e.target && e.target.id === 'game') mouse.down = true; });
-  addEventListener('mouseup', function (e) { if (e.button === 0) mouse.down = false; });
-  addEventListener('blur', function () { mouse.down = false; });
+  addEventListener('mousedown', function (e) {
+    if (e.target && e.target.id === 'game') { if (e.button === 0) mouse.down = true; else if (e.button === 2) mouse.right = true; }
+  });
+  addEventListener('mouseup', function (e) { if (e.button === 0) mouse.down = false; else if (e.button === 2) mouse.right = false; });
+  addEventListener('blur', function () { mouse.down = false; mouse.right = false; });
+  // The right button aims (no menu over the game).
+  addEventListener('contextmenu', function (e) { if (e.target && e.target.id === 'game') e.preventDefault(); });
   addEventListener('contextmenu', function (e) { if (e.target && e.target.id === 'game') e.preventDefault(); });
 
   function down(a, b) { return keys[a] || keys[b] ? 1 : 0; }

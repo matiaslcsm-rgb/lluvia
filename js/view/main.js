@@ -47,6 +47,7 @@
       v.aimX = g.player.x - canvas.width / 2 + mouse.x;
       v.aimY = g.player.y - canvas.height / 2 + mouse.y;
       v.fire = mouse.down;
+      v.aiming = mouse.right; // right button: aim, standing still
       v.reload = L.input.key('KeyR');
       v.light = L.input.key('KeyF'); // the flashlight
       v.use = L.input.key('KeyE');   // search a piece of furniture

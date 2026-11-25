@@ -3,6 +3,8 @@
 //   damage: per bullet      rate: shots per second     mag: bullets before reloading   reload: seconds
 //   pellets: bullets per shot (shotgun)   spread: radians of scatter   speed: px/s   range: px   pierce: enemies a
 //   bullet goes through   size: bullet radius   flame: short-lived, goes through everything (flamethrower)
+//   knock / stagger: a body shot on a plain zombie always stops it a second (docs/ZOMBOID.md, answer 10); this is
+//   the chance it drops it (more up close) or makes it reel. Guns without them use 0.15 and 0.4.
 (function (L) {
   'use strict';
 
@@ -27,7 +29,8 @@
 
   L.data.guns = [
     { id: 'glock', name: 'Glock 17', desc: 'Pistola de 17 balas. Mantené el clic para disparar.', color: '#ffe9a8',
-      damage: 16, rate: 4.5, mag: 17, reload: 1.2, pellets: 1, spread: 0.035, speed: 900, range: 650, pierce: 0, size: 3.5, price: 0 },
+      damage: 16, rate: 4.5, mag: 17, reload: 1.2, pellets: 1, spread: 0.03, speed: 900, range: 650, pierce: 0, size: 3.5, price: 0,
+      knock: 0.15, stagger: 0.45 },
     { id: 'pistola', name: 'Pistola', desc: 'Confiable: precisa, cargador mediano, recarga rápida.', color: '#ffe08a',
       damage: 14, rate: 4, mag: 12, reload: 1.0, pellets: 1, spread: 0.04, speed: 760, range: 620, pierce: 0, size: 4, price: 0 },
     { id: 'escopeta', name: 'Escopeta', desc: 'Siete perdigones de cerca: barre lo que tenés enfrente.', color: '#ffb347',
