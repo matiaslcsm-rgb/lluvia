@@ -206,6 +206,8 @@
       L.emit(g, 'fenix', p.x, p.y);
       return;
     }
+    // The night mode: you wake up where you last slept, your body stays (js/death.js).
+    if (g.night && L.dieAndWake && g.pack) { L.dieAndWake(g); return; }
     p.hp = 0;
     g.lives--;
     g.deaths++;

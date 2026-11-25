@@ -168,6 +168,10 @@
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
     ctx.fillText('I inventario · E revisar · H venda · Tab fabricar · G molotov', 18, y0 - 19);
     ctx.globalAlpha = 1;
+    if (g.bodyTarget >= 0) {
+      ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
+      ctx.fillText('E: recuperar tus cosas', p.x - camX, p.y - camY - p.r - 14);
+    }
     // Something on the floor within reach (js/loot.js): E picks it up.
     if (g.groundTarget >= 0 && g.ground[g.groundTarget]) {
       ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
@@ -579,6 +583,16 @@
       circle(ctx, s.x, s.y, s.r, s.hail ? '#e8f6ff' : '#8aa04a');
     });
     g.projectiles.forEach(function (pr) { L.drawShot(ctx, pr); });
+    // Your bodies (js/death.js): where you died, with your things.
+    (g.bodies || []).forEach(function (b) {
+      if ((b.floor || 0) !== (p.floor || 0) || sees && !sees(b.x, b.y, b.floor || 0)) return;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(0.6);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(2, 3, 16, 8, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#3d4434'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 6, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#5a1a14'; ctx.beginPath(); ctx.ellipse(-4, 4, 9, 4, 0.3, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#c99b7a'; ctx.beginPath(); ctx.arc(14, 0, 4.5, 0, TAU); ctx.fill();
+      ctx.restore();
+    });
     // Things on the floor (js/loot.js): what you threw away, where you can see it.
     (g.ground || []).forEach(function (it) {
       if ((it.floor || 0) !== (p.floor || 0) || sees && !sees(it.x, it.y, it.floor || 0)) return;
