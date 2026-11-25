@@ -18,7 +18,12 @@ comprobar.
   los 20-25 del diseño; el resto se ajusta en la etapa 7.
 
 ## Decisiones abiertas
-- Ninguna por ahora.
+- **(decisión) ¿Los muebles frenan el paso?** Hoy solo se dibujan: se camina por encima de camas y mesas.
+  - A) Que los muebles grandes (camas, mesas, roperos, estantes, máquinas, autos) frenen el paso y sirvan para
+    cubrirse de los tiros; los chicos (mesitas, inodoros, sillas) siguen pasables. **Recomendada**, cuando haya
+    enemigos adentro de las casas: ahí se nota y se puede medir con partidas simuladas.
+  - B) Que frenen todos.
+  - C) Dejarlos como dibujo, sin efecto.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -796,6 +801,24 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
       el cuarto se conecta por otro lado;
     - un edificio con otro pegado al frente no podía tener la puerta de calle en el hall y la ponía en un
       departamento. Ahora, si pasa eso, el edificio prueba con el frente hacia otro lado.
+- **2026-11-24: muebles, puertas y ventanas** (pedido del usuario: "Sí, seguí").
+  - **Muebles** (`js/furnish.js`, la lista de cada cuarto en `data/houses.js`, `furniture`): cada cuarto tiene lo
+    suyo. Dormitorio: cama (de una plaza si no entra la doble), ropero, mesita. Living: sillón, tele, mesa con
+    sillas. Cocina: mesada con pileta y hornallas, heladera, mesa. Baño: inodoro, lavatorio, ducha. Terraza: tanque
+    de agua y soga. Negocio: mostrador, estantes y góndolas. Fábrica: máquinas y estantes. Iglesia: altar y bancos
+    en filas. Escuela: pizarrón, escritorio y pupitres en filas mirando al pizarrón. Y así los demás.
+  - Cada mueble va contra una pared o suelto en el medio con lugar alrededor, adentro de su cuarto, sin pisar a
+    otro, sin tapar puertas ni escaleras y sin salirse de la pared de afuera en las casas giradas. Siempre los
+    mismos en la misma casa; los pisos iguales de un edificio tienen los mismos muebles.
+  - **Puertas**: cada puerta se ve con su hoja abierta y el arco que barre; abre hacia el cuarto, no hacia el
+    pasillo. La de calle abre para adentro.
+  - **Ventanas**: en la pared de afuera de cada cuarto, una cada 4 m (chicas en baños y lavaderos), salvo donde
+    hay otro edificio pegado, en la terraza, el sótano, pasillos y palieres.
+  - Por ahora los muebles solo se dibujan (ver la decisión abierta de arriba).
+  - Pruebas nuevas (`tests/muebles.test.js`): en todo el mapa de prueba, cada mueble adentro de su cuarto, sin
+    pisarse, sin tapar puertas ni escaleras; 9 de cada 10 dormitorios con cama, baños con inodoro, cocinas con
+    mesada y aulas con pupitres; ventanas sobre la pared de afuera y ninguna en la terraza.
+  - Sigue: mirar los pisos en el visor del mapa; después, que los muebles frenen el paso (si se decide).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

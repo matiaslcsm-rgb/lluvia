@@ -957,6 +957,7 @@
           st.topPx = px(st.axis === 'y' ? L.housePoint(plan, mid, top) : L.housePoint(plan, top, mid));
         });
         if (plan.stair) { plan.footPx = plan.stair.footPx; plan.topPx = plan.stair.topPx; }
+        if (L.furnishPlan) L.furnishPlan(plan, pts, canExit); // furniture and windows (js/furnish.js)
       }
     }
     cache.set(i, plan);

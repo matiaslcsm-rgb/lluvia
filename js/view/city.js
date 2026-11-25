@@ -186,6 +186,9 @@
       }
       ctx.fill();
     });
+    (level.furniture || []).forEach(function (q) { drawPiece(ctx, q, cs); });
+    (level.doors || []).forEach(function (g) { drawDoor(ctx, plan, level, g, null); });
+    if (!upper) plan.exits.forEach(function (e) { drawDoor(ctx, plan, level, e.seg, e.dir); });
     (plan.stairs || []).forEach(function (st) {
       if (st.from === fl) drawStair(ctx, st, false);
       else if (st.from + 1 === fl) drawStair(ctx, st, true);
@@ -205,8 +208,15 @@
     ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.2; ctx.stroke();
     if (!upper) plan.exits.forEach(function (e) {
       var a = L.housePoint(plan, e.seg[0], e.seg[1]), b = L.housePoint(plan, e.seg[2], e.seg[3]);
-      ctx.strokeStyle = '#7a5636'; ctx.lineWidth = 0.38; ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#6b6158'; ctx.lineWidth = 0.3; ctx.lineCap = 'butt';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    });
+    // Windows: a pane of glass in the outer wall, with its frame.
+    ctx.lineCap = 'butt';
+    (level.windows || []).forEach(function (w) {
+      ctx.beginPath(); ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]);
+      ctx.strokeStyle = '#f2efe8'; ctx.lineWidth = 0.3; ctx.stroke();
+      ctx.strokeStyle = '#8fc3d8'; ctx.lineWidth = 0.1; ctx.stroke();
     });
     // Room names, upright.
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 0.42px system-ui, sans-serif'; ctx.fillStyle = 'rgba(40,30,20,0.5)';
@@ -216,6 +226,138 @@
       var m = L.housePoint(plan, r.cx, r.cy);
       ctx.fillText(name, m[0], m[1]);
     });
+  }
+
+  // A door between rooms (or, with `out`, a doorway to the street: it opens inward), seen from above: the leaf open
+  // a right angle into the room (not into a corridor) and the arc it swings. In cells of the house's frame.
+  function drawDoor(ctx, plan, level, g, out) {
+    var dx = g[2] - g[0], dy = g[3] - g[1], len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+    if (out) { if (nx * out[0] + ny * out[1] > 0) { nx = -nx; ny = -ny; } } else {
+      var mx = (g[0] + g[2]) / 2, my = (g[1] + g[3]) / 2, W = plan.W;
+      var roomAt = function (k) {
+        var x = Math.floor(mx + nx * k), y = Math.floor(my + ny * k), r = x >= 0 && y >= 0 && x < W && y < plan.D ? level.rooms[level.lab[y * W + x]] : null;
+        return r ? r.type : '';
+      };
+      if (/pasillo|palier|hall/.test(roomAt(0.5)) && !/pasillo|palier|hall/.test(roomAt(-0.5))) { nx = -nx; ny = -ny; }
+    }
+    var hx = g[0], hy = g[1], ex = hx + nx * len, ey = hy + ny * len, a0 = Math.atan2(dy, dx), a1 = Math.atan2(ny, nx);
+    var d = a1 - a0;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    ctx.strokeStyle = 'rgba(60,45,30,0.35)'; ctx.lineWidth = 0.05;
+    ctx.beginPath(); ctx.arc(hx, hy, len, a0, a1, d < 0); ctx.stroke();
+    ctx.strokeStyle = out ? '#6e4a2c' : '#8a6440'; ctx.lineWidth = 0.14; ctx.lineCap = 'butt';
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+  }
+
+  // Furniture (js/furnish.js), each piece drawn in meters with its back at y = -d/2 and its front toward +y.
+  var WOOD = '#6f4f33', DARK = '#4a3b2e', WHITE = '#ece9e2', STEEL = '#8d949a';
+  function box(c, x, y, w, h, fill, line) {
+    c.fillStyle = fill; c.fillRect(x, y, w, h);
+    if (line) { c.strokeStyle = line; c.lineWidth = 0.03; c.strokeRect(x, y, w, h); }
+  }
+  function dot(c, x, y, r, fill) { c.fillStyle = fill; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); }
+  function goods(c, x0, x1, y, h, k) {
+    var COL = ['#c0533a', '#e0b13a', '#3a7bbf', '#5a9a4a'];
+    for (var x = x0, i = k; x < x1 - 0.2; x += 0.3, i++) box(c, x, y, 0.22, h, COL[i % 4]);
+  }
+  var PIECES = {
+    cama: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#e6dfd2', DARK);
+      box(c, -w / 2, -d / 2 + d * 0.3, w, d * 0.7, '#7d93a8'); // the blanket
+      var n = w > 1.1 ? 2 : 1, pw = w / n - 0.12;
+      for (var i = 0; i < n; i++) box(c, -w / 2 + 0.06 + i * (pw + 0.12), -d / 2 + 0.06, pw, 0.3, WHITE, '#bdb6a8');
+    },
+    ropero: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, WOOD, DARK); c.beginPath(); c.moveTo(0, -d / 2); c.lineTo(0, d / 2); c.stroke(); },
+    mesita: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, WOOD, DARK); dot(c, 0, 0, 0.1, '#e8d9a0'); },
+    sillon: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#5e6b5a', DARK);
+      box(c, -w / 2 + 0.18, -d / 2 + 0.25, w - 0.36, d - 0.3, '#738270');
+    },
+    tele: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, WOOD); box(c, -w * 0.4, -d / 2 + 0.05, w * 0.8, 0.08, '#1d1f22'); },
+    mesa: function (c, w, d) {
+      var tw = Math.max(0.6, w - 0.9), td = Math.max(0.6, d - 0.9);
+      for (var i = 0; i < 2; i++) { // chairs on the long sides
+        box(c, -tw / 4 - 0.2 + i * tw / 2, -td / 2 - 0.42, 0.4, 0.38, '#7b5a3c', DARK);
+        box(c, -tw / 4 - 0.2 + i * tw / 2, td / 2 + 0.04, 0.4, 0.38, '#7b5a3c', DARK);
+      }
+      box(c, -tw / 2, -td / 2, tw, td, '#9a7148', DARK);
+    },
+    mesada: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#cfcac0', '#7c766c');
+      box(c, -w / 2 + 0.15, -d / 2 + 0.1, 0.5, d - 0.2, STEEL); // the sink
+      if (w > 1.5) for (var i = 0; i < 4; i++) dot(c, w / 2 - 0.45 + (i % 2) * 0.25, -d / 2 + 0.18 + (i >> 1) * 0.25, 0.08, '#3b3b3b');
+    },
+    heladera: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, WHITE, '#9a968e'); },
+    lavarropas: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, WHITE, '#9a968e'); dot(c, 0, 0, w * 0.3, '#9fb3bf'); },
+    pileta: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#cfcac0', '#7c766c'); box(c, -w / 2 + 0.08, -d / 2 + 0.08, w - 0.16, d - 0.16, STEEL); },
+    inodoro: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, 0.2, WHITE, '#9a968e');
+      c.fillStyle = WHITE; c.strokeStyle = '#9a968e'; c.lineWidth = 0.03;
+      c.beginPath(); c.ellipse(0, d / 2 - 0.25, w / 2 - 0.02, 0.25, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    },
+    lavatorio: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, WHITE, '#9a968e');
+      c.fillStyle = '#c4d1d8'; c.beginPath(); c.ellipse(0, 0.03, w * 0.3, d * 0.3, 0, 0, Math.PI * 2); c.fill();
+    },
+    ducha: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#c9d6dc', '#8aa0aa');
+      c.beginPath(); c.moveTo(-w / 2, -d / 2); c.lineTo(w / 2, d / 2); c.moveTo(w / 2, -d / 2); c.lineTo(-w / 2, d / 2); c.stroke();
+      dot(c, 0, 0, 0.05, '#5d6b72');
+    },
+    tanque: function (c, w) { dot(c, 0, 0, w / 2, '#2f3b46'); dot(c, 0, 0, w / 2 - 0.12, '#3d4b58'); },
+    soga: function (c, w) {
+      c.strokeStyle = '#d8d2c4'; c.lineWidth = 0.03; c.beginPath(); c.moveTo(-w / 2, 0); c.lineTo(w / 2, 0); c.stroke();
+      dot(c, -w / 2, 0, 0.05, STEEL); dot(c, w / 2, 0, 0.05, STEEL);
+    },
+    motor: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#5c6168', '#2e3236'); dot(c, 0, 0, d * 0.3, '#3d4146'); },
+    estante: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#7a6a55', DARK); goods(c, -w / 2 + 0.1, w / 2, -d / 2 + 0.08, d - 0.16, 0); },
+    cajas: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w * 0.55, d * 0.55, '#b48f5c', '#6e5232');
+      box(c, -w / 2 + w * 0.4, -d / 2 + d * 0.35, w * 0.6, d * 0.65, '#a7834f', '#6e5232');
+    },
+    banco: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#8b6a45', DARK); },
+    auto: function (c, w, d) {
+      c.fillStyle = '#7d2f2a'; c.beginPath();
+      if (c.roundRect) c.roundRect(-w / 2, -d / 2, w, d, 0.4); else c.rect(-w / 2, -d / 2, w, d);
+      c.fill();
+      box(c, -w / 2 + 0.2, d / 2 - 1.5, w - 0.4, 0.6, '#2b3138'); // windshield
+      box(c, -w / 2 + 0.25, -d / 2 + 0.5, w - 0.5, 0.4, '#2b3138');
+    },
+    mostrador: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#8a6a4b', DARK); box(c, w / 2 - 0.5, -d / 2 + 0.12, 0.35, 0.3, '#3a3a3a'); },
+    gondola: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#bfc3c6', '#6c7176');
+      goods(c, -w / 2 + 0.08, w / 2, -d / 2 + 0.06, d / 2 - 0.1, 0);
+      goods(c, -w / 2 + 0.08, w / 2, 0.04, d / 2 - 0.1, 2);
+    },
+    maquina: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#5f7a6a', '#2d3a32');
+      box(c, -w / 2 + 0.2, -d / 2 + 0.2, w * 0.4, d - 0.4, '#4b6254');
+      dot(c, w / 4, 0, d * 0.25, '#c9a640');
+    },
+    escritorio: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, 0.7, '#7a5a3c', DARK);
+      box(c, -0.25, -d / 2 + 0.1, 0.5, 0.06, '#1d1f22'); // a screen
+      dot(c, 0, -d / 2 + 0.95, 0.22, '#3b3f44');        // the chair
+    },
+    archivero: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#7c848a', '#43494e'); },
+    altar: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#e8e2d2', '#8a7a5a');
+      box(c, -0.04, -d / 2 + 0.1, 0.08, 0.5, '#b08d3c'); box(c, -0.18, -d / 2 + 0.22, 0.36, 0.08, '#b08d3c');
+    },
+    pizarron: function (c, w, d) { box(c, -w / 2, -d / 2, w, Math.max(d, 0.12), '#2f4a3a', '#1c2a22'); },
+    pupitre: function (c, w, d) { box(c, -w / 2, -d / 2, w, 0.45, '#a07a50', DARK); dot(c, 0, d / 2 - 0.18, 0.17, '#4d5b68'); },
+    camilla: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#a9c0bf', '#5f7574'); box(c, -w / 2 + 0.05, -d / 2 + 0.05, w - 0.1, 0.35, WHITE); }
+  };
+  function drawPiece(ctx, q, cs) {
+    var draw = PIECES[q.t];
+    if (!draw) return;
+    ctx.save();
+    ctx.translate(q.cx, q.cy);
+    ctx.rotate(Math.atan2(-q.face[0], q.face[1])); // its front (+y) toward `face`
+    ctx.scale(1 / cs, 1 / cs);
+    draw(ctx, q.w, q.d);
+    ctx.restore();
   }
 
   // A flight of steps (in cells of the house's frame), a step every 20 cm. From below, the steps get lighter toward

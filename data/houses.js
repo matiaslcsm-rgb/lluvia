@@ -76,6 +76,36 @@
       aula: { name: 'Aula', floor: '#b9a17b' },
       consultorio: { name: 'Consultorio', floor: '#d3d8d5' }
     },
+    // Furniture of each room (js/furnish.js), in the order it is placed: [piece, width, depth, where, how many,
+    // [width, depth] if it doesn't fit].
+    // Width along the wall it stands against, depth out from it, in meters. where: 'wall' (its back against a wall)
+    // or 'center' (free all round; with a count, in rows: pews, desks, shelves). For now it is only drawn: you
+    // walk over it (decision: docs/PLAN.md).
+    furniture: {
+      dormitorio: [['cama', 1.4, 1.9, 'wall', 1, [0.9, 1.9]], ['ropero', 1.2, 0.6, 'wall'], ['mesita', 0.45, 0.4, 'wall']],
+      living: [['sillon', 2.0, 0.85, 'wall'], ['tele', 1.2, 0.4, 'wall'], ['mesa', 2.2, 1.7, 'center']],
+      livingCocina: [['mesada', 2.4, 0.6, 'wall'], ['heladera', 0.7, 0.7, 'wall'], ['sillon', 2.0, 0.85, 'wall'], ['mesa', 2.2, 1.7, 'center']],
+      ambiente: [['cama', 1.4, 1.9, 'wall', 1, [0.9, 1.9]], ['mesada', 1.8, 0.6, 'wall'], ['sillon', 1.6, 0.85, 'wall'], ['mesa', 1.6, 1.4, 'center']],
+      cocina: [['mesada', 2.4, 0.6, 'wall', 1, [1.2, 0.6]], ['heladera', 0.7, 0.7, 'wall'], ['mesa', 1.6, 1.4, 'center']],
+      lavadero: [['lavarropas', 0.6, 0.6, 'wall'], ['pileta', 0.6, 0.5, 'wall']],
+      bano: [['inodoro', 0.45, 0.7, 'wall'], ['lavatorio', 0.6, 0.45, 'wall'], ['ducha', 0.9, 0.9, 'wall', 1, [0.8, 0.8]]],
+      terraza: [['tanque', 1.2, 1.2, 'wall'], ['soga', 3, 0.3, 'wall']],
+      casilla: [['motor', 1.2, 0.8, 'wall']],
+      sotano: [['estante', 1.6, 0.5, 'wall', 2], ['cajas', 0.8, 0.8, 'wall', 3]],
+      galpon: [['banco', 1.8, 0.7, 'wall'], ['estante', 1.6, 0.5, 'wall', 2], ['cajas', 0.8, 0.8, 'wall', 2]],
+      garage: [['auto', 1.8, 4.2, 'wall'], ['estante', 1.6, 0.5, 'wall']],
+      local: [['mostrador', 2.0, 0.6, 'wall'], ['estante', 1.6, 0.5, 'wall', 3], ['gondola', 2.4, 0.8, 'center', 6]],
+      deposito: [['estante', 1.6, 0.5, 'wall', 4], ['cajas', 0.8, 0.8, 'wall', 4]],
+      nave: [['estante', 1.6, 0.5, 'wall', 6], ['maquina', 2.4, 1.6, 'center', 8], ['cajas', 0.8, 0.8, 'wall', 4]],
+      oficina: [['escritorio', 1.4, 1.2, 'wall', 2], ['archivero', 0.5, 0.6, 'wall']],
+      templo: [['altar', 2.0, 1.0, 'wall'], ['banco', 3.0, 0.6, 'center', 24]],
+      sacristia: [['ropero', 1.2, 0.6, 'wall'], ['mesa', 1.6, 1.4, 'center']],
+      aula: [['pizarron', 3.0, 0.2, 'wall'], ['escritorio', 1.4, 1.2, 'wall'], ['pupitre', 0.7, 0.9, 'center', 20]],
+      consultorio: [['camilla', 0.7, 1.9, 'wall'], ['escritorio', 1.4, 1.2, 'wall'], ['lavatorio', 0.6, 0.45, 'wall']]
+    },
+    // Windows on the outer walls, where nothing stands against them: one every `every` meters of a room's outer
+    // wall, `length` long (`small` in the rooms listed), none in the rooms of `none`.
+    windows: { length: 1.2, small: 0.6, smallIn: ['bano', 'lavadero', 'casilla'], none: ['terraza', 'sotano', 'pasillo', 'palier', 'hall'], every: 4 },
     wall: '#e8e1d3',        // inside walls, seen from above
     wallEdge: '#5a5146'
   };
