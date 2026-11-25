@@ -67,7 +67,7 @@
         el('p', 'hint', 'WASD: moverte · Shift: correr · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
         el('p', 'hint', 'A mano: cada botón una mano; los dos juntos, empujar · Espacio: cubrirte'),
         el('p', 'hint', 'E: revisar muebles o juntar · H: venda · Z: dormir · K: estado · F: linterna · Tab: fabricar · G: molotov'),
-        el('p', 'hint', 'M: mapa · P: pausa · O: sonido · Enter: ' + (onContinue ? 'continuar' : 'empezar'))].filter(Boolean));
+        el('p', 'hint', 'M: mapa · P: pausa · O: sonido · F2: menú de pruebas · Enter: ' + (onContinue ? 'continuar' : 'empezar'))].filter(Boolean));
       L.ui.current = 'title';
     },
 
@@ -307,6 +307,24 @@
         cv, button('Cerrar (M)', onClose, 'btn ghost'), el('p', 'hint', 'Rueda del mouse: acercar y alejar · Arrastrar: mover el mapa')]);
       draw();
       L.ui.current = 'map';
+    },
+
+    // The test menu (F2, js/debug.js): a button per shortcut, grouped; what it did shows at the top. Where you are, to
+    // tell Claude when something goes wrong.
+    debug: function (g, onClose) {
+      var msg = el('p', 'debugmsg', 'Atajos para probar. Lo que tocás pasa enseguida.'), where = el('p', 'hint', 'Dónde estás: ' + L.debug.where(g));
+      var wrap = el('div', 'debug');
+      L.debug.groups.forEach(function (gr) {
+        var box = el('div', 'debuggroup');
+        box.appendChild(el('div', 'invtitle', gr.name));
+        gr.actions.forEach(function (a) {
+          box.appendChild(button(a.label, function () { msg.textContent = a.run(g) || 'Listo.'; where.textContent = 'Dónde estás: ' + L.debug.where(g); }, 'btn small'));
+        });
+        wrap.appendChild(box);
+      });
+      show([el('h2', null, 'Menú de pruebas'), msg, wrap, where, button('Cerrar (F2)', onClose, 'btn ghost'),
+        el('p', 'hint', 'Si algo anda mal, copiá la línea de "Dónde estás" y pasásela a Claude.')]);
+      L.ui.current = 'debug';
     },
 
     // Your body (js/health.js, docs/CUERPO.md section 5): your wounds, what you have and what slows you down, and a

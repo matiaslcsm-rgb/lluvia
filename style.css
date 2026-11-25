@@ -135,3 +135,8 @@ body.bigtext .card .name { font-size: 21px; }
 
 /* The big map (M) */
 .bigmap { display: block; margin: 8px auto; border: 2px solid rgba(255, 233, 168, 0.5); cursor: grab; touch-action: none; }
+
+/* The test menu (F2, js/debug.js) */
+.debug { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 900px; margin: 8px auto; }
+.debuggroup { display: flex; flex-direction: column; gap: 4px; min-width: 160px; background: rgba(20,18,14,0.6); padding: 8px; border: 1px solid #3a3424; }
+.debugmsg { color: #e6dcbc; min-height: 1.3em; }

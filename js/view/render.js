@@ -508,8 +508,12 @@
         ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       }
       // Wisps of black smoke rising from the wall.
-      var len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.min(5000, Math.floor(len / (1.2 * s))); // only the ones on screen are drawn
-      for (var k = 0; k < n; k++) {
+      var len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.min(5000, Math.floor(len / (1.2 * s)));
+      // Only the stretch of the wall on screen: where the screen's corners fall along it.
+      var tmin = 1, tmax = 0, ddx = b[0] - a[0], ddy = b[1] - a[1], l2 = len * len || 1;
+      [[x0, y0], [x1, y0], [x0, y1], [x1, y1]].forEach(function (c) { var tt = ((c[0] - a[0]) * ddx + (c[1] - a[1]) * ddy) / l2; tmin = Math.min(tmin, tt); tmax = Math.max(tmax, tt); });
+      var k0 = Math.max(0, Math.floor(tmin * n) - 1), k1 = Math.min(n, Math.ceil(tmax * n) + 1);
+      for (var k = k0; k < k1; k++) {
         var f = (k + 0.5) / n, ph = (t * 0.35 + k * 0.618 + i * 0.37) % 1, x = a[0] + (b[0] - a[0]) * f, y = a[1] + (b[1] - a[1]) * f;
         if (x < x0 || x > x1 || y < y0 || y > y1) continue;
         ctx.fillStyle = 'rgba(10,6,18,' + (0.55 * (1 - ph)) + ')';

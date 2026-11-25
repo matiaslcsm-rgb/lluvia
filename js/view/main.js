@@ -125,7 +125,17 @@
     L.ui.bigMap(game(), toggleMap);
   }
 
+  // F2: the test menu (js/debug.js). The game waits while it is open.
+  function toggleDebug() {
+    if (!match || match.over || !game().city) return;
+    if (L.ui.current === 'debug') { paused = false; L.ui.hide(); return; }
+    if (paused) return;
+    paused = true;
+    L.ui.debug(game(), toggleDebug);
+  }
+
   function togglePause() {
+    if (L.ui.current === 'debug') { toggleDebug(); return; }
     if (L.ui.current === 'map') { toggleMap(); return; }
     if (L.ui.current === 'status') { toggleStatus(); return; }
     if (L.ui.current === 'craft') { toggleCraft(); return; }
@@ -175,6 +185,7 @@
     else if (e.code === 'KeyI' && L.ui.current !== 'craft' && L.ui.current !== 'status') toggleInventory();
     else if (e.code === 'KeyK' && L.ui.current !== 'craft' && L.ui.current !== 'inventory') toggleStatus();
     else if (L.ui.current === 'craft' && n !== undefined) L.ui.craftPick(n);
+    else if (e.code === 'F2') { e.preventDefault(); toggleDebug(); }
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
     else if (e.code === 'KeyR' && match && !paused && !match.solo) send();

@@ -63,6 +63,13 @@
     plan.outline.forEach(function (q) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
     L.cityForget(g.city, x0 - m, y0 - m, x1 + m, y1 + m);
     g.flowT = 0;
+    // A zombie standing where a plank or a piece of furniture just went: out of the wall.
+    g.enemies.forEach(function (e) {
+      if (e.dead || (e.floor || 0) !== 0 || e.x < x0 - m || e.x > x1 + m || e.y < y0 - m || e.y > y1 + m) return;
+      if (L.cityFits(g.city, e.x, e.y, Math.min(e.r, L.data.city.body))) return;
+      var fr = L.cityFree(g.city, e.x, e.y);
+      e.x = fr.x; e.y = fr.y;
+    });
   }
   function entry(g, o) {
     return g.barricades[o.key] || (g.barricades[o.key] = { planks: 0, hp: 0, furn: -1, fhp: 0, broken: false, glass: D().glassHp });
@@ -95,7 +102,7 @@
     var reach = D().reach * city.scale + p.r, best = null, bd = reach;
     var plans = [L.cityHouseAt(city, p.x, p.y)];
     // From outside: the houses whose doorway or window is right there.
-    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { plans.push(L.cityHouseAt(city, p.x + d[0] * reach, p.y + d[1] * reach)); });
+    [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]].forEach(function (d) { plans.push(L.cityHouseAt(city, p.x + d[0] * reach, p.y + d[1] * reach)); });
     plans.forEach(function (plan) {
       if (!plan) return;
       L.planOpenings(plan).forEach(function (o) {
@@ -105,13 +112,14 @@
     });
     if (!best) return null;
     var o = best, b = g.barricades[o.key] || { planks: 0, furn: -1 }, max = D().planks[o.kind], T = { o: o, add: null, rem: null };
+    var inside = L.cityHouseAt(city, p.x, p.y) === o.plan; // furniture is dragged from inside the house only
     var mats = L.packCount(g, 'tablas') >= 1 && L.packCount(g, 'clavos') >= D().nails && hasHammer(g);
     if (b.furn < 0 && b.planks < max && mats) { T.add = 'nail'; T.addLabel = 'clavar una tabla (' + (b.planks + 1) + '/' + max + ')'; }
-    else if (o.kind === 'door' && b.furn < 0 && !b.planks) {
+    else if (o.kind === 'door' && b.furn < 0 && !b.planks && inside) {
       var pc = pieceNear(g, o);
       if (pc) { T.add = 'move'; T.piece = pc; T.addLabel = 'trabar la puerta con ' + D().heavy[pc.t].name; }
     }
-    if (b.furn >= 0) { T.rem = 'back'; T.remLabel = 'correr ' + D().heavy[o.plan.furniture[b.furn].t].name; }
+    if (b.furn >= 0 && inside) { T.rem = 'back'; T.remLabel = 'correr ' + D().heavy[o.plan.furniture[b.furn].t].name; }
     else if (b.planks > 0 && hasHammer(g)) { T.rem = 'pry'; T.remLabel = 'sacar una tabla'; }
     if (!T.add && b.furn < 0 && b.planks < max) T.need = 'Para trabarla: tablas, ' + D().nails + ' clavos y un martillo';
     return T;
@@ -155,6 +163,8 @@
     L.emit(g, act === 'nail' ? 'hammer' : 'shove', p.x, p.y);
     tidy(g, o);
     forget(g, o.plan.index);
+    // Standing right on the doorway, or where the piece goes back: a step aside, so you aren't inside the wall.
+    if (!L.cityFits(g.city, p.x, p.y, Math.min(p.r, L.data.city.body)) && L.unstick) L.unstick(g);
     return true;
   };
 
@@ -179,8 +189,9 @@
       });
       if (!best) continue;
       if (bd > reach) {
-        // Looking for a way in: it walks up to that doorway or window (from outside).
-        if (e.mind === 'investigate') { e.goX = best.x + best.nx * 0.5 * s; e.goY = best.y + best.ny * 0.5 * s; e.linger = Math.max(e.linger || 0, 2); }
+        // Looking for a way in: it walks up to that doorway or window, aiming just past it (still inside the house,
+        // so it keeps after the same house).
+        if (e.mind === 'investigate') { e.goX = best.x - best.nx * 0.5 * s; e.goY = best.y - best.ny * 0.5 * s; e.linger = Math.max(e.linger || 0, 2); } // just inside: it walks into the opening
         continue;
       }
       if (e.mind === 'investigate') e.linger = Math.max(e.linger || 0, 2); // keeps at it

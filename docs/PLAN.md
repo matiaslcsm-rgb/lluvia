@@ -1257,6 +1257,18 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Todo se guarda con la partida; una partida nueva arranca sin barricadas.
   - Decisión mía: las ventanas sanas ya no dejaban pasar a nadie; ahora los zombis pueden romperlas.
   - Pruebas: 73 (nuevas: clavar y sacar tablas, trabar con un mueble, zombis que rompen tablas y vidrios, guardar).
+- **2026-11-25: trabarse en una pared, menú de pruebas y revisión** (el usuario se quedó trabado probando; dijo
+  que sí al menú de pruebas y a revisar el código cada tanto).
+  - Un bot (`node tools/stuck.js`) caminó por calles, casas y escaleras del mapa entero y no se trabó nunca. Lo que
+    te mete en una pared viene de otra cosa (un empujón, una escalera, algo que aparece debajo tuyo). Ahora, si
+    intentás caminar y no hay para dónde, el juego te saca al lugar libre más cercano. También en un piso de arriba.
+  - Arreglado: guardar acostado en una casa rompía el guardado (la casa se guardaba entera). Ahora se guarda su número.
+  - **Menú de pruebas (F2):** moverte (destrabarte, a la plaza, a una casa, a una de dos pisos, a la barrera), darte
+    cosas (para trabar puertas, comida, curarte, abrigo, armas), la hora, el clima, invencible, curarte todo, sacar
+    los zombis de cerca y destapar el mapa. Abajo dice dónde estás, para pasarle a Claude si algo anda mal.
+  - Revisión del código de hoy: los zombis que oían un ruido adentro no llegaban a golpear la puerta; un zombi parado
+    en la puerta quedaba metido en la tabla; se podía trabar con un mueble desde afuera. Los tres arreglados.
+  - Pruebas: 77.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

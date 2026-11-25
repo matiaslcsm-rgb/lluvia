@@ -114,7 +114,8 @@
     if (opts.night && L.makeHealth) L.makeHealth(g); // wounds, bleeding, infection (js/health.js)
     if (opts.night && L.makeClothes) L.makeClothes(g); // what you wear (js/clothes.js)
     if (opts.night && L.makeExplored) L.makeExplored(g); // the map remembers what you saw (js/explored.js)
-    if (opts.night && L.useBarricades) { g.barricades = {}; L.useBarricades(g); } // planks, furniture, broken glass (js/barricade.js)
+    // Planks, furniture, broken glass (js/barricade.js): every game starts without them, also in the city's walk grid.
+    if (L.useBarricades) { g.barricades = {}; L.useBarricades(g); if (!opts.night) delete g.barricades; }
     if (opts.night) g.lives = 1;                   // one life, as in Project Zomboid (the user's answer 10)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
@@ -268,6 +269,7 @@
     if (g.night && L.updateBarrier) L.updateBarrier(g, dt);       // how far the black barrier is (js/barrier.js)
     if (g.night && L.updateExplored) L.updateExplored(g, dt);     // what you see is remembered on the map (js/explored.js)
     if (g.night && L.updateBarricades) L.updateBarricades(g, dt); // zombies banging on doors and windows (js/barricade.js)
+    if (g.god && L.updateDebug) L.updateDebug(g);                  // invincible, from the test menu (js/debug.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);

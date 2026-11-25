@@ -123,3 +123,15 @@ test('barricadas: se guardan con la partida y una partida nueva arranca sin ella
   assert.strictEqual(g2.barricades[h.o.key].planks, 2);
   assert.ok(!anyOpen(g2.city, h.o), 'al seguir la partida la puerta quedó abierta');
 });
+
+test('barricadas: un zombi que oyó un ruido adentro camina hasta la puerta trabada y la rompe', function () {
+  var L = Lluvia, B = L.data.barricade, g = barGame(126), p = g.player, h = barHouse(g, 'door'), s = g.city.scale;
+  g.barricades[h.o.key] = { planks: 1, hp: B.plankHp, furn: -1, fhp: 0, broken: false, glass: B.glassHp };
+  L.useBarricades(g);
+  p.x = h.x; p.y = h.y; p.floor = 0; g.god = true;
+  var at = L.cityFree(g.city, h.o.x + h.o.nx * 6 * s, h.o.y + h.o.ny * 6 * s);
+  var e = L.spawnEnemy(g, 'rastrero', at.x, at.y);
+  e.floor = 0; e.mind = 'investigate'; e.goX = h.x; e.goY = h.y; e.linger = 3; e.face = 0;
+  for (var t = 0; t < 40 && g.barricades[h.o.key]; t += 1 / 30) { g.enemies = g.enemies.filter(function (z) { return z === e; }); L.update(g, 1 / 30, {}); }
+  assert.ok(!g.barricades[h.o.key], 'el zombi no llegó a romper la tabla (quedó a ' + (Math.hypot(e.x - h.o.x, e.y - h.o.y) / s).toFixed(1) + ' m, ' + e.mind + ')');
+});
