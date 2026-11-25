@@ -69,9 +69,23 @@ comprobar.
   donde dormiste por última vez y tu cuerpo queda para ir a buscarlo (la partida no se pierde); estaciones de 7 días,
   y después un sistema de ropa; más adelante la cordura. Todo en `docs/CUERPO.md`.
 
+- **2026-11-25 (decisión del usuario):** respuestas a los 10 puntos después de la novena temporada:
+  - se sigue y se prueba más adelante;
+  - el aire dura un 30% más y vuelve un 30% más rápido;
+  - **ropa como Project Zomboid**: medias, zapatos, guantes, remeras, camisas, etc.; cada prenda protege y abriga;
+  - **la partida se guarda solo al dormir en una cama**;
+  - el sistema de subir de nivel queda así hasta afinarlo;
+  - solo el sonido con dirección, sin marcas en pantalla;
+  - la cordura, más adelante;
+  - **el mapa recuerda lo que viste**: el minimapa se va destapando con lo que entra en tu vista, y hay un lugar
+    donde consultar todo lo explorado; más adelante, niebla de guerra (que también sirve para no cargar todo el mapa
+    al empezar);
+  - **el juego se llama Sol Loco** por ahora;
+  - el lore nuevo (la tormenta, la barrera negra, la noche sin estrellas, el sol enfermo) en `docs/LORE.md`.
+  - Trajo además una propuesta de facciones y finales hecha con otra IA: `docs/FACCIONES.md`, sin decidir.
+
 ## Decisiones abiertas
-- El nombre del juego (el usuario lo está pensando; le propuse 5).
-- Guardar la partida.
+- Las facciones y los finales (`docs/FACCIONES.md`): si van, cuáles primero, y si el Ente se queda.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -234,6 +248,17 @@ Pedido del usuario (2026-11-25), en este orden:
 58. **Morir:** despertar donde dormiste y el cuerpo que queda.
 59. **Estaciones** (y después la ropa).
 Más adelante: la cordura; refugio y barricadas; otros sobrevivientes.
+
+### Décima temporada — Sol Loco
+Pedido del usuario (2026-11-25):
+60. **Aire, nombre y lore:** el aire dura un 30% más; el juego se llama Sol Loco; el lore nuevo en `docs/LORE.md`.
+61. **Guardar al dormir en una cama**, y seguir la partida desde el menú.
+62. **Ropa como Project Zomboid:** prendas por parte del cuerpo; cada una protege de mordidas y rasguños y abriga;
+    se mojan con la lluvia negra y se rompen.
+63. **Sonido con dirección:** se oye más fuerte del lado de donde viene.
+64. **El mapa que recuerda:** el minimapa muestra solo lo que ya viste, y un mapa grande para consultar lo explorado.
+Más adelante: gente en la ciudad (NPC), que se puede convertir en zombi; facciones y finales (propuesta en
+`docs/FACCIONES.md`); la cordura; refugio y barricadas; niebla de guerra.
 
 ### Más adelante: autos y vehículos
 Idea del usuario (2026-11-24): que algún día el juego tenga autos y vehículos. Hoy los autos estacionados son

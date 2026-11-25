@@ -59,8 +59,8 @@
 
     // The start screen of San Miguel (the old character select of the rain game is gone from the menu).
     title: function (onStart) {
-      show([el('h1', null, 'LLUVIA'),
-        el('p', 'tagline', 'San Miguel. Un día el sol empezó a brillar amarillo y la gente se volvió loca.'),
+      show([el('h1', null, 'SOL LOCO'),
+        el('p', 'tagline', 'San Miguel. La tormenta de lluvia negra se fue, pero ya no hay estrellas, una barrera negra rodea la ciudad y de ella salen ellos.'),
         button('Empezar', onStart),
         el('p', 'hint', 'WASD: moverte · Shift: correr · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
         el('p', 'hint', 'A mano: cada botón una mano; los dos juntos, empujar · Espacio: cubrirte'),

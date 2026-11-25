@@ -1,14 +1,34 @@
 # El mundo de Lluvia
 
-## San Miguel bajo el Sol Amarillo (el juego de ahora)
-Lo de abajo es el mundo del juego anterior (Aguaverde y los Paraguas), guardado como referencia. El juego de ahora
-pasa en San Miguel.
+## Sol Loco: San Miguel después de la tormenta (el juego de ahora)
+El juego se llama **Sol Loco** por ahora (decisión del usuario, 2026-11-25). Lo de más abajo (Aguaverde y los
+Paraguas) es el mundo del juego anterior, guardado como referencia.
 
-Un día el sol empezó a brillar amarillo y la gente se volvió loca: mutó, enloqueció, se volvió zombi.
+**Lo que pasó** (contado por el usuario, 2026-11-25):
+- Un día llegó a San Miguel una **tormenta extraña**: lluvia negra y nubes grises y violetas. La tormenta inundó
+  toda la ciudad.
+- El juego arranca cuando **el agua se fue de golpe** y el cielo se despejó. Pero **ya no hay estrellas**.
+- A la ciudad la rodea una **barrera negra**. De la barrera salen los zombis: son ellos los que invaden el mundo.
+- La tormenta se fue, pero **el cielo quedó gris** y el sol despide un **amarillo enfermizo**. Ahora están estas
+  criaturas.
+- Va a haber **gente que vive en la ciudad** (NPC). Esa gente se puede convertir en zombi.
 
-**El cielo** (pedido del usuario, 2026-11-25): las nubes son blancas, y detrás de ellas se ve el sol brillando con
-un amarillo tétrico y violáceo. Cuando llueve, **la lluvia es negra**. Todo lo que se ve en la ciudad tiene esa luz:
-amarilla enferma, con un tinte violeta en las sombras.
+**Cómo se ve:** la luz de todo es amarilla enferma, con un tinte violeta en las sombras. Cuando vuelve a llover,
+la lluvia es negra.
+
+**Cómo se traduce al juego** (mi propuesta para ordenar lo que ya hay; nada de esto está decidido):
+- **La barrera negra** es el borde del mapa: no se cruza, y de ahí vienen los zombis. Cerca de la barrera es más
+  peligroso que en el centro.
+- **La noche sin estrellas** explica por qué la noche es tan oscura: solo hay luz de linterna, fuego o algún
+  generador.
+- **La lluvia negra** que vuelve a veces es el clima que ya hay. Con la ropa (pronto) te moja, te enfría y más
+  adelante te hace mal.
+- **Los zombis salen de la barrera** y se reparten por la ciudad. Cuando haya gente, un vecino mordido o caído
+  también se levanta como zombi.
+- **El sol loco** es el cielo de día: amarillo enfermo detrás del gris. De ahí el nombre.
+
+Las facciones (Ejército, iglesias, hospital, comisarías, supermercados) y los finales son una propuesta que el
+usuario trajo de otra IA: está en `docs/FACCIONES.md`, todavía sin decidir.
 
 ## Aguaverde
 Una ciudad de puertos, puentes y techos de chapa donde llueve sin parar desde hace cien años. Nadie sabe por qué

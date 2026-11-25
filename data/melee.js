@@ -13,7 +13,9 @@
   'use strict';
   L.data = L.data || {};
   L.data.melee = {
-    air: { max: 100, regen: 18, rest: 0.6, low: 15, slow: 1.7 }, // your air: refills after `rest` s; below `low`, blows `slow`x slower
+    // your air: refills after `rest` s; below `low`, blows `slow`x slower. 30% more and back 30% faster than at first
+    // (the user, 2026-11-25: it ran out too fast).
+    air: { max: 130, regen: 23.4, rest: 0.6, low: 15, slow: 1.7 },
     run: { mul: 1.6, cost: 14 },       // Shift: running, this many times faster, air per second (the user: "necesita correr")
     // Both mouse buttons at once: a shove (the user: "si usa los dos al mismo tiempo empuja"). Pushes the zombies in
     // front back `back` m and stops them `stun` s, may drop them; no damage. With fists each button is one hand.
