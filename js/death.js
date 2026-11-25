@@ -59,6 +59,8 @@
         if (!h.l && !h.r) { L.putInHands(g, sl, 'r'); took++; }
         else if (L.packAddWeapon(g, sl.id.slice(2), sl.dur)) took++;
         else { rest.push(sl); left++; }
+      } else if (sl.id.indexOf('r:') === 0) {
+        if (L.giveCloth(g, sl)) took++; else { rest.push(sl); left++; }
       } else {
         var n = L.packAdd(g, sl.id, sl.n);
         if (n < sl.n) took++;

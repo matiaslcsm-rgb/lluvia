@@ -129,7 +129,7 @@
   function slotIcon(ctx, sl, x, y, sz, C) {
     if (sl.id === 'gun') { ctx.fillStyle = '#151515'; ctx.fillRect(x + 4, y + sz / 2 - 3, sz - 8, 5); ctx.fillRect(x + 5, y + sz / 2, 4, 7); return; } // the pistol
     var wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
-    ctx.fillStyle = wd ? wd.color : L.data.loot.items[sl.id].color;
+    ctx.fillStyle = wd ? wd.color : sl.id.indexOf('r:') === 0 ? L.clothColor(sl.id) : L.data.loot.items[sl.id].color;
     if (wd) { ctx.save(); ctx.translate(x + sz / 2, y + sz / 2); ctx.rotate(-0.7); ctx.fillRect(-sz * 0.38, -2, sz * 0.76, 4); ctx.restore(); }
     else ctx.fillRect(x + 5, y + 4, sz - 10, sz - 12);
     if (!wd) { ctx.fillStyle = C.text; ctx.font = '600 9px system-ui, sans-serif'; ctx.textAlign = 'right'; ctx.fillText(sl.n, x + sz - 2, y + sz - 2); }
@@ -245,7 +245,9 @@
         if (p.bluntSlow > 0) hb.push('Golpeado');
         if (p.kitT > 0) hb.push('Kit ' + Math.ceil(p.kitT) + ' h');
         if (p.recovering) hb.push('Recuperándote');
-        if (hb.length) { ctx.fillStyle = L.bleeding(p).length || p.infection ? C.low : C.dim; ctx.fillText(hb.join(' · ') + ' (K: estado)', x, y + 98); }
+        var WS = { helado: 'Helado', frio: 'Frío', calor: 'Calor', muchoCalor: 'Mucho calor' }; // your clothes (js/clothes.js)
+        if (p.clothes && WS[p.warmState]) hb.push(WS[p.warmState]);
+        if (hb.length) { ctx.fillStyle = L.bleeding(p).length || p.infection || p.warmState === 'helado' ? C.low : C.dim; ctx.fillText(hb.join(' · ') + ' (K: estado)', x, y + 98); }
       }
       else if (p.blocking) { ctx.fillStyle = C.text; ctx.fillText('Cubriéndote', x, y + 83); }
       if (g.weather && L.floodAt(g, p.x, p.y) > 0.05) { ctx.fillStyle = C.dim; ctx.fillText('En el agua: ' + L.floodAt(g, p.x, p.y).toFixed(1) + ' m', x + 120, y + 83); }
@@ -599,7 +601,7 @@
       var sl = it.slot, wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null, gs = g.city ? g.city.scale : 50, q = 0.13 * gs;
       ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(it.x + 2, it.y + 3, q * 1.5, q, 0, 0, TAU); ctx.fill();
       if (wd) { ctx.save(); ctx.translate(it.x, it.y); ctx.rotate((it.x * 7 + it.y) % 3); ctx.fillStyle = wd.color; var ln = Math.max(0.25, wd.len || 0.2) * gs; ctx.fillRect(-ln / 2, -2, ln, 4); ctx.restore(); }
-      else { ctx.fillStyle = L.data.loot.items[sl.id].color; ctx.fillRect(it.x - q, it.y - q, 2 * q, 2 * q); ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(it.x - q, it.y - q, 2 * q, 2 * q); }
+      else { ctx.fillStyle = sl.id.indexOf('r:') === 0 ? L.clothColor(sl.id) : L.data.loot.items[sl.id].color; ctx.fillRect(it.x - q, it.y - q, 2 * q, 2 * q); ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(it.x - q, it.y - q, 2 * q, 2 * q); }
     });
     // Molotov fires (flickering) and bottles in the air (js/craft.js).
     (g.fires || []).forEach(function (f) {

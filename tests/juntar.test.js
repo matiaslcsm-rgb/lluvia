@@ -13,7 +13,7 @@ test('inventario: solo los bolsillos al empezar; lo grande va en bolso o mochila
   assert.strictEqual(L.packCount(g, 'balas'), D.startAmmo, 'no arranca con las balas de más');
   Object.keys(D.pieces).forEach(function (t) { D.pieces[t].forEach(function (row) {
     var id = row[0];
-    assert.ok(id === 'i:' || id.indexOf('w:') === 0 || id.indexOf('c:') === 0 && D.containers[id.slice(2)] || D.items[id], t + ' da algo que no existe: ' + id);
+    assert.ok(id === 'i:' || id.indexOf('w:') === 0 || id.indexOf('r:') === 0 && L.clothDef(id) || id.indexOf('c:') === 0 && D.containers[id.slice(2)] || D.items[id], t + ' da algo que no existe: ' + id);
   }); });
   // The 2 pockets: the pistol and the spare bullets fill them (docs/CUERPO.md section 4).
   assert.deepStrictEqual(g.pack.places[0].slots.map(function (sl) { return sl.id; }), ['gun', 'balas'], 'los bolsillos no tienen la pistola y las balas');
@@ -59,7 +59,8 @@ test('revisar muebles: con E al lado de un ropero, una sola vez, siempre lo mism
   assert.ok(!g.searched.has(tg.key), 'se revisa al instante');
   L.updateLoot(g, D.search, { use: true });
   assert.ok(g.searched.has(tg.key), 'manteniendo E no se revisa');
-  expect.forEach(function (q) { assert.strictEqual(L.packCount(g, q[0]), before[q[0]] + q[1], 'no se guardó ' + q[0]); });
+  // Clothes go on you or to the floor (js/clothes.js); the rest to the backpack.
+  expect.forEach(function (q) { if (q[0].indexOf('r:') !== 0) assert.strictEqual(L.packCount(g, q[0]), before[q[0]] + q[1], 'no se guardó ' + q[0]); });
   assert.ok(!L.searchTarget(g) || L.searchTarget(g).key !== tg.key, 'se puede revisar dos veces');
   // Soltar E corta la búsqueda.
   g.searched.clear();

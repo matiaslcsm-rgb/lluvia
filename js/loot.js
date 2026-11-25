@@ -34,7 +34,8 @@
   };
 
   function isWeapon(id) { return id.indexOf('w:') === 0; }
-  function isBig(id) { return id === 'gun' ? false : isWeapon(id) ? L.meleeDef(id.slice(2)).skill === 'media' : !!D().items[id].big; }
+  function isCloth(id) { return id.indexOf('r:') === 0; } // a garment (js/clothes.js)
+  function isBig(id) { return id === 'gun' ? false : isWeapon(id) ? L.meleeDef(id.slice(2)).skill === 'media' : isCloth(id) ? !!L.clothDef(id).big : !!D().items[id].big; }
   function isSupply(id) { return D().supplies.indexOf(id) >= 0; }
   // Two hands: long weapons (the gun too, but it lives apart: p.hand === 'gun').
   function twoHands(id) { return isWeapon(id) && L.meleeDef(id.slice(2)).skill === 'media'; }
@@ -72,9 +73,22 @@
     pl.slots.push({ id: id, n: 1, dur: dur });
     return true;
   };
-  // Any slot (a weapon or a stack) back into the places. Returns what didn't fit (a slot) or null.
+  // A slot as it is (a weapon or a garment) into a free slot that takes it, or a stack on top of others. True if it
+  // all fit.
+  L.packAddSlot = function (g, sl) {
+    if (isWeapon(sl.id) || isCloth(sl.id)) {
+      var pl = g.pack.places.filter(function (q) { return takes(q, sl.id); })[0];
+      if (!pl) return false;
+      pl.slots.push(sl);
+      return true;
+    }
+    var rest = L.packAdd(g, sl.id, sl.n);
+    if (rest) sl.n = rest;
+    return !rest;
+  };
+  // Any slot (a weapon, a garment or a stack) back into the places. Returns what didn't fit (a slot) or null.
   function stash(g, sl) {
-    if (isWeapon(sl.id)) return L.packAddWeapon(g, sl.id.slice(2), sl.dur) ? null : sl;
+    if (isWeapon(sl.id) || isCloth(sl.id)) return L.packAddSlot(g, sl) ? null : sl;
     var rest = L.packAdd(g, sl.id, sl.n);
     return rest ? { id: sl.id, n: rest } : null;
   }
@@ -112,7 +126,7 @@
   };
   // What everything you carry weighs, in kg: every slot, your hands, the bags and the gun.
   function weaponKg(id) { var w = L.meleeDef(id); return w.kg !== undefined ? w.kg : L.data.melee.kgBySkill[w.skill]; }
-  function slotKg(sl) { return sl.id === 'gun' ? 0 : isWeapon(sl.id) ? weaponKg(sl.id.slice(2)) : D().items[sl.id].kg * sl.n; }
+  function slotKg(sl) { return sl.id === 'gun' ? 0 : isWeapon(sl.id) ? weaponKg(sl.id.slice(2)) : isCloth(sl.id) ? L.clothDef(sl.id).kg : D().items[sl.id].kg * sl.n; }
   L.packWeight = function (g) {
     if (!g.pack) return 0;
     var p = g.player, kg = 0;
@@ -193,6 +207,7 @@
   function slotName(sl) {
     if (sl.id === 'gun') return 'pistola';
     if (isWeapon(sl.id)) { var wd = L.meleeDef(sl.id.slice(2)); return wd.name + (wd.dur ? ' (' + Math.round(sl.dur / wd.dur * 100) + '%)' : ''); }
+    if (isCloth(sl.id)) return L.clothName(sl);
     return L.lootText([[sl.id, sl.n]]);
   }
   L.slotName = slotName;
@@ -204,6 +219,12 @@
       add(p.hand === 'gun' ? 'Guardarla (2)' : 'Sacarla (1)', function () { p.hand = p.hand === 'gun' ? 'melee' : 'gun'; return true; });
       return out;
     }
+    // Clothes: put it on (what you had there goes where this was, or where it fits).
+    if (isCloth(sl.id) && p.clothes) add('Ponerte', function () {
+      var on = takeOut(g, ref), old = L.putOn(g, on);
+      if (old && !L.packAddSlot(g, old)) { L.dropToGround(g, old); L.toast(g, 'No te entra: ' + slotName(old) + ' queda en el piso.', '#8d8672'); }
+      return true;
+    });
     // Things you use.
     if (sl.id === N.drink.item) add('Tomar', function () { return L.consume(g, 'drink'); });
     if (sl.id === N.eat.item) add('Comer', function () { return L.consume(g, 'eat'); });
@@ -263,7 +284,10 @@
   // far as it fits (the rest stays). Returns true if you took something.
   L.pickUp = function (g, i) {
     var it = g.ground[i], sl = it.slot, p = g.player, name = slotName(sl);
-    if (isWeapon(sl.id)) {
+    if (isCloth(sl.id)) {
+      if (!L.giveCloth(g, sl)) { L.toast(g, 'No te entra: ' + name + '.', '#8d8672'); return false; }
+      g.ground.splice(i, 1);
+    } else if (isWeapon(sl.id)) {
       var h = hands(g);
       if (!h.l && !h.r) { putInHands(g, sl, 'r'); if (p.hand !== 'gun') p.hand = 'melee'; }
       else if (!L.packAddWeapon(g, sl.id.slice(2), sl.dur)) { L.toast(g, 'No te entra: ' + name + '.', '#8d8672'); return false; }
@@ -282,6 +306,7 @@
   L.lootText = function (list) {
     return list.map(function (q) {
       if (q[0].indexOf('w:') === 0) return L.meleeDef(q[0].slice(2)).name.toLowerCase(); // a hand weapon
+      if (q[0].indexOf('r:') === 0) return L.clothDef(q[0]).name.toLowerCase(); // a garment
       if (q[0].indexOf('c:') === 0) return 'una ' + D().containers[q[0].slice(2)].name.toLowerCase(); // a bag
       if (q[0] === 'i:') return 'algo raro'; // a special object (its name shows apart)
       var nm = D().items[q[0]].name; return q[1] + ' ' + (q[1] === 1 ? nm[0] : nm[1]);
@@ -369,6 +394,7 @@
         list.forEach(function (q) {
           var rest = q[0].indexOf('w:') === 0 ? (L.giveMelee(g, q[0].slice(2)) ? 0 : 1) :
             q[0].indexOf('c:') === 0 ? (L.wear(g, q[0].slice(2)) ? 0 : 1) :
+            q[0].indexOf('r:') === 0 ? (L.foundCloth(g, L.newCloth(q[0].slice(2))), 0) :
             q[0] === 'i:' ? (foundItem(g), 0) : L.packAdd(g, q[0], q[1]);
           if (q[1] - rest > 0) got.push([q[0], q[1] - rest]);
           if (rest > 0) left.push([q[0], rest]);

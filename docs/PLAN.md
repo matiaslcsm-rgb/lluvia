@@ -1187,6 +1187,14 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     tu cuerpo si habías muerto). Los zombis no se guardan: vienen otros. "Empezar de nuevo" arranca otra partida, y
     la guardada se reemplaza la próxima vez que dormís en una cama.
   - Pruebas: una nueva (guardar) y una mirada en el navegador (guardar, recargar la página, Continuar).
+- **2026-11-25: la ropa** (etapa 62; todo en `docs/CUERPO.md`, sección 8).
+  - 24 prendas en 7 lugares del cuerpo. Cada una abriga y frena algunas heridas; se gastan y se rompen.
+  - El frío y el calor dependen de lo que tenés puesto: con frío, más hambre; helado, perdés vida; con calor, más sed
+    y menos aire.
+  - La lluvia moja, y mojada la ropa abriga menos.
+  - Está en los roperos (lo que no te ponés queda en el piso), lavarropas, talleres, cajas y autos.
+  - Pruebas: 64 (nuevas: cuatro de ropa; cambiaron clima, inventario y revisar muebles), el bot 2 minutos y una
+    mirada en el navegador (el recuadro Ropa del inventario, ponerse el camperón, la ropa en el piso).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

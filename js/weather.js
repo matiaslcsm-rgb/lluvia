@@ -89,8 +89,8 @@
         L.emit(g, 'thunder', g.player.x, g.player.y);
       }
     }
-    // Cold: outdoors at night you lose life little by little.
+    // Cold: outdoors at night you lose life little by little (with clothes, js/clothes.js decides it).
     var cold = L.wx(g, 'cold'), p = g.player;
-    if (cold > 0 && L.clockOf(g).light < 0.3 && !(p.floor || L.cityHouseAt(g.city, p.x, p.y)) && !(g.respawn > 0)) p.hp -= cold * hours;
+    if (cold > 0 && !p.clothes && L.clockOf(g).light < 0.3 && !(p.floor || L.cityHouseAt(g.city, p.x, p.y)) && !(g.respawn > 0)) p.hp -= cold * hours;
   };
 })(this.Lluvia = this.Lluvia || {});

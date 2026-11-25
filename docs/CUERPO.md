@@ -78,4 +78,35 @@ que llevabas, y lo podés ir a buscar. La partida no se pierde. Se va a pulir m�
 
 ## 7. Estaciones
 Las 4 estaciones, de 7 días cada una. Cambian cuánto duran el día y la noche y qué clima es más probable. Hace falta
-un **sistema de ropa** para el frío y el calor: va anotado para después.
+un **sistema de ropa** para el frío y el calor: es la sección 8.
+
+## 8. La ropa (etapa 62)
+Pedido del usuario (2026-11-25): "como el Project Zomboid podés equiparte prendas de ropa, medias, zapatos, guantes,
+remeras, camisas, etc.; cada prenda te da protección y te da calor".
+- **Siete lugares del cuerpo**, una prenda en cada uno: cabeza, torso, abrigo, manos, piernas, medias y calzado.
+  Hay 24 prendas (gorro, gorra, casco de moto, remera, camisa, camiseta térmica, buzo, campera de jean, campera de
+  cuero, piloto, camperón, tres tipos de guantes, jean, jogging, short, pantalón de trabajo, dos tipos de medias,
+  ojotas, zapatillas, zapatos y botas). Los números de cada una están en `data/clothes.js`.
+- **Abrigo:** cada prenda suma calor. Lo que hace falta depende de la estación (verano poco, invierno mucho), de la
+  noche, del clima (frío, lluvia, tormenta suben; calor baja) y de si estás bajo techo.
+  - Si te falta un poco, tenés **frío** y te da más hambre. Si te falta mucho, estás **helado** y perdés vida.
+  - Si te sobra un poco, tenés **calor**: más sed y el aire vuelve más lento. Si te sobra mucho, más todavía.
+  - Esto reemplaza la regla vieja "el frío de noche afuera lastima": ahora depende de lo que tenés puesto.
+- **Protección:** cada golpe de zombi que te iba a dejar una herida cae en una parte del cuerpo (cabeza, torso,
+  brazos, manos, piernas, pies). Lo que tenés puesto ahí puede frenarla: unas prendas frenan mejor los cortes y otras
+  las mordidas. Para los brazos solo sirven las prendas con mangas. La remera casi no frena nada; la campera de cuero,
+  el casco y las botas, mucho.
+- **Se gastan:** cada golpe que frena gasta la prenda, hasta que **se rompe**. Rota no protege y abriga la mitad.
+- **La lluvia moja** lo de afuera, y lo de abajo solo si lo de afuera la deja pasar. El piloto y las botas casi no
+  dejan pasar nada. Mojada, una prenda abriga mucho menos. Se seca sola, más rápido bajo techo.
+- **Dónde está:** sobre todo en los roperos; algo en los lavarropas, los talleres, las cajas y los autos.
+- **Lo decidí yo:**
+  - arrancás con remera, jean, medias y zapatillas;
+  - en un mueble, la prenda de un lugar que tenés libre te la ponés sola; las demás quedan en el piso, al lado,
+    para que elijas (así un ropero no te llena la mochila de remeras);
+  - lo que tenés puesto no pesa; en la mochila, sí;
+  - al morir te despertás con la ropa puesta (lo demás queda en el cuerpo);
+  - el camperón, la campera de cuero, el casco y las botas son grandes: solo entran en una mochila o un bolso.
+- **En el inventario (I)** está el recuadro "Ropa": cuánto abriga lo que tenés y cuánto hace falta. El clic sobre una
+  prenda puesta te la saca, y sobre una de la mochila te la pone (lo que tenías ahí va a la mochila). La ventana de
+  estado (K) dice si tenés frío o calor y cuántas prendas mojadas tenés.

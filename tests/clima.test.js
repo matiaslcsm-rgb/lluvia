@@ -26,10 +26,10 @@ test('clima: cambia solo, nunca dos veces igual seguido; la niebla y la lluvia a
   setWeather(g, 'tormenta'); g.weather.nextFlash = 0;
   L.updateWeather(g, 0.016);
   assert.ok(g.weather.flashT > 0 && L.sightReach(g) >= clear * 0.99, 'el rayo no ilumina todo');
-  // Cold at night outdoors.
+  // Cold at night outdoors, in a T-shirt (js/clothes.js decides how cold you are).
   setWeather(g, 'frio'); g.time = (24 - K.start) * K.hour;
   var hp = g.player.hp;
-  for (i = 0; i < 30; i++) L.updateWeather(g, K.hour / 30);
+  for (i = 0; i < 30; i++) { L.updateWeather(g, K.hour / 30); L.updateClothes(g, 0, K.hour / 30); }
   assert.ok(g.player.hp < hp, 'el frío de noche afuera no lastima');
 });
 

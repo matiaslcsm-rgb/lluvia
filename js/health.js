@@ -48,6 +48,7 @@
       p.woundAcc -= H.every;
       var mix = (e && e.type && e.type.attack) || H.zombieMix, r = g.rng(), kind = 'c';
       for (var k in mix) { r -= mix[k]; if (r < 0) { kind = k; break; } }
+      if (L.clothesStop && L.clothesStop(g, kind)) continue; // what you wear stopped it (js/clothes.js)
       L.addWound(g, kind);
     }
   };

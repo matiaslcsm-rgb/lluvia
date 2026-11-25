@@ -229,9 +229,9 @@
     inventory: function (g, onClose) {
       var p = g.player, Dl = L.data.loot, wrap = el('div', 'inv'), h = p.hands || {};
       var again = function () { L.ui.inventory(g, onClose); };
-      var row = function (box, ref, sl) {
+      var row = function (box, ref, sl, acts) {
         var r = el('div', 'invrow');
-        var acts = L.slotActions(g, ref);
+        acts = acts || L.slotActions(g, ref);
         var use = button(L.slotName(sl), function () { if (acts[0] && acts[0].run()) again(); }, 'btn slot');
         use.title = 'Clic: ' + (acts[0] ? acts[0].label.toLowerCase() : '—') + ' · Clic derecho: más opciones';
         use.addEventListener('contextmenu', function (ev) { ev.preventDefault(); menu(ev, acts); });
@@ -256,6 +256,17 @@
       });
       if (p.gun) hb.appendChild(el('div', 'invline', p.gun.def.name + ' · ' + p.gun.ammo + ' en el cargador'));
       wrap.appendChild(hb);
+      // What you wear (js/clothes.js).
+      if (p.clothes) {
+        var CD = L.data.clothes, cb = el('div', 'invbox'), tmp = L.bodyTemp(g);
+        cb.appendChild(el('div', 'invtitle', 'Ropa · abriga ' + L.warmth(g).toFixed(1) + ' de ' + L.warmNeed(g).toFixed(1) + ' que hace falta'));
+        CD.slots.forEach(function (s) {
+          cb.appendChild(el('div', 'invline', CD.slotNames[s] + ':'));
+          if (p.clothes[s]) row(cb, null, p.clothes[s], L.clothActions(g, s)); else cb.appendChild(el('div', 'invempty', '—'));
+        });
+        if (L.warmText[tmp.state]) cb.appendChild(el('div', 'invline', L.warmText[tmp.state]));
+        wrap.appendChild(cb);
+      }
       // Pockets and bags.
       var st = L.suppliesTime(g);
       g.pack.places.forEach(function (pl) {
@@ -271,7 +282,7 @@
       var cm0 = document.querySelector('.ctxmenu'); if (cm0) cm0.remove();
       show([el('h2', null, 'Inventario'), el('p', kg > cap ? 'warn' : null, 'Peso: ' + kg.toFixed(1) + ' de ' + cap + ' kg' + (kg > cap ? ' · vas pesado: caminás más lento y te cansás más' : '')),
         wrap, button('Cerrar (I)', onClose, 'btn ghost'),
-        el('p', 'hint', 'Clic: lo primero que se puede hacer · Clic derecho: todas las opciones (tomar, llevar en la mano, tirar...) · Lo que tirás queda en el piso y se junta con E · La comida y el agua van en una mochila o bolso')]);
+        el('p', 'hint', 'Clic: lo primero que se puede hacer · Clic derecho: todas las opciones (tomar, llevar en la mano, tirar...) · Lo que tirás queda en el piso y se junta con E · La comida y el agua van en una mochila o bolso · La ropa: clic derecho, Ponerte; la que encontrás y no te ponés queda en el piso')]);
       L.ui.current = 'inventory';
     },
 
@@ -304,6 +315,11 @@
       if (p.fed >= N.eat.every) st.push('Tenés hambre.');
       if (p.energy !== undefined && p.energy < L.data.rest.sightLow) st.push('Tenés sueño: ves menos lejos.');
       if (L.defenses(g)) st.push('Defensas altas: es más difícil infectarte.');
+      if (p.clothes) {
+        var bt = L.bodyTemp(g), wetN = L.data.clothes.slots.filter(function (s) { return p.clothes[s] && p.clothes[s].wet > 0.15; }).length;
+        st.push('Ropa: abriga ' + L.warmth(g).toFixed(1) + ' y hace falta ' + L.warmNeed(g).toFixed(1) + '. ' + (L.warmText[bt.state] || 'Estás bien abrigado.'));
+        if (wetN) st.push('Tenés ' + wetN + (wetN === 1 ? ' prenda mojada' : ' prendas mojadas') + ': abriga menos. Se seca bajo techo.');
+      }
       if (p.capLost > 0) {
         var miss = [];
         if (p.infection) miss.push('curar la infección');

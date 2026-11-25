@@ -64,10 +64,10 @@
       mostrador: [['botiquin', 0.2, 1, 1], ['kitFarmacia', 0.4, 1, 2], ['antibiotico', 0.35, 4, 8], ['paracetamol', 0.5, 4, 8]],
       gondola: [['curitas', 0.6, 4, 10], ['alcohol', 0.5, 1, 2], ['sanitizante', 0.5, 1, 2], ['vendas', 0.5, 1, 3], ['paracetamol', 0.4, 4, 8], ['kitFarmacia', 0.12, 1, 1], ['agua', 0.2, 1, 1]],
       estante: [['vendas', 0.4, 1, 3], ['antibiotico', 0.2, 4, 4], ['kitFarmacia', 0.15, 1, 1], ['botiquin', 0.05, 1, 1]],
-      cajas: [['curitas', 0.4, 4, 10], ['alcohol', 0.3, 1, 2], ['botiquin', 0.08, 1, 1]]
+      cajas: [['curitas', 0.4, 4, 10], ['alcohol', 0.3, 1, 2], ['botiquin', 0.08, 1, 1], ['r:guantesTrabajo', 0.08, 1, 1]]
     },
     pieces: {
-      ropero: [['i:', 0.04, 1, 1], ['c:mochila', 0.08, 1, 1], ['c:bolso', 0.1, 1, 1], ['c:rinonera', 0.06, 1, 1], ['trapos', 0.6, 1, 3], ['vendas', 0.2, 1, 1], ['balas', 0.12, 3, 8], ['w:cinturon', 0.25, 1, 1], ['w:hockey', 0.04, 1, 1]],
+      ropero: [['i:', 0.04, 1, 1], ['c:mochila', 0.08, 1, 1], ['c:bolso', 0.1, 1, 1], ['c:rinonera', 0.06, 1, 1], ['trapos', 0.6, 1, 3], ['vendas', 0.2, 1, 1], ['balas', 0.12, 3, 8], ['w:cinturon', 0.25, 1, 1], ['w:hockey', 0.04, 1, 1], ['r:remera', 0.5, 1, 1], ['r:camisa', 0.3, 1, 1], ['r:termica', 0.08, 1, 1], ['r:buzo', 0.35, 1, 1], ['r:camperaJean', 0.12, 1, 1], ['r:camperaCuero', 0.05, 1, 1], ['r:piloto', 0.08, 1, 1], ['r:camperon', 0.1, 1, 1], ['r:gorro', 0.2, 1, 1], ['r:gorra', 0.2, 1, 1], ['r:guantesLana', 0.15, 1, 1], ['r:guantesCuero', 0.04, 1, 1], ['r:jean', 0.3, 1, 1], ['r:jogging', 0.3, 1, 1], ['r:short', 0.2, 1, 1], ['r:medias', 0.4, 1, 1], ['r:mediasLana', 0.15, 1, 1], ['r:zapatillas', 0.15, 1, 1], ['r:zapatos', 0.1, 1, 1], ['r:botas', 0.05, 1, 1], ['r:ojotas', 0.1, 1, 1]],
       mesa: [['i:', 0.03, 1, 1], ['comida', 0.1, 1, 1]],
       mesita: [['i:', 0.05, 1, 1], ['balas', 0.15, 2, 6], ['vendas', 0.2, 1, 1], ['paracetamol', 0.12, 2, 6], ['w:americano', 0.04, 1, 1], ['w:destornillador', 0.06, 1, 1]],
       mesada: [['agua', 0.2, 1, 1], ['botella', 0.4, 1, 1], ['trapos', 0.3, 1, 2], ['comida', 0.35, 1, 1], ['w:tenedor', 0.3, 1, 1], ['w:cuchillo', 0.25, 1, 1],
@@ -82,14 +82,14 @@
       mostrador: [['c:rinonera', 0.06, 1, 1], ['c:bolso', 0.05, 1, 1], ['balas', 0.15, 3, 8], ['comida', 0.2, 1, 1], ['w:americano', 0.04, 1, 1], ['w:matafuegos', 0.06, 1, 1]],
       maquina: [['chatarra', 0.6, 2, 4], ['nafta', 0.2, 1, 1], ['w:barra', 0.2, 1, 1], ['w:llave', 0.15, 1, 1], ['w:hacha', 0.04, 1, 1]],
       motor: [['nafta', 0.5, 1, 1], ['chatarra', 0.3, 1, 2], ['w:matafuegos', 0.3, 1, 1], ['w:llave', 0.15, 1, 1]],
-      auto: [['nafta', 0.5, 1, 1], ['chatarra', 0.4, 1, 2], ['w:llave', 0.2, 1, 1], ['w:cadena', 0.1, 1, 1]],
+      auto: [['nafta', 0.5, 1, 1], ['chatarra', 0.4, 1, 2], ['w:llave', 0.2, 1, 1], ['w:cadena', 0.1, 1, 1], ['r:casco', 0.03, 1, 1], ['r:piloto', 0.05, 1, 1]],
       lavatorio: [['vendas', 0.35, 1, 2], ['curitas', 0.3, 2, 6], ['alcohol', 0.25, 1, 1], ['paracetamol', 0.15, 2, 4], ['antibiotico', 0.04, 2, 4]],
       camilla: [['curitas', 0.4, 2, 8], ['alcohol', 0.3, 1, 1], ['vendas', 0.3, 1, 2], ['kitFarmacia', 0.08, 1, 1], ['antibiotico', 0.1, 4, 4]],
-      lavarropas: [['trapos', 0.4, 1, 2], ['w:escoba', 0.3, 1, 1], ['w:palita', 0.3, 1, 1]],
+      lavarropas: [['trapos', 0.4, 1, 2], ['w:escoba', 0.3, 1, 1], ['w:palita', 0.3, 1, 1], ['r:remera', 0.3, 1, 1], ['r:medias', 0.3, 1, 1], ['r:jean', 0.15, 1, 1], ['r:buzo', 0.1, 1, 1]],
       pileta: [['trapos', 0.3, 1, 1], ['w:escoba', 0.2, 1, 1]],
       tanque: [['chatarra', 0.3, 1, 1]],
       taller: [['w:martillo', 0.3, 1, 1], ['w:destornillador', 0.2, 1, 1], ['w:llave', 0.2, 1, 1], ['w:pala', 0.1, 1, 1], ['w:rastrillo', 0.1, 1, 1],
-        ['w:machete', 0.06, 1, 1], ['w:hacha', 0.05, 1, 1], ['clavos', 0.4, 4, 12]]
+        ['w:machete', 0.06, 1, 1], ['w:hacha', 0.05, 1, 1], ['clavos', 0.4, 4, 12], ['r:guantesTrabajo', 0.3, 1, 1], ['r:pantalonTrabajo', 0.15, 1, 1], ['r:botas', 0.1, 1, 1]]
     }
   };
 })(this.Lluvia = this.Lluvia || {});
