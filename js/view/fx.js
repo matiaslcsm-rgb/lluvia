@@ -54,6 +54,7 @@
           case 'rummage': S.play('rummage'); break;
           case 'craft': S.play('craft'); break;
           case 'skill': S.play('skill'); break;
+          case 'thunder': S.play('thunder'); break;
           case 'groan':
             var me = L.currentGame && L.currentGame() && L.currentGame().player;
             if (me) { var dd = Math.hypot(ev.x - me.x, ev.y - me.y) / 50; if (dd < 18) S.play('groan', 1 - dd / 18); }

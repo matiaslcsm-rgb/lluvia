@@ -58,8 +58,13 @@ comprobar.
   malestar, y nervioso te puede bajar la presión y desmayarte, más cuanto más tiempo pase. Al terminar la tanda,
   elegir las pruebas, hacerlas y subir todo.
 
+- **2026-11-25 (decisión del usuario):** sonidos, "lo que consideres mejor" (siguen hechos por el programa: bajar
+  archivos pide aprobar cada uno); la botella vacía se rellena en una canilla; agua y comida y el desmayo como están;
+  sigue el clima, y también cubrirse; guardar la partida y las estaciones, todavía sin definir.
+
 ## Decisiones abiertas
 - El nombre del juego (el usuario lo está pensando).
+- Guardar la partida y las estaciones (el usuario todavía no lo definió).
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -1071,6 +1076,28 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     archivo (nombre, de dónde y cuánto pesa); queda en la lista de puntos.
   - **Pruebas de la tanda:** las 45 pruebas (nuevas: peso, una vida, experiencia directa, comer y tomar, desmayo,
     objetos en muebles, golpe preparado) y una partida corta con el bot (4 minutos, sin errores).
+- **2026-11-25: el clima, la inundación, cubrirse y rellenar botellas** (etapa 50 y respuestas del usuario).
+  - **El clima** (`data/weather.js`) cambia solo cada 1 a 7 horas del juego, nunca dos veces igual seguido, y el
+    cambio tarda media hora en llegar. Se ve al lado de la hora:
+    - **despejado**;
+    - **nublado:** el día un poco más oscuro;
+    - **lluvia negra:** gotas negras cayendo, se oye, ves un poco menos y tus pasos se oyen menos;
+    - **tormenta:** más oscura y más lluvia, rayos cada 7 a 18 s que iluminan todo un instante (y se ven los
+      zombis), truenos;
+    - **niebla:** ves menos de la mitad y los zombis también;
+    - **calor:** el aire vuelve más lento, correr cansa más y te da sed más rápido;
+    - **frío:** te da hambre más rápido, y de noche afuera perdés 4 de vida por hora (adentro de una casa, no).
+    Por ahora sin estaciones: cada tipo tiene su chance fija.
+  - **La inundación:** mientras llueve, el agua sube en lo más bajo del terreno real (hasta 3 m sobre el punto más
+    bajo del mapa) y baja cuando para. Se ve agua oscura en el piso, con anillos donde cae la lluvia. Caminar en el
+    agua te frena (más cuanto más hondo), y a los zombis también.
+  - **Cubrirse (Espacio):** frena parte del golpe de un zombi que viene de adelante (la mitad a mano, más con un arma
+    corta, 80% con una larga), pagado con aire; caminás a mitad de velocidad. Se ven los brazos arriba.
+  - **Rellenar botellas:** una pileta, un lavatorio o una mesada ya revisados, con botellas vacías encima: E las
+    llena de agua.
+  - Pruebas: 48 (nuevas: el clima cambia, niebla y lluvia achican la vista, el rayo ilumina, el frío lastima de
+    noche afuera, la inundación sube en lo bajo y no en lo alto y baja al parar, cubrirse frena, la pileta llena
+    botellas) y una partida corta con el bot.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

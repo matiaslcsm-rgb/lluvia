@@ -36,7 +36,7 @@
     if (p.fed === undefined) L.makeNeeds(g);
     if (p.hurt > 0 && !p.wasHurt) p.hurtAt = g.time;
     p.wasHurt = p.hurt > 0;
-    p.fed += hours; p.watered += hours;
+    p.fed += hours * (L.wx ? L.wx(g, 'hunger') : 1); p.watered += hours * (L.wx ? L.wx(g, 'thirst') : 1); // heat and cold
     if (p.watered >= N.drink.every) L.consume(g, 'drink');
     if (p.fed >= N.eat.every) L.consume(g, 'eat');
     var u = L.uneaseOf(p);

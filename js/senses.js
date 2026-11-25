@@ -34,6 +34,7 @@
     if ((e.floor || 0) !== (p.floor || 0) || g.respawn > 0) return false;
     var light = L.clockOf(g).light, range = (K.night + (K.day - K.night) * light) * s;
     if (p.flashlight && p.flashlight.on) range = Math.max(range, K.lit * s);
+    if (L.wx) range *= L.wx(g, 'zsight'); // fog and storm (js/weather.js)
     var dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy);
     if (d > range) return false;
     if (d > e.r + p.r + 0.6 * s) {

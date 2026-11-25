@@ -179,7 +179,7 @@
     if (L.clockOf) {
       var k = L.clockOf(g), icon = k.phase === 'noche' ? '☾' : k.phase === 'dia' ? '☀' : '◐';
       ctx.fillStyle = C.text;
-      ctx.fillText(icon + ' Día ' + k.day + ' · ' + (k.hh < 10 ? '0' : '') + k.hh + ':' + (k.mm < 10 ? '0' : '') + k.mm, x, y + 38);
+      ctx.fillText(icon + ' Día ' + k.day + ' · ' + (k.hh < 10 ? '0' : '') + k.hh + ':' + (k.mm < 10 ? '0' : '') + k.mm + (L.weatherName ? ' · ' + L.weatherName(g) : ''), x, y + 38);
       // Your aim (js/skills.js): its level and how far to the next.
       if (L.skillOf && g.night) {
         var sk = L.skillOf(p, 'punteria'), need = L.data.skills.need[sk.level];
@@ -198,6 +198,8 @@
         ctx.fillText(bits.join(' · '), x, y + 68);
       }
       if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
+      else if (p.blocking) { ctx.fillStyle = C.text; ctx.fillText('Cubriéndote', x, y + 83); }
+      if (g.weather && L.floodAt(g, p.x, p.y) > 0.05) { ctx.fillStyle = C.dim; ctx.fillText('En el agua: ' + L.floodAt(g, p.x, p.y).toFixed(1) + ' m', x + 120, y + 83); }
       var fl = p.flashlight;
       if (fl && (fl.on || fl.battery < 1 || k.light < 0.5)) {
         ctx.fillStyle = C.dim; ctx.fillText(fl.on ? 'Linterna' : 'Linterna (F)', x, y + 53);
@@ -440,6 +442,7 @@
     if (g.city) {
       g.city._searched = g.searched || null; g.city._leftover = g.leftover || null; // searched furniture looks emptied
       L.drawCity(ctx, g.city, camX, camY, W, H, t);
+      if (L.drawFlood) L.drawFlood(ctx, g, camX, camY, W, H); // flood water on the low ground (js/view/weather.js)
       L.drawCityInterior(ctx, g.city, p); // the house you are in, without its roof, on the floor you are on
     } else L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
 
@@ -592,6 +595,7 @@
       var poly = sees ? L.sightPolygon(g.city, p, aimOf(p)) : null;
       if (L.drawNight) L.drawNight(ctx, g, p, camX, camY, W, H, poly, t); // night, dusk, dawn and lights (js/view/night.js)
       if (sees) drawShade(ctx, poly, camX, camY, W, H); // half-light outside what you see
+      if (L.drawWeather) L.drawWeather(ctx, g, W, H, dt);  // black rain, fog, lightning (js/view/weather.js)
       if (L.drawLook) L.drawLook(ctx, W, H, t);        // muted colors, grain and dark corners (data/look.js)
     }
 

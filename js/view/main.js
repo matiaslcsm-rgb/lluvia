@@ -52,6 +52,7 @@
       v.slot2 = L.input.key('Digit2'); // the hand weapon (again: the next one in the backpack)
       v.throwIt = L.input.key('KeyG');   // throw a molotov
       v.run = L.input.key('ShiftLeft') || L.input.key('ShiftRight'); // run
+      v.block = L.input.key('Space'); // cover yourself
       v.reload = L.input.key('KeyR');
       v.light = L.input.key('KeyF'); // the flashlight
       v.use = L.input.key('KeyE');   // search a piece of furniture
@@ -145,7 +146,7 @@
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
     else if (e.code === 'KeyR' && match && !paused && !match.solo) send();
-    else if (e.code === 'Space' && match && !paused && !match.over) { e.preventDefault(); ulti(); }
+    else if (e.code === 'Space' && match && !paused && !match.over) { e.preventDefault(); if (!game().night) ulti(); } // in the city Space covers you
     else if (e.code === 'KeyM') L.ui.flash(L.sound.toggle() ? 'Sonido apagado (M)' : 'Sonido prendido (M)');
   });
 
@@ -243,7 +244,7 @@
   var stepAt = null, stepLen = 0, zstepT = 0;
   function citySteps(g, dt) {
     var p = g.player, s = g.city.scale;
-    L.sound.rain(0);
+    L.sound.rain(L.wx ? L.wx(g, 'rain') * 1.8 : 0); // the black rain (js/weather.js)
     if (stepAt) stepLen += Math.hypot(p.x - stepAt.x, p.y - stepAt.y);
     stepAt = { x: p.x, y: p.y };
     if (stepLen > 0.7 * s) { stepLen = 0; L.sound.play('step', p.running ? 1 : 0.6); }

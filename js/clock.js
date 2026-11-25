@@ -45,8 +45,9 @@
   // (or the moon, if it is off).
   L.sightReach = function (g) {
     var s = g.city.scale, D = L.data.sight, K = C(), light = L.clockOf(g).light, fl = g.player.flashlight;
+    if (g.weather && g.weather.flashT > 0) return D.range * s; // a lightning lights everything
     var dark = fl && fl.on ? Math.max(K.moon, K.flashlight.range) : K.moon;
-    return (dark + (D.range - dark) * light) * s;
+    return (dark + (D.range - dark) * light) * s * (L.wx ? L.wx(g, 'sight') : 1); // fog and rain see less (js/weather.js)
   };
 
   // ---- Street lamps ----

@@ -99,7 +99,8 @@
     rummage: [0.35, function () { for (var i = 0; i < 4; i++) noise(0.05, 0.06, 1500 + Math.random() * 1500, i * 0.08, 'bandpass'); }],
     craft: [0.2, function () { noise(0.05, 0.15, 800); noise(0.05, 0.15, 1200, 0.12); }],
     glass: [0.1, function () { noise(0.25, 0.35, 4500, 0, 'highpass'); noise(0.6, 0.2, 600, 0.05); }],
-    skill: [0.3, function () { notes([392, 523], 'triangle', 0.09, 0.07); }]
+    skill: [0.3, function () { notes([392, 523], 'triangle', 0.09, 0.07); }],
+    thunder: [1, function () { noise(0.15, 0.5, 3000, 0, 'highpass'); noise(2.5, 0.45, 160, 0.1); noise(1.8, 0.3, 90, 0.5); }]
   };
 
   L.sound = {

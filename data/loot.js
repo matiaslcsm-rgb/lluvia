@@ -43,6 +43,7 @@
     // the user's answer 11: "los objetos se encuentran en el mundo, en los roperos, mesas"), rolled by `rarity`.
     // Pieces not listed (beds, pews, toilets...) have nothing to search.
     rarity: { comun: 80, raro: 17, legendario: 3 },
+    sinks: ['pileta', 'lavatorio', 'mesada'], // where an empty bottle is filled with water (E, once searched)
     pieces: {
       ropero: [['i:', 0.04, 1, 1], ['c:mochila', 0.08, 1, 1], ['c:bolso', 0.1, 1, 1], ['c:rinonera', 0.06, 1, 1], ['trapos', 0.6, 1, 3], ['vendas', 0.2, 1, 1], ['balas', 0.12, 3, 8], ['w:cinturon', 0.25, 1, 1], ['w:hockey', 0.04, 1, 1]],
       mesa: [['i:', 0.03, 1, 1], ['comida', 0.1, 1, 1]],

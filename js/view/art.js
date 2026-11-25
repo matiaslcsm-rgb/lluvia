@@ -66,6 +66,8 @@
       if (f.gun.cd > 1 / f.gun.def.rate - 0.05) { ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(r * 2.15, 0, r * 0.35, 0, Math.PI * 2); ctx.fill(); }
     }
     ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(r * 1.12, 0, r * 0.24, 0, Math.PI * 2); ctx.fill();
+    // Covering yourself: arms up in front.
+    if (f.blocking) { ctx.strokeStyle = '#4d5646'; ctx.lineWidth = r * 0.45; ctx.beginPath(); ctx.arc(0, 0, r * 1.15, -1.1, 1.1); ctx.stroke(); }
     // Shoulders (the torso seen from above).
     ctx.fillStyle = coat; ctx.strokeStyle = dark; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.ellipse(-r * 0.05, 0, r * 0.55, r * 1.05, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();

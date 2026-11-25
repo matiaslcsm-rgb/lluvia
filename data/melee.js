@@ -21,6 +21,10 @@
     arc: 100,          // degrees in front of you a blow reaches
     downBonus: 2,      // a zombie lying on the floor takes this many times the damage
     ready: 0.8, readyDmg: 0.6, readyKnock: 1,
+    // Covering yourself (Space held; the user's answer 5: "una mecánica para cubrirse"): how much of a zombie's
+    // blow you stop, by what is in your hands; each point stopped costs `air` air; you walk at `slow` speed; only
+    // what comes from the front (`arc` degrees).
+    block: { mano: 0.5, corta: 0.65, media: 0.8, gun: 0.4, air: 0.8, slow: 0.5, arc: 140 },
     kgBySkill: { mano: 0.2, corta: 0.6, media: 2 },
     hurtLife: 3,       // life you lose when you hurt your hands
     weapons: [

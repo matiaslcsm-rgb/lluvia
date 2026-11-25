@@ -109,6 +109,7 @@
     if (opts.night && L.makePack) L.makePack(g); // a backpack, and bullets come from it (js/loot.js)
     if (opts.night && L.makeHands) L.makeHands(g); // fists and hand weapons (js/melee.js)
     if (opts.night && L.makeNeeds) L.makeNeeds(g); // eating and drinking (js/needs.js)
+    if (opts.night && L.makeWeather) L.makeWeather(g); // the weather (js/weather.js)
     if (opts.night) g.lives = 1;                   // one life, as in Project Zomboid (the user's answer 10)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
@@ -248,6 +249,7 @@
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
     if (g.night && L.updateNeeds) L.updateNeeds(g, dt);         // eating, drinking, fainting (js/needs.js)
+    if (g.night && L.updateWeather) L.updateWeather(g, dt);     // rain, storm, fog, heat, cold, flooding (js/weather.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
@@ -292,6 +294,9 @@
     if (p.faint > 0) { x = 0; y = 0; }
     // Readying a blow with a long weapon (right button): half speed.
     if (p.readying) { x *= 0.5; y *= 0.5; }
+    // Covering yourself (Space): slower, and it needs air (js/melee.js).
+    p.blocking = !!(g.night && input.block && p.air > L.data.melee.air.low && !(p.faint > 0));
+    if (p.blocking) { x *= L.data.melee.block.slow; y *= L.data.melee.block.slow; }
     // Aiming (right button) you stand still; the sight closes (js/skills.js).
     if (g.night && p.gun && L.updateAim && p.hand !== 'melee') { if (input.aiming) { x = 0; y = 0; } L.updateAim(g, dt, input, !!(x || y)); }
     // Running (Shift): faster, but it costs air and makes more noise (js/melee.js, data/melee.js run).
@@ -299,7 +304,7 @@
     if (g.night && input.run && (x || y) && p.air > L.data.melee.air.low && !input.aiming) {
       run = L.data.melee.run.mul; p.running = true;
       // Heavy, running costs more air (js/loot.js, weight).
-      p.air = Math.max(0, p.air - L.data.melee.run.cost * (1 + 0.15 * L.packOver(g)) * dt); p.airRest = L.data.melee.air.rest;
+      p.air = Math.max(0, p.air - L.data.melee.run.cost * (1 + 0.15 * L.packOver(g)) * L.wx(g, 'run') * dt); p.airRest = L.data.melee.air.rest;
     } else p.running = false;
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
@@ -307,10 +312,11 @@
     // Your steps make a little noise (js/senses.js).
     if (g.night && (x || y)) {
       g.stepT = (g.stepT || 0) - dt;
-      if (g.stepT <= 0) { g.stepT = 0.5; L.makeNoise(g, p.x, p.y, p.running ? L.data.senses.noise.run : L.data.senses.noise.walk, p.floor, p); }
+      if (g.stepT <= 0) { g.stepT = 0.5; L.makeNoise(g, p.x, p.y, (p.running ? L.data.senses.noise.run : L.data.senses.noise.walk) * L.wx(g, 'steps'), p.floor, p); }
     }
     L.updateStance(p, len > 0.2, dt);
     var slow = (g.pack ? 1 - L.packSlow(g) : 1) * run; // a bolso in your hand gets in the way (js/loot.js)
+    if (g.weather) slow *= 1 - L.floodSlow(g, p.x, p.y);  // wading in flood water (js/weather.js)
     stepPlayer(g, x * p.stats.speed * slow * dt, y * p.stats.speed * slow * dt);
   }
 
@@ -544,6 +550,7 @@
       var d = Math.sqrt(dx * dx + dy * dy) || 1;
       // Stunned enemies stand still; slowed ones move at half speed.
       var sp = (e.stun > 0 ? 0 : e.slow > 0 ? e.speed * 0.5 : e.speed) * mul;
+      if (thinks && g.weather && g.weather.rise > 0) sp *= 1 - L.floodSlow(g, e.x, e.y); // wading too
       if (e.stun > 0) e.stun -= dt;
       if (e.downT > 0) e.downT -= dt; // on the floor (drawn lying, js/view/render.js)
       if (e.slow > 0) e.slow -= dt;
@@ -652,7 +659,19 @@
       e.x = ex; e.y = ey;
       if (e.flash > 0) e.flash -= dt;
       var touch = Math.hypot(p.x - e.x, p.y - e.y);
-      if (touch < e.r + p.r && (e.floor || 0) === pf && p.invuln <= 0) { p.hp -= e.dps * dt * (1 - p.stats.armor); p.hurt = 0.15; }
+      if (touch < e.r + p.r && (e.floor || 0) === pf && p.invuln <= 0) {
+        var bite = e.dps * dt * (1 - p.stats.armor);
+        // Covering yourself stops part of a blow from the front, paid with air (js/melee.js, data/melee.js block).
+        if (p.blocking) {
+          var B = L.data.melee.block, aimB = p.aim !== undefined ? p.aim : Math.atan2(p.dirY || 0, p.dirX || 1);
+          var diffB = Math.abs(((Math.atan2(e.y - p.y, e.x - p.x) - aimB) % TAU + 3 * Math.PI) % TAU - Math.PI);
+          if (diffB < B.arc * Math.PI / 360) {
+            var kind = p.hand === 'melee' && p.melee ? L.meleeDef(p.melee.id).skill : 'gun', stop = bite * B[kind];
+            bite -= stop; p.air = Math.max(0, p.air - stop * B.air); p.airRest = L.data.melee.air.rest;
+          }
+        }
+        p.hp -= bite; p.hurt = 0.15;
+      }
       if (e.burnTtl > 0) {
         e.burnTtl -= dt;
         L.applyHit(g, e, e.burnDps * dt, 0, 0);

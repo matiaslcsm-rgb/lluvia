@@ -145,12 +145,15 @@
     var lv = L.planLevel(plan, f);
     if (!lv || !lv.solidPx) return null;
     var reach = D().reach * city.scale + p.r, best = null, bd = Infinity;
+    var empties = L.packCount(g, 'botella') > 0;
     lv.solidPx.forEach(function (o, k) {
       var t = lv.furniture[k].t, key = plan.index + ':' + f + ':' + k;
-      if (!D().pieces[t] || g.searched.has(key) && !g.leftover.has(key)) return;
+      // A sink already searched: with empty bottles, E fills them (the user: refill at a tap).
+      var fill = empties && D().sinks.indexOf(t) >= 0 && g.searched.has(key) && !g.leftover.has(key);
+      if (!fill && (!D().pieces[t] || g.searched.has(key) && !g.leftover.has(key))) return;
       var dx = p.x - o.x, dy = p.y - o.y, a = dx * o.ax + dy * o.ay, b = dx * o.fx + dy * o.fy;
       var d = Math.hypot(a - L.clamp(a, -o.hw, o.hw), b - L.clamp(b, -o.hd, o.hd));
-      if (d < reach && d < bd) { bd = d; best = { plan: plan, f: f, k: k, t: t, key: key }; }
+      if (d < reach && d < bd) { bd = d; best = { plan: plan, f: f, k: k, t: t, key: key, fill: fill }; }
     });
     return best;
   };
@@ -165,7 +168,13 @@
       if (!g.search || g.search.key !== tg.key) { g.search = { key: tg.key, t: 0 }; L.emit(g, 'rummage', p.x, p.y); }
       g.search.t += dt;
       if (L.makeNoise && Math.floor(g.search.t * 2) !== Math.floor((g.search.t - dt) * 2)) L.makeNoise(g, p.x, p.y, L.data.senses.noise.search, p.floor, p);
-      if (g.search.t >= D().search) {
+      if (g.search.t >= D().search && tg.fill) {
+        var n = L.packTake(g, 'botella', 99), left2 = L.packAdd(g, 'agua', n);
+        if (left2) L.packAdd(g, 'botella', left2);
+        L.toast(g, n - left2 ? 'Llenaste ' + (n - left2) + (n - left2 === 1 ? ' botella' : ' botellas') + ' de agua.' : 'No te entra más agua.', '#7fb3c9');
+        L.emit(g, 'craft', p.x, p.y);
+        g.search = null;
+      } else if (g.search.t >= D().search) {
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {
           var rest = q[0].indexOf('w:') === 0 ? (L.giveMelee(g, q[0].slice(2)) ? 0 : 1) :

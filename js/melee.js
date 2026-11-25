@@ -143,7 +143,7 @@
     if (p.swingCdR > 0) p.swingCdR -= dt;
     if (p.pushCd > 0) p.pushCd -= dt;
     if (p.swingT > 0) p.swingT -= dt;
-    if (p.airRest > 0) p.airRest -= dt; else p.air = Math.min(A.max, p.air + A.regen * dt);
+    if (p.airRest > 0) p.airRest -= dt; else p.air = Math.min(A.max, p.air + A.regen * (L.wx ? L.wx(g, 'air') : 1) * dt); // heat: slower
     if (p.hand !== 'melee' || g.respawn || p.faint > 0) return;
     // When each button went down (to tell both-at-once from one after the other).
     if (input.fire && !p.heldL) p.downL = g.time;
