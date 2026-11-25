@@ -110,6 +110,35 @@
     ctx.drawImage(shadeCv, 0, 0);
   }
 
+  // The backpack (js/loot.js), bottom left: a slot per item with how many; and, next to you, what E would search
+  // and how far along the search is.
+  function packHud(ctx, g, p, camX, camY, W, H) {
+    var C = L.data.look.hud, Dl = L.data.loot, sz = 26, x0 = 18, y0 = H - 18 - sz;
+    ctx.globalAlpha = 0.85;
+    for (var i = 0; i < g.pack.size; i++) {
+      var sl = g.pack.slots[i], x = x0 + i * (sz + 4);
+      ctx.fillStyle = 'rgba(12,11,9,0.6)'; ctx.fillRect(x, y0, sz, sz);
+      ctx.strokeStyle = 'rgba(207,198,168,0.25)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y0 + 0.5, sz - 1, sz - 1);
+      if (!sl) continue;
+      ctx.fillStyle = Dl.items[sl.id].color; ctx.fillRect(x + 6, y0 + 5, sz - 12, sz - 14);
+      ctx.fillStyle = C.text; ctx.font = '600 10px system-ui, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(sl.n, x + sz - 3, y0 + sz - 3);
+    }
+    ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
+    ctx.fillText('Mochila · E revisar · H venda', x0, y0 - 5);
+    ctx.globalAlpha = 1;
+    var tg = g.lootTarget;
+    if (tg) {
+      var sx = p.x - camX, sy = p.y - camY - p.r - 14;
+      ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
+      ctx.fillText(g.search ? 'Revisando...' : 'E: revisar', sx, sy);
+      if (g.search) {
+        ctx.strokeStyle = C.ammo; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, g.search.t / Dl.search)); ctx.stroke();
+      }
+    }
+  }
+
   // The quiet HUD of the city (data/look.js, hud): small, muted, top left. Life as a thin bar with your lives as
   // marks under it, the level and its progress as a thinner line.
   function quietHud(ctx, g, p, need) {
@@ -139,7 +168,7 @@
     ctx.textAlign = 'right';
     ctx.font = C ? '700 16px system-ui, sans-serif' : '700 22px system-ui, sans-serif';
     ctx.fillStyle = gun.reload > 0 ? (C ? C.dim : '#9a9db0') : gun.ammo <= mag * 0.25 ? (C ? C.low : '#ff9a7a') : (C ? C.ammo : '#ffe9a8');
-    ctx.fillText(gun.reload > 0 ? 'Recargando...' : gun.ammo + ' / ' + mag, x, y);
+    ctx.fillText(gun.reload > 0 ? 'Recargando...' : gun.ammo + ' / ' + mag + (g.pack ? '  ·  ' + L.packCount(g, 'balas') : ''), x, y);
     ctx.font = C ? '600 11px system-ui, sans-serif' : '600 13px system-ui, sans-serif';
     ctx.fillStyle = C ? C.dim : '#c4c6d2';
     ctx.fillText(gun.def.name + (gun.level ? ' +' + gun.level : '') + (C ? '' : ' · R recarga'), x, y - (C ? 20 : 26));
@@ -362,6 +391,7 @@
     ctx.translate(-camX, -camY);
 
     if (g.city) {
+      g.city._searched = g.searched || null; g.city._leftover = g.leftover || null; // searched furniture looks emptied
       L.drawCity(ctx, g.city, camX, camY, W, H, t);
       L.drawCityInterior(ctx, g.city, p); // the house you are in, without its roof, on the floor you are on
     } else L.drawFloor(ctx, camX, camY, W, H, g.arena, g.seed, t);
@@ -564,6 +594,7 @@
 
     if (m && !m.solo) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
     if (p.gun) gunHud(ctx, g, W, H);
+    if (g.pack) packHud(ctx, g, p, camX, camY, W, H);
     if (g.city) L.drawMinimap(ctx, g, W);
 
     // Boss health bar.

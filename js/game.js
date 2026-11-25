@@ -106,6 +106,7 @@
     }
     recalcStats(g);
     if (opts.gun) L.giveGun(g, opts.gun);
+    if (opts.night && L.makePack) L.makePack(g); // a backpack, and bullets come from it (js/loot.js)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
     if (g.city && g.city.start) { var fr = L.cityFree(g.city, g.city.start.x, g.city.start.y); g.player.x = fr.x; g.player.y = fr.y; }
@@ -240,6 +241,7 @@
     L.tickUlti(p, dt);
     movePlayer(g, dt, input);
     if (g.city && L.updateClock) L.updateClock(g, dt, input); // the flashlight (js/clock.js)
+    if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);

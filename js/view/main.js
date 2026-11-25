@@ -49,6 +49,8 @@
       v.fire = mouse.down;
       v.reload = L.input.key('KeyR');
       v.light = L.input.key('KeyF'); // the flashlight
+      v.use = L.input.key('KeyE');   // search a piece of furniture
+      v.heal = L.input.key('KeyH');  // a bandage
     }
     return v;
   }

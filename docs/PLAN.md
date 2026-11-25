@@ -908,6 +908,24 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     (tarda: unos 10 minutos por partida de dos días). Falta ajustarlos con lo que mida.
   - Prueba nueva: al mediodía hay pocos, a medianoche muchos, la segunda noche más y más fuertes, y a la mañana
     los de lejos se van.
+- **2026-11-25: juntar, primera parte: revisar muebles y la mochila** (etapa 48; pedido del usuario: "con qué
+  podés seguir mientras").
+  - Manteniendo **E** al lado de un mueble (a menos de 90 cm) lo revisás en 1,4 s, con un círculo que se llena
+    alrededor del personaje. Lo que hay va a la mochila, y el mueble queda más apagado, revisado.
+  - Qué tiene cada mueble (`data/loot.js`): roperos, trapos, vendas y a veces balas; mesitas y mostradores, balas;
+    mesadas y heladeras, comida y botellas; estantes y cajas, chatarra, clavos y tablas; máquinas, motores y
+    autos, nafta y chatarra; lavatorios, vendas. Camas, bancos e inodoros no tienen nada. Siempre lo mismo en el
+    mismo mueble, y cada mueble se revisa una sola vez.
+  - **La mochila** tiene 10 casilleros, abajo a la izquierda, y cada cosa se apila hasta un tope (34 balas, 5
+    vendas, 10 trapos...). Lo que no entra se queda en el mueble para volver a buscarlo.
+  - **Las balas salen de la mochila** (decisión 2 de Darkwood): arrancás con el cargador lleno y 17 más. Sin balas
+    no se recarga y aparece un aviso. Junto al cargador se ve cuántas quedan en la mochila.
+  - **H** usa una venda: +30 de vida.
+  - Queda para la segunda parte: el arma de mano para cuando no hay balas, y fabricar en el banco de trabajo (vendas,
+    molotov, balas, tablas). Hoy la comida, los clavos, la nafta y la chatarra se juntan pero todavía no sirven.
+  - Pruebas nuevas (`tests/juntar.test.js`): la mochila apila y se llena; un ropero se revisa con E, una sola vez y
+    siempre da lo mismo; soltar E corta; lo que no entra queda en el mueble; la venda cura; recargar usa las
+    balas de la mochila y sin balas no recarga.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

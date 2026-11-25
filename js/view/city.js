@@ -186,7 +186,13 @@
       }
       ctx.fill();
     });
-    (level.furniture || []).forEach(function (q) { drawPiece(ctx, q, cs); });
+    var searched = city._searched, left = city._leftover;
+    (level.furniture || []).forEach(function (q, k) {
+      var key = plan.index + ':' + fl + ':' + k, done = searched && searched.has(key) && !(left && left.has(key));
+      if (done) ctx.globalAlpha *= 0.55; // searched: emptied, faded
+      drawPiece(ctx, q, cs);
+      if (done) ctx.globalAlpha /= 0.55;
+    });
     (level.doors || []).forEach(function (g) { drawDoor(ctx, plan, level, g, null); });
     if (!upper) plan.exits.forEach(function (e) { drawDoor(ctx, plan, level, e.seg, e.dir); });
     (plan.stairs || []).forEach(function (st) {
