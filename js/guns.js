@@ -37,6 +37,11 @@
   L.updateGun = function (g, dt, input) {
     var p = g.player, gun = p.gun;
     if (!gun) return;
+    // You face where you aim, and see that way (js/sight.js).
+    if (input.aimX !== undefined && (input.aimX !== p.x || input.aimY !== p.y)) {
+      p.aim = Math.atan2(input.aimY - p.y, input.aimX - p.x);
+      p.dirX = Math.cos(p.aim); p.dirY = Math.sin(p.aim);
+    }
     if (gun.cd > 0) gun.cd -= dt;
     if (gun.reload > 0) {
       gun.reload -= dt;

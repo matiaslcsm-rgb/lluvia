@@ -215,7 +215,8 @@
         var q = h.outline[k], r = h.outline[(k + 1) % h.outline.length];
         stampWall(city, a, x0, y0, q[0], q[1], r[0], r[1], h.exitsPx);
       }
-      h.wallsPx.forEach(function (w) { stampWall(city, a, x0, y0, w[0], w[1], w[2], w[3], null); });
+      var rails = (h.railsPx || []).map(String); // stamped later, see-through
+      h.wallsPx.forEach(function (w) { if (rails.indexOf(String(w)) < 0) stampWall(city, a, x0, y0, w[0], w[1], w[2], w[3], null); });
     });
     // Then every doorway is cleared through the whole thickness of its wall (on a turned house the walls near a
     // corner can close a door's gap), but only inside its own house or outside every building: row houses share
@@ -231,16 +232,23 @@
       h.exitSegsPx.forEach(function (d) { clearDoor(city, a, x0, y0, d, free); });
     });
     // The ground floor's furniture is solid too (js/furnish.js).
-    // A small or thin piece may cover no cell's center: its middle line is stamped too.
+    // A small or thin piece may cover no cell's center: its middle line is stamped too. Low furniture (most of it:
+    // data/sight.js, tall) blocks bodies but you see over it: value 2, see-through.
+    var tall = L.data.sight ? L.data.sight.tall : [];
     houses.forEach(function (h) {
-      (h.solidPx || []).forEach(function (o) {
-        fillZone(city, a, x0, y0, o.pts, null, 0);
+      (h.solidPx || []).forEach(function (o, k) {
+        var v = tall.indexOf(h.furniture[k].t) >= 0 ? 0 : 2, only = v ? 1 : undefined;
+        fillZone(city, a, x0, y0, o.pts, null, v, only);
         var long = o.hw >= o.hd, ux = long ? o.ax : o.fx, uy = long ? o.ay : o.fy, half = long ? o.hw : o.hd;
-        stampWall(city, a, x0, y0, o.x - ux * half, o.y - uy * half, o.x + ux * half, o.y + uy * half, null);
-        stampWall(city, a, x0, y0, o.x, o.y, o.x, o.y, null); // and its very middle
+        stampWall(city, a, x0, y0, o.x - ux * half, o.y - uy * half, o.x + ux * half, o.y + uy * half, null, v, only);
+        stampWall(city, a, x0, y0, o.x, o.y, o.x, o.y, null, v, only); // and its very middle
       });
+      // Stair railings and windows: still in the way, but you see through them.
+      (h.railsPx || []).forEach(function (w) { stampWall(city, a, x0, y0, w[0], w[1], w[2], w[3], null, 2, 1); });
+      (h.windows || []).forEach(function (w) { stampWall(city, a, x0, y0, w[0] * city.scale, w[1] * city.scale, w[2] * city.scale, w[3] * city.scale, null, 2, 0); });
     });
-    if (cars) for (i = 0; i < cars.length; i++) fillZone(city, a, x0, y0, cars[i].pts, null, 0);
+    // Parked cars: in the way, but you see over them.
+    if (cars) for (i = 0; i < cars.length; i++) fillZone(city, a, x0, y0, cars[i].pts, null, 2, 1);
     if (city.pages.size >= C.maxPages) city.pages.delete(city.pages.keys().next().value); // the oldest goes
     city.pages.set(z, a);
     return a;
@@ -248,7 +256,9 @@
 
   // Fills a polygon into a zone, row by row: a cell takes \`value\` when its center is inside. The polygon is either
   // points in px (\`pts\`) or the map's flat numbers (\`flat\`, times city.k).
-  function fillZone(city, a, x0, y0, pts, flat, value) {
+  // `only`: if given, only cells that hold that value change (a car or low furniture over open ground, never over a
+  // wall).
+  function fillZone(city, a, x0, y0, pts, flat, value, only) {
     var c = city.cell, P = L.data.city.page, k = city.k, n = pts ? pts.length : flat.length >> 1, xs = [], i, j;
     var X = pts ? function (q) { return pts[q][0]; } : function (q) { return flat[q * 2] * k; };
     var Y = pts ? function (q) { return pts[q][1]; } : function (q) { return flat[q * 2 + 1] * k; };
@@ -265,7 +275,7 @@
       xs.sort(function (p, q) { return p - q; });
       for (var m = 0; m + 1 < xs.length; m += 2) {
         var ca = Math.max(x0, Math.ceil(xs[m] / c - 0.5)), cb = Math.min(x0 + P - 1, city.cols - 1, Math.floor(xs[m + 1] / c - 0.5));
-        for (var cx = ca; cx <= cb; cx++) a[(cy - y0) * P + (cx - x0)] = value;
+        for (var cx = ca; cx <= cb; cx++) { var at = (cy - y0) * P + (cx - x0); if (only === undefined || a[at] === only) a[at] = value; }
       }
     }
   }
@@ -273,14 +283,18 @@
   // A wall from (ax, ay) to (bx, by) px into a zone: the cells the line goes through, one cell thick. On a slant
   // two of its cells may touch only at a corner, which is fine: a body can't squeeze through a corner (L.cityFits
   // looks around its center). `gaps` ({ x, y, r }) are doorways left open.
-  function stampWall(city, a, x0, y0, ax, ay, bx, by, gaps) {
+  // `value` (default 0) and `only` as in fillZone.
+  function stampWall(city, a, x0, y0, ax, ay, bx, by, gaps, value, only) {
     var c = city.cell, P = L.data.city.page, len = Math.hypot(bx - ax, by - ay), steps = Math.max(1, Math.ceil(len / (c / 3)));
     for (var k = 0; k <= steps; k++) {
       var x = ax + (bx - ax) * k / steps, y = ay + (by - ay) * k / steps, open = false;
       if (gaps) for (var g = 0; g < gaps.length; g++) if (Math.hypot(x - gaps[g].x, y - gaps[g].y) < gaps[g].r) { open = true; break; }
       if (open) continue;
       var cx = Math.floor(x / c), cy = Math.floor(y / c);
-      if (cx >= x0 && cx < x0 + P && cy >= y0 && cy < y0 + P) a[(cy - y0) * P + (cx - x0)] = 0;
+      if (cx >= x0 && cx < x0 + P && cy >= y0 && cy < y0 + P) {
+        var at = (cy - y0) * P + (cx - x0);
+        if (only === undefined || a[at] === only) a[at] = value || 0;
+      }
     }
   }
 
@@ -588,6 +602,9 @@
   }
   L.cityFits = fits;
 
+  // A walk-grid cell for sight (js/sight.js): 1 open, 2 blocked but see-through, 0 hides what is behind.
+  L.citySightCell = cellAt;
+
   // Moves a circle from (x, y) to (nx, ny), sliding along walls. Returns the new position in `out`.
   // r is capped at the city's body size, so everyone fits in the narrow streets.
   L.cityMove = function (city, x, y, nx, ny, r, out) {
@@ -626,7 +643,7 @@
         var edge = Math.abs(dy) === ring, step = edge || !ring ? 1 : ring * 2;
         for (var dx = -ring; dx <= ring; dx += step) {
           var cx = cx0 + dx, cy = cy0 + dy;
-          if (!cellAt(city, cx, cy)) continue;
+          if (cellAt(city, cx, cy) !== 1) continue;
           if (needFit && !fits(city, (cx + 0.5) * c, (cy + 0.5) * c, L.data.city.body)) continue;
           return { x: (cx + 0.5) * c, y: (cy + 0.5) * c };
         }
@@ -647,10 +664,10 @@
     flow[R * W + R] = 0; q[tail++] = R * W + R;
     while (head < tail) {
       var c = q[head++], lx = c % W, ly = (c - lx) / W, d = flow[c] + 1, gx = ox + lx, gy = oy + ly;
-      if (lx > 0 && gx > 0 && cellAt(city, gx - 1, gy) && flow[c - 1] > d) { flow[c - 1] = d; q[tail++] = c - 1; }
-      if (lx < W - 1 && gx < cols - 1 && cellAt(city, gx + 1, gy) && flow[c + 1] > d) { flow[c + 1] = d; q[tail++] = c + 1; }
-      if (ly > 0 && gy > 0 && cellAt(city, gx, gy - 1) && flow[c - W] > d) { flow[c - W] = d; q[tail++] = c - W; }
-      if (ly < W - 1 && gy < city.rows - 1 && cellAt(city, gx, gy + 1) && flow[c + W] > d) { flow[c + W] = d; q[tail++] = c + W; }
+      if (lx > 0 && gx > 0 && cellAt(city, gx - 1, gy) === 1 && flow[c - 1] > d) { flow[c - 1] = d; q[tail++] = c - 1; }
+      if (lx < W - 1 && gx < cols - 1 && cellAt(city, gx + 1, gy) === 1 && flow[c + 1] > d) { flow[c + 1] = d; q[tail++] = c + 1; }
+      if (ly > 0 && gy > 0 && cellAt(city, gx, gy - 1) === 1 && flow[c - W] > d) { flow[c - W] = d; q[tail++] = c - W; }
+      if (ly < W - 1 && gy < city.rows - 1 && cellAt(city, gx, gy + 1) === 1 && flow[c + W] > d) { flow[c + W] = d; q[tail++] = c + W; }
     }
     city.flowCell = tcy * cols + tcx;
   };
@@ -675,7 +692,7 @@
         var nx = cx + dx, ny = cy + dy;
         if (nx < 0 || ny < 0 || nx >= cols || ny >= city.rows) continue;
         // Diagonals only when both sides are open, so creatures don't cut wall corners.
-        if (dx && dy && (!cellAt(city, nx, cy) || !cellAt(city, cx, ny))) continue;
+        if (dx && dy && (cellAt(city, nx, cy) !== 1 || cellAt(city, cx, ny) !== 1)) continue;
         var f = flowAt(city, nx, ny);
         if (f < best) { best = f; bx = dx; by = dy; }
       }

@@ -719,6 +719,7 @@
         if (s.from === f) add = add.concat(railings(s, false));
         else if (s.from + 1 === f) add = add.concat(railings(s, true));
       });
+      level.rails = add.filter(keep); // low: you see over them (js/sight.js)
       (plan.lanes || []).forEach(function (ln, li) {
         if (plan.stairs.some(function (s) { return s.lane === li && (s.from === f || s.from + 1 === f); })) return;
         add.push([ln.x0, ln.y0, ln.x1, ln.y0], [ln.x1, ln.y0, ln.x1, ln.y1], [ln.x0, ln.y1, ln.x1, ln.y1], [ln.x0, ln.y0, ln.x0, ln.y1]);
@@ -947,6 +948,7 @@
         plan.doorsPx = plan.doors.map(segPx);
         plan.exitSegsPx = plan.exits.map(function (e) { return segPx(e.seg); });
         for (var lk in plan.levels) plan.levels[lk].wallsPx = plan.levels[lk].walls.map(segPx);
+        [plan].concat(Object.keys(plan.levels).map(function (k) { return plan.levels[k]; })).forEach(function (lv) { lv.railsPx = (lv.rails || []).map(segPx); });
         // Where to stand to go up a stair (just past the foot) and to go down it (just past the top), for the
         // creatures.
         plan.stairs.forEach(function (st) {

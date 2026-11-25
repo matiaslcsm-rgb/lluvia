@@ -86,6 +86,30 @@
 
   // Everyone's position: name, lives and level. Highlights you; those out show their place.
   // Bottom right: the gun, bullets left and the reload bar. Plus the crosshair at the mouse.
+  // Where the player looks: where they aim, or the way they face.
+  function aimOf(p) { return p.aim !== undefined ? p.aim : Math.atan2(p.dirY || 0, p.dirX || 1); }
+
+  // The half-light: the screen darkened except inside the edge of what you see (L.sightPolygon), soft at the edge.
+  var shadeCv = null;
+  function drawShade(ctx, g, p, camX, camY, W, H) {
+    var D = L.data.sight, poly = L.sightPolygon(g.city, p, aimOf(p));
+    if (!shadeCv) shadeCv = document.createElement('canvas');
+    if (shadeCv.width !== W || shadeCv.height !== H) { shadeCv.width = W; shadeCv.height = H; }
+    var x = shadeCv.getContext('2d');
+    x.globalCompositeOperation = 'source-over';
+    x.clearRect(0, 0, W, H);
+    x.fillStyle = 'rgba(6,6,9,' + D.shade + ')';
+    x.fillRect(0, 0, W, H);
+    x.globalCompositeOperation = 'destination-out';
+    if (D.soft) x.filter = 'blur(' + D.soft + 'px)';
+    x.fillStyle = '#000';
+    x.beginPath();
+    poly.forEach(function (q, i) { if (i) x.lineTo(q[0] - camX, q[1] - camY); else x.moveTo(q[0] - camX, q[1] - camY); });
+    x.closePath(); x.fill();
+    x.filter = 'none';
+    ctx.drawImage(shadeCv, 0, 0);
+  }
+
   // The quiet HUD of the city (data/look.js, hud): small, muted, top left. Life as a thin bar with your lives as
   // marks under it, the level and its progress as a thinner line.
   function quietHud(ctx, g, p, need) {
@@ -383,8 +407,11 @@
     g.gems.forEach(function (gem) { if (visible(gem.x, gem.y, 8)) L.drawGem(ctx, gem, t); });
 
     // Enemies.
+    // In the city you only see what is in your cone and not behind a wall (js/sight.js).
+    var sees = g.city && L.canSee && L.data.sight ? function (x, y, fl) { return L.canSee(g.city, p, aimOf(p), x, y, fl); } : null;
     g.enemies.forEach(function (e) {
       if (!visible(e.x, e.y, e.r)) return;
+      if (sees && !sees(e.x, e.y, e.floor)) return;
       // One on another floor (below you or above) shows faded.
       var otherFloor = g.city && (e.floor || 0) !== (p.floor || 0);
       if (otherFloor) ctx.globalAlpha = 0.3;
@@ -403,6 +430,7 @@
 
     // Mud, projectiles and spinning blades.
     g.enemyShots.forEach(function (s) {
+      if (sees && !sees(s.x, s.y, s.floor || 0)) return;
       circle(ctx, s.x, s.y, s.r + 2, s.hail ? '#3a6a8a' : '#2c3318');
       circle(ctx, s.x, s.y, s.r, s.hail ? '#e8f6ff' : '#8aa04a');
     });
@@ -453,7 +481,10 @@
     L.fx.draw(ctx, dt);
     ctx.restore();
     if (!g.city) L.drawRain(ctx, W, H, dt, !!g.surge);
-    else if (L.drawLook) L.drawLook(ctx, W, H, t); // muted colors, grain and dark corners (data/look.js)
+    else {
+      if (sees) drawShade(ctx, g, p, camX, camY, W, H); // half-light outside what you see
+      if (L.drawLook) L.drawLook(ctx, W, H, t);        // muted colors, grain and dark corners (data/look.js)
+    }
 
     if (g.respawn > 0) {
       ctx.fillStyle = 'rgba(10, 11, 15, 0.55)';

@@ -864,6 +864,20 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - El minimapa sigue igual por ahora: se va en la etapa 53 (el mapa sin flecha).
   - Prueba nueva: los valores de `data/look.js` están en rango. Falta medir cuánto cuesta por cuadro en una PC
     común (en la vista de prueba el navegador estaba en segundo plano).
+- **2026-11-24: campo de visión** (etapa 45; pedido del usuario: "sí, seguí").
+  - Ves un cono de 100° hacia donde apuntás con el mouse, de hasta 38 m, y un círculo chico de 2,5 m alrededor
+    tuyo, también a la espalda. El personaje mira siempre hacia la mira.
+  - Lo que no ves queda en penumbra: la ciudad se reconoce, pero los zombis y sus tiros no se dibujan.
+  - Tapan la vista las paredes de los edificios y de las casas, y los muebles altos (roperos, estantes, heladeras,
+    góndolas, máquinas, archiveros, motores, tanques). Por encima de los muebles bajos, los autos estacionados y las
+    barandas de las escaleras se ve; por las ventanas, también, de adentro hacia afuera y al revés. Todo eso sigue
+    frenando el paso y las balas.
+  - En un piso de arriba tapan las paredes de ese piso; por una ventana se ve la calle.
+  - Un zombi en otro piso no se ve.
+  - Los números están en `data/sight.js`; el cálculo en `js/sight.js`. Calcular lo que se ve lleva 1,3 ms por
+    cuadro en el partido entero.
+  - Pruebas nuevas (`tests/vista.test.js`): el cono llega lejos y atrás solo lo pegado; las paredes tapan; las
+    ventanas, las barandas y las camas dejan ver; los roperos tapan; arriba también tapan las paredes.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

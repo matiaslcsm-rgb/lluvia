@@ -274,7 +274,7 @@
     var p = g.player, x = input.x || 0, y = input.y || 0;
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
-    if (x || y) { p.dirX = x; p.dirY = y; } // the way you face, for drawing
+    if ((x || y) && !(p.gun && input.aimX !== undefined)) { p.dirX = x; p.dirY = y; } // the way you face (with a gun: where you aim)
     L.updateStance(p, len > 0.2, dt);
     stepPlayer(g, x * p.stats.speed * dt, y * p.stats.speed * dt);
   }
