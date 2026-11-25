@@ -57,6 +57,16 @@
       flashTimer = setTimeout(function () { flashEl.style.opacity = '0'; }, 1600);
     },
 
+    // The start screen of San Miguel (the old character select of the rain game is gone from the menu).
+    title: function (onStart) {
+      show([el('h1', null, 'LLUVIA'),
+        el('p', 'tagline', 'San Miguel. Un día el sol empezó a brillar amarillo y la gente se volvió loca.'),
+        button('Empezar', onStart),
+        el('p', 'hint', 'WASD: moverte · Mouse: apuntar y disparar · R: recargar · E: revisar muebles · H: venda · F: linterna'),
+        el('p', 'hint', 'P: pausa · M: sonido · Enter: empezar')]);
+      L.ui.current = 'title';
+    },
+
     characterSelect: function (onPick) {
       var cards = el('div', 'cards');
       L.data.characters.forEach(function (c, i) {

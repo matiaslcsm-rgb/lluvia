@@ -521,7 +521,7 @@
       // Mastery aura: the rank's color, softly pulsing under you (only looks).
       var aura = L.profile && L.masteryRank(L.profile, p.char.id).rank.color;
       if (aura) { var a0 = ctx.globalAlpha; ctx.globalAlpha = a0 * (0.18 + 0.08 * Math.sin(t * 3)); ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 6, 0, TAU); ctx.fill(); ctx.globalAlpha = a0; }
-      L.drawHero(ctx, p, t, p.hurt > 0);
+      if (g.city && L.drawPerson) L.drawPerson(ctx, p, t, p.hurt > 0); else L.drawHero(ctx, p, t, p.hurt > 0);
       ctx.globalAlpha = 1;
     }
     L.fx.draw(ctx, dt);

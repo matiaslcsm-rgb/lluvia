@@ -949,6 +949,13 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Pruebas nuevas (`tests/juntar.test.js`): la mochila apila y se llena; un ropero se revisa con E, una sola vez y
     siempre da lo mismo; soltar E corta; lo que no entra queda en el mueble; la venda cura; recargar usa las
     balas de la mochila y sin balas no recarga.
+- **2026-11-25: pantalla de inicio nueva y el personaje como persona** (pedido del usuario: "saca el menú de inicio
+  del juego anterior; cambia el círculo del personaje principal por una persona").
+  - Al abrir el juego aparece "LLUVIA", una línea sobre San Miguel y el Sol Amarillo, el botón Empezar (o Enter) y
+    las teclas. Ya no se elige Paraguas: se juega con el primero. Lo del juego viejo (elegir personaje, Cuaderno,
+    Pactos, Partida del día) queda en el código, fuera del menú.
+  - En la ciudad tu personaje es una persona vista desde arriba: hombros con campera, cabeza con pelo, los brazos
+    hacia la pistola que sostiene con las dos manos, y los pies que dan pasos al caminar. Mira hacia la mira.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

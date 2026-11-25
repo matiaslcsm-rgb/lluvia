@@ -29,6 +29,39 @@
 
   // ---- Paraguas (the playable characters) ----
   // f: anything with x, y, r, dirX, dirY, char (a player or a duel fighter). t: time, for small animations.
+  // You in the city: a person seen from above, facing where you aim. Shoulders and arms, the head with its hair, the
+  // gun held in both hands, and the feet stepping when you walk.
+  L.drawPerson = function (ctx, f, t, flash) {
+    var x = f.x, y = f.y, r = f.r, ang = Math.atan2(f.dirY || 0, f.dirX || 1), moving = 1 - (f.still || 0);
+    var coat = flash ? '#ffffff' : '#4d5646', dark = flash ? '#dddddd' : '#2f352b', skin = '#c99b7a', hair = '#2b211a';
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(ang); // +x: where you face
+    // Shadow.
+    ctx.globalAlpha = 0.3; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(2, 3, r * 0.9, r * 1.25, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    // Feet, one ahead of the other when walking.
+    var step = Math.sin(t * 11) * r * 0.45 * moving;
+    ctx.fillStyle = '#1e1f22';
+    ctx.beginPath(); ctx.ellipse(step, -r * 0.42, r * 0.38, r * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-step, r * 0.42, r * 0.38, r * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+    // Arms reaching forward to the gun.
+    ctx.strokeStyle = coat; ctx.lineWidth = r * 0.42; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(0, -r * 0.8); ctx.lineTo(r * 1.15, -r * 0.12); ctx.moveTo(0, r * 0.8); ctx.lineTo(r * 1.15, r * 0.12); ctx.stroke();
+    // The gun and the hands on it.
+    if (f.gun) {
+      ctx.fillStyle = '#151515'; ctx.fillRect(r * 1.05, -r * 0.13, r * 0.95, r * 0.26);
+      if (f.gun.cd > 1 / f.gun.def.rate - 0.05) { ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(r * 2.15, 0, r * 0.35, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(r * 1.12, 0, r * 0.24, 0, Math.PI * 2); ctx.fill();
+    // Shoulders (the torso seen from above).
+    ctx.fillStyle = coat; ctx.strokeStyle = dark; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(-r * 0.05, 0, r * 0.55, r * 1.05, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Head: hair, with a bit of face toward the front.
+    ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(r * 0.12, 0, r * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = hair; ctx.beginPath(); ctx.arc(r * 0.02, 0, r * 0.47, Math.PI * 0.42, Math.PI * 1.58); ctx.fill();
+    ctx.beginPath(); ctx.arc(r * 0.0, 0, r * 0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  };
+
   L.drawHero = function (ctx, f, t, flash) {
     var c = f.char, x = f.x, y = f.y, r = f.r, ang = Math.atan2(f.dirY || 0, f.dirX || 1);
     var body = flash ? '#ffffff' : c.color;

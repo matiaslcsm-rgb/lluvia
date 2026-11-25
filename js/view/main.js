@@ -103,12 +103,14 @@
     if (L.placeBet(match, match.human, side, Math.max(1, Math.floor(mine.cap * L.data.bets.pressShare))) || mine.side === side) L.sound.play('bet');
   }
 
-  function menu() { match = null; L.ui.characterSelect(start); }
+  // The start screen; you play the first character (the old character select stays in the code, off the menu).
+  function menu() { match = null; L.ui.title(function () { start(L.data.characters[0].id); }); }
   function endless() { if (L.startEndless(match)) { seen.over = false; L.ui.hide(); } }
 
   addEventListener('keydown', function (e) {
     var n = /^(Digit|Numpad)[1-8]$/.test(e.code) ? Number(e.code.slice(-1)) - 1 : undefined;
-    if (L.ui.current === 'select' && n !== undefined && L.data.characters[n] && L.isUnlocked(L.profile, L.data.characters[n].id)) start(L.data.characters[n].id);
+    if (L.ui.current === 'title' && e.code === 'Enter') start(L.data.characters[0].id);
+    else if (L.ui.current === 'select' && n !== undefined && L.data.characters[n] && L.isUnlocked(L.profile, L.data.characters[n].id)) start(L.data.characters[n].id);
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
