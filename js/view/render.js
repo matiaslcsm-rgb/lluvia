@@ -478,6 +478,32 @@
     }
   };
 
+  // The black barrier up close (js/barrier.js): its edge breathes, a violet glow that comes and goes, with wisps.
+  function drawBarrier(ctx, P, camX, camY, W, H, t, s) {
+    var pad = 4 * s, x0 = camX - pad, y0 = camY - pad, x1 = camX + W + pad, y1 = camY + H + pad;
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    for (var i = 0, j = P.length - 1; i < P.length; j = i++) {
+      var a = P[j], b = P[i];
+      if (Math.max(a[0], b[0]) < x0 || Math.min(a[0], b[0]) > x1 || Math.max(a[1], b[1]) < y0 || Math.min(a[1], b[1]) > y1) continue;
+      for (var w = 0; w < 3; w++) {
+        var pulse = 0.5 + 0.5 * Math.sin(t * (1.3 + w * 0.7) + i * 1.7 + w);
+        ctx.strokeStyle = 'rgba(' + (90 + w * 30) + ',50,' + (150 + w * 20) + ',' + (0.08 + 0.12 * pulse) + ')';
+        ctx.lineWidth = (4 - w * 1.4) * s;
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      }
+      // Wisps of black smoke rising from the wall.
+      var len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.min(5000, Math.floor(len / (1.2 * s))); // only the ones on screen are drawn
+      for (var k = 0; k < n; k++) {
+        var f = (k + 0.5) / n, ph = (t * 0.35 + k * 0.618 + i * 0.37) % 1, x = a[0] + (b[0] - a[0]) * f, y = a[1] + (b[1] - a[1]) * f;
+        if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+        ctx.fillStyle = 'rgba(10,6,18,' + (0.55 * (1 - ph)) + ')';
+        ctx.beginPath(); ctx.arc(x + Math.sin(ph * 6 + k) * 0.3 * s, y - ph * 2 * s, (0.25 + ph * 0.6) * s, 0, TAU); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   L.render = function (g, ctx, W, H, m) {
     ctx.fillStyle = '#14161c';
     ctx.fillRect(0, 0, W, H);
@@ -665,6 +691,8 @@
       var poly = sees ? L.sightPolygon(g.city, p, aimOf(p)) : null;
       if (L.drawNight) L.drawNight(ctx, g, p, camX, camY, W, H, poly, t); // night, dusk, dawn and lights (js/view/night.js)
       if (sees) drawShade(ctx, poly, camX, camY, W, H); // half-light outside what you see
+      // The black barrier glows through the dark: you see where the city ends from afar (js/barrier.js).
+      if (g.barrier && g.barrier.d < Math.max(W, H)) { ctx.save(); ctx.translate(-camX, -camY); drawBarrier(ctx, g.city.border, camX, camY, W, H, t, g.city.scale); ctx.restore(); }
       if (L.drawWeather) L.drawWeather(ctx, g, W, H, dt);  // black rain, fog, lightning (js/view/weather.js)
       // The edges of the screen (docs/CUERPO.md section 5): a red pulse while bleeding without a bandage, a green
       // sickly haze while an infection moves on.

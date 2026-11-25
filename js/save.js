@@ -14,7 +14,7 @@
     gun: 1, asleep: 1, hurt: 1, invuln: 1, aiming: 1, running: 1, blocking: 1, wasHurt: 1, stairOn: 1 };
   // Game fields copied as they are.
   var GAME = ['seed', 'time', 'slept', 'kills', 'deaths', 'gold', 'pendingLevels', 'nextBoss', 'nextMini', 'nextWave',
-    'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies'];
+    'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies', 'barrierSeen'];
 
   function copy(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
 

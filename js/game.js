@@ -264,6 +264,7 @@
     if (g.night && L.updateHealth) L.updateHealth(g, dt, gdt);  // wounds, bleeding, infection, recovering (js/health.js)
     if (g.night && L.updateWeather) L.updateWeather(g, gdt);     // rain, storm, fog, heat, cold, flooding (js/weather.js)
     if (g.night && L.updateClothes) L.updateClothes(g, dt, gdt); // wet clothes, warmth, freezing (js/clothes.js)
+    if (g.night && L.updateBarrier) L.updateBarrier(g, dt);       // how far the black barrier is (js/barrier.js)
     if (g.night && L.updateExplored) L.updateExplored(g, dt);     // what you see is remembered on the map (js/explored.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
@@ -375,12 +376,24 @@
   function spawnByClock(g, dt) {
     var N = L.data.mode.nights, h = L.data.horde, k = L.clockOf(g), dark = 1 - k.light, n = Math.max(1, L.nightOf(k));
     var grow = 1 + N.perNight * (n - 1), rate = (N.day.rate + (N.dark.rate - N.day.rate) * dark) * grow;
-    var alive = Math.round((N.day.alive + (N.dark.alive - N.day.alive) * dark) * grow);
+    // Near the black barrier there are more, and some come out of it (js/barrier.js).
+    var bm = L.barrierMul ? L.barrierMul(g) : 1, Bd = L.data.barrier;
+    rate *= bm;
+    var alive = Math.round((N.day.alive + (N.dark.alive - N.day.alive) * dark) * grow * bm);
     g.spawnAcc += rate * dt;
     var p0 = g.player, s = g.city.scale;
     while (g.spawnAcc >= 1) {
       g.spawnAcc -= 1;
       if (g.enemies.length >= Math.min(alive, h.maxAlive)) continue;
+      if (bm > 1 && g.rng() < Bd.emerge * (bm - 1) / (Bd.more - 1)) {
+        var bp = L.barrierSpawnPoint(g);
+        if (bp && Math.hypot(bp.x - p0.x, bp.y - p0.y) > N.near * 0.4 * s) {
+          var bz = L.spawnEnemy(g, N.type || pickType(g, g.time / 60), bp.x, bp.y);
+          bz.floor = 0; bz.fromBarrier = true;
+          L.emit(g, 'barrier', bp.x, bp.y);
+          continue;
+        }
+      }
       // Somewhere on a street between `near` and `far` meters, where you don't see it.
       for (var tries = 0; tries < 6; tries++) {
         var a = g.rng() * TAU, r0 = (N.near + g.rng() * (N.far - N.near)) * s;

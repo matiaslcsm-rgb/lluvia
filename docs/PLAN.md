@@ -83,9 +83,22 @@ comprobar.
   - **el juego se llama Sol Loco** por ahora;
   - el lore nuevo (la tormenta, la barrera negra, la noche sin estrellas, el sol enfermo) en `docs/LORE.md`.
   - Trajo además una propuesta de facciones y finales hecha con otra IA: `docs/FACCIONES.md`, sin decidir.
+- **2026-11-25 (segunda tanda):** respondió la lista de "qué sigue":
+  - **la barrera negra**: un muro negro alrededor de San Miguel, que no se cruza; de ahí salen los zombis, así que
+    cerca hay muchos más;
+  - **refugio y barricadas** ahora ("probemos cómo sale"): tablas y clavos en puertas y ventanas, correr muebles, y
+    zombis que golpean y rompen;
+  - **vecinos (NPC)**, arrancando chico ("a ver cómo sale"): encerrados en sus casas, te piden algo y te dan algo a
+    cambio, y se convierten si los muerden;
+  - **la cordura no se usa por ahora**: primero quiere pulir cómo se juega y se desarrolla una partida. Por eso la
+    lluvia negra que hace mal también espera;
+  - las facciones, después de los NPC, empezando por una o dos;
+  - el Ente se queda, pero misterioso: solo señales, nunca se dice qué es;
+  - la niebla de guerra de la calle, más adelante, cuando el mapa pese.
 
 ## Decisiones abiertas
-- Las facciones y los finales (`docs/FACCIONES.md`): si van, cuáles primero, y si el Ente se queda.
+- Las facciones y los finales (`docs/FACCIONES.md`): cuáles primero (van después de los NPC, de a una o dos).
+- Cómo se juega y se desarrolla una partida (el usuario lo está pensando); recién después, la cordura.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -257,8 +270,14 @@ Pedido del usuario (2026-11-25):
     se mojan con la lluvia negra y se rompen.
 63. **Sonido con dirección:** se oye más fuerte del lado de donde viene.
 64. **El mapa que recuerda:** el minimapa muestra solo lo que ya viste, y un mapa grande para consultar lo explorado.
-Más adelante: gente en la ciudad (NPC), que se puede convertir en zombi; facciones y finales (propuesta en
-`docs/FACCIONES.md`); la cordura; refugio y barricadas; niebla de guerra.
+Segunda tanda (2026-11-25):
+65. **La barrera negra:** el borde del partido es un muro negro que no se cruza; cerca hay más zombis y algunos
+    salen de ella.
+66. **Refugio y barricadas:** tablas y clavos en puertas y ventanas, correr muebles para trabar, zombis que golpean
+    y rompen.
+67. **Vecinos:** gente encerrada en su casa que te pide algo y te da algo a cambio; si la muerden, se convierte.
+Más adelante: facciones (de a una o dos, propuesta en `docs/FACCIONES.md`); la cordura y la lluvia negra que hace
+mal (cuando el usuario defina cómo se juega una partida); niebla de guerra en la calle.
 
 ### Más adelante: autos y vehículos
 Idea del usuario (2026-11-24): que algún día el juego tenga autos y vehículos. Hoy los autos estacionados son
@@ -1219,6 +1238,13 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     piso donde estás, o la planta baja. Antes quedaba oscuro porque solo había calles.
   - Se guarda con la partida.
   - Pruebas: 67 (nueva: adentro se ve solo lo que alumbra tu vista) y una mirada en el navegador.
+- **2026-11-25: etapa 65, la barrera negra** (`data/barrier.js`, `js/barrier.js`).
+  - El borde del partido, que ya no se podía cruzar, ahora es un muro negro con brillo violeta y humo, que se ve a
+    través de la oscuridad (así de noche sabés dónde termina la ciudad).
+  - A menos de 150 m hay más zombis: en la pared misma, 2,5 veces más. Parte de los nuevos salen de la barrera, a
+    tu vista, con un gemido y una nube oscura.
+  - La primera vez que te acercás te avisa qué es; eso se guarda con la partida.
+  - Pruebas: 69 (nuevas: dónde está y que se guarda; más zombis cerca y que salen de ella).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

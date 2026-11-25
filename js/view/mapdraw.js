@@ -356,16 +356,16 @@
       if (bx > ax && by > ay) ctx.drawImage(opt.terrain, ax * RX, ay * RY, (bx - ax) * RX, (by - ay) * RY, ax, ay, bx - ax, by - ay);
       ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     }
-    // Past the partido's border: dark, with a soft edge (you can't go there).
+    // Past the partido's border: the black barrier (data/barrier.js), a wall of black with a violet sheen on its edge.
     if (P.border) {
       ctx.beginPath();
       ctx.rect(vb[0] - 10, vb[1] - 10, vb[2] - vb[0] + 20, vb[3] - vb[1] + 20);
       P.border.forEach(function (q, i) { if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
       ctx.closePath();
-      ctx.fillStyle = 'rgba(6,7,10,0.86)'; ctx.fill('evenodd');
+      ctx.fillStyle = 'rgba(4,3,7,0.97)'; ctx.fill('evenodd');
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(6,7,10,0.45)'; ctx.lineWidth = 8; path(ctx, P.border, true); ctx.stroke();
-      ctx.strokeStyle = 'rgba(6,7,10,0.6)'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.strokeStyle = 'rgba(70,40,110,0.35)'; ctx.lineWidth = 10; path(ctx, P.border, true); ctx.stroke();
+      ctx.strokeStyle = 'rgba(8,5,14,0.95)'; ctx.lineWidth = 4; ctx.stroke();
     }
     ctx.restore();
     return shown;
@@ -432,7 +432,7 @@
       ctx.rect(vb[0] - 10, vb[1] - 10, vb[2] - vb[0] + 20, vb[3] - vb[1] + 20);
       P.border.forEach(function (q, i) { if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
       ctx.closePath();
-      ctx.fillStyle = 'rgba(6,7,10,0.86)'; ctx.fill('evenodd');
+      ctx.fillStyle = 'rgba(4,3,7,0.97)'; ctx.fill('evenodd');
     }
     ctx.restore();
     return n;

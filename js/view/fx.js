@@ -49,6 +49,7 @@
           case 'bodyhit': S.play('bodyhit'); break;
           case 'headshot': S.play('headshot'); burst(ev.x, ev.y, '#5a1f1f', 10, 140, 0.4); break;
           case 'swing': S.play('swing'); break;
+          case 'barrier': S.play('groan'); burst(ev.x, ev.y, '#2a1840', 22, 160, 0.8); break; // one comes out of the black barrier
           case 'blow': S.play('blow'); break;
           case 'break': S.play('break'); break;
           case 'shove': S.play('shove'); break;
