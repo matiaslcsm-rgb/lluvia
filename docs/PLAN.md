@@ -1201,6 +1201,16 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Suena más bajo cuanto más lejos (se deja de oír a los 30 m) y la mitad si hay una pared en el medio.
   - Lo tuyo suena al medio. Sin marcas en la pantalla, como pidió el usuario.
   - Pruebas: 65 (nueva: oído) y una mirada en el navegador (el ruido de la izquierda sale por la izquierda).
+- **2026-11-25: el mapa que recuerda** (etapa 64, respuesta 8 del usuario).
+  - La ciudad está partida en cuadrados de 8 m. Lo que entra en lo que ves en ese momento (más lejos de día, menos de
+    noche o con niebla) queda marcado como visto.
+  - El minimapa muestra solo lo que ya viste; lo demás es oscuro.
+  - **M abre el mapa grande** (el juego espera): todo lo que recorriste, el porcentaje de San Miguel que conocés, dónde
+    estás, dónde dormiste por última vez y tu cuerpo si moriste. Con la rueda se acerca y aleja, y se arrastra.
+  - Se guarda con la partida (al dormir en una cama).
+  - **Cambio de tecla (lo decidí yo):** el sonido se apaga ahora con la O, porque la M es el mapa.
+  - Queda para más adelante la niebla de guerra y cargar el mapa de a partes.
+  - Pruebas: 66 (nueva: mapa) y una mirada en el navegador (minimapa, mapa grande, M sin apagar el sonido).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

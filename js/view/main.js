@@ -115,7 +115,17 @@
     L.ui.status(game(), toggleStatus);
   }
 
+  // M: the big map, what you have seen of the city (js/explored.js). The game waits while it is open.
+  function toggleMap() {
+    if (!match || match.over || game().choice) return;
+    if (L.ui.current === 'map') { paused = false; L.ui.hide(); return; }
+    if (paused) return;
+    paused = true;
+    L.ui.bigMap(game(), toggleMap);
+  }
+
   function togglePause() {
+    if (L.ui.current === 'map') { toggleMap(); return; }
     if (L.ui.current === 'status') { toggleStatus(); return; }
     if (L.ui.current === 'craft') { toggleCraft(); return; }
     if (L.ui.current === 'inventory') { toggleInventory(); return; }
@@ -168,7 +178,8 @@
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
     else if (e.code === 'KeyR' && match && !paused && !match.solo) send();
     else if (e.code === 'Space' && match && !paused && !match.over) { e.preventDefault(); if (!game().night) ulti(); } // in the city Space covers you
-    else if (e.code === 'KeyM') L.ui.flash(L.sound.toggle() ? 'Sonido apagado (M)' : 'Sonido prendido (M)');
+    else if (e.code === 'KeyM' && match && game().explored && L.ui.current !== 'craft' && L.ui.current !== 'inventory' && L.ui.current !== 'status') toggleMap();
+    else if (e.code === 'KeyO' || e.code === 'KeyM' && !(match && game().explored)) L.ui.flash(L.sound.toggle() ? 'Sonido apagado (O)' : 'Sonido prendido (O)');
   });
 
   // Sounds for what happens in the match itself (duels, bets, the end), comparing with the last frame.

@@ -132,3 +132,6 @@ body.bigtext .card .name { font-size: 21px; }
   border: 1px solid #6b5f42; padding: 6px; min-width: 160px; }
 .ctxmenu .btn { text-align: left; margin: 0; }
 .invbox.wide { width: 300px; }
+
+/* The big map (M) */
+.bigmap { display: block; margin: 8px auto; border: 2px solid rgba(255, 233, 168, 0.5); cursor: grab; touch-action: none; }

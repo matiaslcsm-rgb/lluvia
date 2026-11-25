@@ -113,6 +113,7 @@
     if (opts.night && L.makeRest) L.makeRest(g); // energy and sleep (js/rest.js)
     if (opts.night && L.makeHealth) L.makeHealth(g); // wounds, bleeding, infection (js/health.js)
     if (opts.night && L.makeClothes) L.makeClothes(g); // what you wear (js/clothes.js)
+    if (opts.night && L.makeExplored) L.makeExplored(g); // the map remembers what you saw (js/explored.js)
     if (opts.night) g.lives = 1;                   // one life, as in Project Zomboid (the user's answer 10)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
@@ -263,6 +264,7 @@
     if (g.night && L.updateHealth) L.updateHealth(g, dt, gdt);  // wounds, bleeding, infection, recovering (js/health.js)
     if (g.night && L.updateWeather) L.updateWeather(g, gdt);     // rain, storm, fog, heat, cold, flooding (js/weather.js)
     if (g.night && L.updateClothes) L.updateClothes(g, dt, gdt); // wet clothes, warmth, freezing (js/clothes.js)
+    if (g.night && L.updateExplored) L.updateExplored(g, dt);     // what you see is remembered on the map (js/explored.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);

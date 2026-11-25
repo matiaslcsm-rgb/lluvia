@@ -67,7 +67,7 @@
         el('p', 'hint', 'WASD: moverte · Shift: correr · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
         el('p', 'hint', 'A mano: cada botón una mano; los dos juntos, empujar · Espacio: cubrirte'),
         el('p', 'hint', 'E: revisar muebles o juntar · H: venda · Z: dormir · K: estado · F: linterna · Tab: fabricar · G: molotov'),
-        el('p', 'hint', 'P: pausa · M: sonido · Enter: ' + (onContinue ? 'continuar' : 'empezar'))].filter(Boolean));
+        el('p', 'hint', 'M: mapa · P: pausa · O: sonido · Enter: ' + (onContinue ? 'continuar' : 'empezar'))].filter(Boolean));
       L.ui.current = 'title';
     },
 
@@ -286,6 +286,29 @@
       L.ui.current = 'inventory';
     },
 
+    // The big map (M, js/explored.js): everything you have seen of the city. The wheel zooms, dragging moves it.
+    bigMap: function (g, onClose) {
+      var X = g.explored, p = g.player, city = g.city;
+      var cv = el('canvas', 'bigmap');
+      cv.width = Math.max(320, Math.floor(window.innerWidth * 0.86)); cv.height = Math.max(240, Math.floor(window.innerHeight * 0.62));
+      var view = { cx: p.x, cy: p.y, k: cv.height / (700 * city.scale) }; // 700 m from top to bottom
+      var draw = function () { L.drawBigMap(cv, g, view); };
+      cv.addEventListener('wheel', function (ev) {
+        ev.preventDefault();
+        view.k = Math.max(cv.height / city.size / 1.2, Math.min(cv.height / (60 * city.scale), view.k * (ev.deltaY < 0 ? 1.25 : 0.8)));
+        draw();
+      });
+      var drag = null;
+      cv.addEventListener('pointerdown', function (ev) { drag = { x: ev.clientX, y: ev.clientY, cx: view.cx, cy: view.cy }; cv.setPointerCapture(ev.pointerId); });
+      cv.addEventListener('pointermove', function (ev) { if (!drag) return; view.cx = drag.cx - (ev.clientX - drag.x) / view.k; view.cy = drag.cy - (ev.clientY - drag.y) / view.k; draw(); });
+      cv.addEventListener('pointerup', function () { drag = null; });
+      var share = X ? X.count / (X.cols * X.rows) : 0;
+      show([el('h2', null, 'Mapa'), el('p', null, 'Recorriste el ' + (share * 100).toFixed(share < 0.01 ? 2 : 1) + '% de ' + (city.name || 'la ciudad') + '. Solo se ve lo que ya viste.'),
+        cv, button('Cerrar (M)', onClose, 'btn ghost'), el('p', 'hint', 'Rueda del mouse: acercar y alejar · Arrastrar: mover el mapa')]);
+      draw();
+      L.ui.current = 'map';
+    },
+
     // Your body (js/health.js, docs/CUERPO.md section 5): your wounds, what you have and what slows you down, and a
     // button for each treatment you carry.
     status: function (g, onClose) {
@@ -378,10 +401,10 @@
       opts.appendChild(button('Letra grande: ' + (L.options.big ? 'sí' : 'no'), function () { L.options.big = !L.options.big; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
       var keys = el('div', 'keys');
       [['WASD', 'moverte'], ['Shift', 'correr'], ['Mouse', 'disparar o pegar'], ['Clic derecho', 'apuntar (a mano: la otra mano)'], ['Los dos botones', 'empujar'], ['R', 'recargar'], ['1 / 2', 'pistola / arma de mano'],
-        ['Espacio', 'cubrirte'], ['E', 'revisar muebles, juntar del piso o recuperar tu cuerpo (o llenar botellas en una pileta)'], ['H', 'venda'], ['Z', 'dormir (mejor en una cama) o despertarte'], ['K', 'estado: heridas y remedios'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'sonido']].forEach(function (k) {
+        ['Espacio', 'cubrirte'], ['E', 'revisar muebles, juntar del piso o recuperar tu cuerpo (o llenar botellas en una pileta)'], ['H', 'venda'], ['Z', 'dormir (mejor en una cama) o despertarte'], ['K', 'estado: heridas y remedios'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'mapa: lo que ya recorriste'], ['O', 'sonido']].forEach(function (k) {
         var r = el('div', 'keyrow'); r.appendChild(el('span', 'kbd', k[0])); r.appendChild(el('span', null, k[1])); keys.appendChild(r);
       });
-      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, keys, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
+      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, keys, el('p', 'hint', 'O: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
       L.ui.current = 'pause';
     },
 

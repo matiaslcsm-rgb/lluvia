@@ -572,17 +572,33 @@
 
   function circle(ctx, x, y, r, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
 
-  // Minimap (top right): the streets around you, plazas, you in the middle and the zombies close by, plus the
-  // name of the street you are on. `range`: 260 m of city fit from the center to the edge.
-  L.drawMinimap = function (ctx, g, W) {
-    var city = g.city, p = g.player, s = city.scale || L.data.city.scale, size = 190, range = 260 * s, k = size / 2 / range, x0 = W - size - 14, y0 = 72;
-    if (!city._boxes) return;
-    ctx.save();
-    ctx.globalAlpha = 0.88;
-    ctx.fillStyle = '#1b1f17'; ctx.fillRect(x0, y0, size, size);
-    ctx.beginPath(); ctx.rect(x0, y0, size, size); ctx.clip();
-    var mx = function (x) { return x0 + size / 2 + (x - p.x) * k; }, my = function (y) { return y0 + size / 2 + (y - p.y) * k; };
-    var near = function (b) { return b[2] > p.x - range && b[0] < p.x + range && b[3] > p.y - range && b[1] < p.y + range; };
+  // What the map remembers (js/explored.js) as a picture: one pixel per square of the city, opaque where you saw.
+  // Kept up to date with the squares marked since the last look.
+  function exploredMask(g) {
+    var X = g.explored;
+    if (!X) return null;
+    if (!X._mask) { X._mask = document.createElement('canvas'); X._mask.width = X.cols; X._mask.height = X.rows; X.all = true; }
+    var mc = X._mask.getContext('2d');
+    if (X.all) {
+      var img = mc.createImageData(X.cols, X.rows), d = img.data;
+      for (var k = 0; k < X.grid.length; k++) if (X.grid[k]) { d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 255; d[k * 4 + 3] = 255; }
+      mc.putImageData(img, 0, 0);
+      X.all = false; X.dirty.length = 0;
+    } else if (X.dirty.length) {
+      mc.fillStyle = '#fff';
+      X.dirty.forEach(function (k) { mc.fillRect(k % X.cols, Math.floor(k / X.cols), 1, 1); });
+      X.dirty.length = 0;
+    }
+    return X._mask;
+  }
+  L.exploredMask = exploredMask;
+
+  // Draws the city's streets and plazas inside the box (bx, by, bw, bh) of `ctx`, at k screen px per world px,
+  // centered on the world point (cx, cy).
+  function drawStreets(ctx, city, cx, cy, k, bx, by, bw, bh) {
+    var s = city.scale || L.data.city.scale, rx = bw / 2 / k, ry = bh / 2 / k;
+    var mx = function (x) { return bx + bw / 2 + (x - cx) * k; }, my = function (y) { return by + bh / 2 + (y - cy) * k; };
+    var near = function (b) { return b[2] > cx - rx && b[0] < cx + rx && b[3] > cy - ry && b[1] < cy + ry; };
     city.parks.forEach(function (pk) {
       if (!near(pk.box)) return;
       ctx.fillStyle = '#2f5a2a'; ctx.beginPath();
@@ -592,19 +608,48 @@
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     city.roads.forEach(function (r) {
       if (!near(r.box)) return;
-      ctx.strokeStyle = r.w >= 12 * s ? '#c9c2a8' : '#8a877d'; ctx.lineWidth = Math.max(1.5, r.w * k * 1.6);
+      ctx.strokeStyle = r.w >= 12 * s ? '#c9c2a8' : '#8a877d'; ctx.lineWidth = Math.max(1, r.w * k * 1.6);
       ctx.beginPath();
       r.pts.forEach(function (q, i) { if (i) ctx.lineTo(mx(q[0]), my(q[1])); else ctx.moveTo(mx(q[0]), my(q[1])); });
       ctx.stroke();
     });
-    ctx.fillStyle = '#ff5a5a';
+    return { mx: mx, my: my };
+  }
+  // Leaves in `ctx` only what the map remembers, over the box (the same view as drawStreets).
+  function keepExplored(ctx, g, cx, cy, k, bx, by, bw, bh) {
+    var mask = exploredMask(g), X = g.explored;
+    if (!mask) return;
+    var c = X.cell, sw = bw / k / c, sh = bh / k / c;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(mask, cx / c - sw / 2, cy / c - sh / 2, sw, sh, bx, by, bw, bh);
+    ctx.restore();
+  }
+
+  // Minimap (top right): the streets around you that you have seen, plazas, you in the middle, plus the name of
+  // the street you are on. `range`: 260 m of city fit from the center to the edge.
+  var mm = null;
+  L.drawMinimap = function (ctx, g, W) {
+    var city = g.city, p = g.player, s = city.scale || L.data.city.scale, size = 190, range = 260 * s, k = size / 2 / range, x0 = W - size - 14, y0 = 72;
+    if (!city._boxes) return;
+    if (!mm) { mm = document.createElement('canvas'); mm.width = size; mm.height = size; }
+    var m = mm.getContext('2d');
+    m.clearRect(0, 0, size, size);
+    var at = drawStreets(m, city, p.x, p.y, k, 0, 0, size, size);
+    m.fillStyle = '#ff5a5a';
     // With the field of view (js/sight.js) the map doesn't give away the zombies: you only know what you see.
     if (!g.night) g.enemies.forEach(function (e) {
-      var ex = mx(e.x), ey = my(e.y);
-      if (ex > x0 && ex < x0 + size && ey > y0 && ey < y0 + size) ctx.fillRect(ex - 1.5, ey - 1.5, e.type.boss ? 6 : 3, e.type.boss ? 6 : 3);
+      var ex = at.mx(e.x), ey = at.my(e.y);
+      if (ex > 0 && ex < size && ey > 0 && ey < size) m.fillRect(ex - 1.5, ey - 1.5, e.type.boss ? 6 : 3, e.type.boss ? 6 : 3);
     });
-    ctx.fillStyle = '#ffd27a';
-    g.chests.forEach(function (c) { var cx = mx(c.x), cy = my(c.y); ctx.fillRect(cx - 2.5, cy - 2.5, 5, 5); });
+    m.fillStyle = '#ffd27a';
+    g.chests.forEach(function (c) { var cx = at.mx(c.x), cy = at.my(c.y); m.fillRect(cx - 2.5, cy - 2.5, 5, 5); });
+    keepExplored(m, g, p.x, p.y, k, 0, 0, size, size);
+    ctx.save();
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = '#1b1f17'; ctx.fillRect(x0, y0, size, size);
+    ctx.drawImage(mm, x0, y0);
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x0 + size / 2, y0 + size / 2, 4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
@@ -613,6 +658,29 @@
     if (!g._streetT || g.time - g._streetT > 0.5) { g._streetT = g.time; g._street = L.cityStreetAt(city, p.x, p.y); }
     ctx.textAlign = 'center'; ctx.font = '700 14px system-ui, sans-serif'; ctx.fillStyle = '#ffe9a8';
     ctx.fillText(g._street || (city.name || ''), x0 + size / 2, y0 + size + 20);
+    if (g.explored) { ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,233,168,0.6)'; ctx.fillText('M: mapa', x0 + size / 2, y0 + size + 36); }
+  };
+
+  // The big map (M): everything you have seen of the city, zoomable with the wheel and draggable, with you, where you
+  // last slept and your body. `cv`: a canvas on the map screen; `view`: { cx, cy, k } (kept between draws).
+  L.drawBigMap = function (cv, g, view) {
+    var ctx = cv.getContext('2d'), city = g.city, p = g.player, W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    var at = drawStreets(ctx, city, view.cx, view.cy, view.k, 0, 0, W, H);
+    keepExplored(ctx, g, view.cx, view.cy, view.k, 0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#14160f'; ctx.fillRect(0, 0, W, H); // what you haven't seen: dark
+    ctx.restore();
+    var mark = function (x, y, color, label) {
+      var X = at.mx(x), Y = at.my(y);
+      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(X, Y, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.font = '600 13px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = color; ctx.fillText(label, X + 10, Y + 4);
+    };
+    if (p.bed) mark(p.bed.x, p.bed.y, '#9fc3e8', 'Dormiste acá');
+    (g.bodies || []).forEach(function (b) { mark(b.x, b.y, '#c26a4a', 'Tu cuerpo'); });
+    mark(p.x, p.y, '#ffffff', 'Vos');
   };
 
   // Street names under you, for the HUD.

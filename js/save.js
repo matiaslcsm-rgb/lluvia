@@ -32,7 +32,8 @@
       items: copy(p.items || {}),
       pack: copy(g.pack),
       searched: g.searched ? Array.from(g.searched) : [],
-      leftover: g.leftover ? Array.from(g.leftover.entries()) : []
+      leftover: g.leftover ? Array.from(g.leftover.entries()) : [],
+      explored: L.packExplored ? L.packExplored(g) : null // what the map remembers (js/explored.js)
     };
     GAME.forEach(function (k) { if (g[k] !== undefined) data[k] = copy(g[k]); });
     return data;
@@ -60,6 +61,7 @@
     g.pack = copy(data.pack);
     g.searched = new Set(data.searched || []);
     g.leftover = new Map(data.leftover || []);
+    if (data.explored && L.unpackExplored) L.unpackExplored(g, data.explored);
     g.enemies = []; g.projectiles = []; g.enemyShots = []; g.throws = []; g.fires = []; g.toasts = [];
     g.choice = g.pendingLevels > 0 && L.makeChoices ? L.makeChoices(g) : null;
     return true;
