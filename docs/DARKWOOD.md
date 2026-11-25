@@ -117,13 +117,15 @@ del juego, no solo cómo se ve:
 La duración del día cambia con la estación, pero el reloj no: en verano hay más horas de luz de las 24, en invierno
 menos. Los árboles cambian con la estación (verdes, amarillos, pelados, en flor).
 
-**(decisión) 5. ¿La noche también dura 40 minutos?**
+Las dos de abajo se decidieron el 2026-11-24: van las recomendadas.
+
+**5. ¿La noche también dura 40 minutos?**
 - A) **Sí: 12 horas de día y 12 de noche, 40 minutos cada una, y la estación corre el amanecer y el atardecer**
   *(recomendada)*. En verano el día dura unos 46 minutos y la noche unos 34; en invierno, al revés.
 - B) Siempre 40 minutos de día y 40 de noche, sin importar la estación.
 - C) 40 minutos de día y una noche más corta (20 minutos), para que se juegue más de día.
 
-**(decisión) 6. ¿Cuánto dura una partida?** Con un día de 1 hora 20 minutos, aguantar 7 noches lleva más de 9
+**6. ¿Cuánto dura una partida?** Con un día de 1 hora 20 minutos, aguantar 7 noches lleva más de 9
 horas. Ya no entra en una sentada, y las estaciones solo tienen sentido si la partida dura varios días.
 - A) **Partida larga que se guarda sola** *(recomendada)*: el juego se guarda al dormir y al salir, y seguís otro
   día. Cada estación dura 3 días del juego (un año, 12 días: unas 16 horas). Ganás si sobrevivís un año entero;

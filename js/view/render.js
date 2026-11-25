@@ -86,19 +86,32 @@
 
   // Everyone's position: name, lives and level. Highlights you; those out show their place.
   // Bottom right: the gun, bullets left and the reload bar. Plus the crosshair at the mouse.
+  // The quiet HUD of the city (data/look.js, hud): small, muted, top left. Life as a thin bar with your lives as
+  // marks under it, the level and its progress as a thinner line.
+  function quietHud(ctx, g, p, need) {
+    var C = L.data.look.hud, x = 18, y = 20;
+    ctx.globalAlpha = 0.85;
+    bar(ctx, x, y, 150, 6, p.hp / p.stats.maxHp, C.life);
+    bar(ctx, x, y + 9, 150, 2, p.xp / need, C.xp);
+    for (var i = 0; i < g.lives; i++) { ctx.fillStyle = C.life; ctx.fillRect(x + i * 9, y + 16, 6, 6); }
+    ctx.font = '600 11px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = C.dim;
+    ctx.fillText('Nivel ' + p.level, x + Math.max(3, g.lives) * 9 + 6, y + 22);
+    ctx.globalAlpha = 1;
+  }
+
   function gunHud(ctx, g, W, H) {
-    var gun = g.player.gun, mag = L.gunMag(gun), x = W - 20, y = H - 26;
+    var gun = g.player.gun, mag = L.gunMag(gun), x = W - 20, y = H - 26, C = g.city && L.data.look ? L.data.look.hud : null;
     ctx.textAlign = 'right';
-    ctx.font = '700 22px system-ui, sans-serif';
-    ctx.fillStyle = gun.reload > 0 ? '#9a9db0' : gun.ammo <= mag * 0.25 ? '#ff9a7a' : '#ffe9a8';
+    ctx.font = C ? '700 16px system-ui, sans-serif' : '700 22px system-ui, sans-serif';
+    ctx.fillStyle = gun.reload > 0 ? (C ? C.dim : '#9a9db0') : gun.ammo <= mag * 0.25 ? (C ? C.low : '#ff9a7a') : (C ? C.ammo : '#ffe9a8');
     ctx.fillText(gun.reload > 0 ? 'Recargando...' : gun.ammo + ' / ' + mag, x, y);
-    ctx.font = '600 13px system-ui, sans-serif';
-    ctx.fillStyle = '#c4c6d2';
-    ctx.fillText(gun.def.name + (gun.level ? ' +' + gun.level : '') + ' · R recarga', x, y - 26);
-    if (gun.reload > 0) bar(ctx, x - 160, y + 8, 160, 5, 1 - gun.reload / (gun.def.reload * Math.max(0.4, g.player.stats.cooldownMul)), '#ffe9a8');
+    ctx.font = C ? '600 11px system-ui, sans-serif' : '600 13px system-ui, sans-serif';
+    ctx.fillStyle = C ? C.dim : '#c4c6d2';
+    ctx.fillText(gun.def.name + (gun.level ? ' +' + gun.level : '') + (C ? '' : ' · R recarga'), x, y - (C ? 20 : 26));
+    if (gun.reload > 0) bar(ctx, x - 160, y + 8, 160, C ? 3 : 5, 1 - gun.reload / (gun.def.reload * Math.max(0.4, g.player.stats.cooldownMul)), C ? C.ammo : '#ffe9a8');
     var ms = L.input && L.input.mouse;
     if (ms && !L.ui.current) {
-      ctx.strokeStyle = 'rgba(255,233,168,0.9)'; ctx.lineWidth = 2;
+      ctx.strokeStyle = C ? 'rgba(217,207,166,0.75)' : 'rgba(255,233,168,0.9)'; ctx.lineWidth = C ? 1.5 : 2;
       ctx.beginPath(); ctx.arc(ms.x, ms.y, 9, 0, Math.PI * 2);
       ctx.moveTo(ms.x - 15, ms.y); ctx.lineTo(ms.x - 5, ms.y); ctx.moveTo(ms.x + 5, ms.y); ctx.lineTo(ms.x + 15, ms.y);
       ctx.moveTo(ms.x, ms.y - 15); ctx.lineTo(ms.x, ms.y - 5); ctx.moveTo(ms.x, ms.y + 5); ctx.lineTo(ms.x, ms.y + 15);
@@ -440,6 +453,7 @@
     L.fx.draw(ctx, dt);
     ctx.restore();
     if (!g.city) L.drawRain(ctx, W, H, dt, !!g.surge);
+    else if (L.drawLook) L.drawLook(ctx, W, H, t); // muted colors, grain and dark corners (data/look.js)
 
     if (g.respawn > 0) {
       ctx.fillStyle = 'rgba(10, 11, 15, 0.55)';
@@ -455,18 +469,21 @@
 
     // ---- HUD ----
     var need = L.xpToNext(p.level);
-    bar(ctx, 0, 0, W, 10, p.xp / need, '#5fe0d0');
-    ctx.font = '600 16px system-ui, sans-serif';
-    ctx.fillStyle = '#e8e8ee';
-    ctx.textAlign = 'left';
-    ctx.fillText('Nivel ' + p.level, 16, 36);
-    ctx.fillStyle = '#ff6b81';
-    ctx.fillText(hearts(g.lives), 100, 36);
-    ctx.fillStyle = '#e8e8ee';
-    bar(ctx, 16, 46, 220, 14, p.hp / p.stats.maxHp, '#e05060');
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillStyle = '#e8e8ee'; // bar() leaves its own color behind
-    ctx.fillText(Math.ceil(p.hp) + ' / ' + Math.round(p.stats.maxHp), 22, 57);
+    if (g.city) quietHud(ctx, g, p, need);
+    else {
+      bar(ctx, 0, 0, W, 10, p.xp / need, '#5fe0d0');
+      ctx.font = '600 16px system-ui, sans-serif';
+      ctx.fillStyle = '#e8e8ee';
+      ctx.textAlign = 'left';
+      ctx.fillText('Nivel ' + p.level, 16, 36);
+      ctx.fillStyle = '#ff6b81';
+      ctx.fillText(hearts(g.lives), 100, 36);
+      ctx.fillStyle = '#e8e8ee';
+      bar(ctx, 16, 46, 220, 14, p.hp / p.stats.maxHp, '#e05060');
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.fillStyle = '#e8e8ee'; // bar() leaves its own color behind
+      ctx.fillText(Math.ceil(p.hp) + ' / ' + Math.round(p.stats.maxHp), 22, 57);
+    }
     ctx.textAlign = 'center';
     // Only the map for now (L.data.mode.explore): no clock, difficulty, kills or gold.
     if (!g.explore) {

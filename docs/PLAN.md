@@ -25,11 +25,13 @@ comprobar.
   - penumbra fuera del campo de visión, más oscuro de noche.
   Y sumar el ciclo de día y noche, el clima y las estaciones, con un día de 12 horas que dura 40 minutos.
 
+- **2026-11-24 (decisión del usuario):** las dos del reloj (`docs/DARKWOOD.md`, sección 5), las recomendadas:
+  - 12 horas de día y 12 de noche, 40 minutos cada una; la estación corre el amanecer y el atardecer;
+  - partida larga que se guarda sola (al dormir y al salir); cada estación dura 3 días del juego y se gana
+    sobreviviendo un año entero, con la opción de seguir.
+
 ## Decisiones abiertas
-- **Dos decisiones del reloj**, explicadas en `docs/DARKWOOD.md` (sección 5):
-  5. ¿la noche también dura 40 minutos? (recomendada: sí, 12 y 12 horas, y la estación corre el amanecer y el
-     atardecer);
-  6. ¿cuánto dura una partida? (recomendada: larga y se guarda sola; cada estación 3 días, se gana con un año).
+- Ninguna por ahora.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -852,6 +854,16 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     grilla de planta baja se come un poco de ese metro, así que entre algunas filas se pasa justo.
   - Prueba nueva: el medio de cada mueble no deja pararse ni pasar una bala, en todos los pisos. Las pruebas de
     caminar hasta cada cuarto siguen pasando con los muebles puestos.
+- **2026-11-24: estética a lo Darkwood** (etapa 44; decisión del usuario: "sí, y arrancá").
+  - La ciudad se ve con colores gastados: pierde la mitad del color, queda teñida suave por el amarillo enfermo
+    del Sol y un poco más oscura y sucia. Encima, un grano de película que se mueve y bordes de pantalla oscuros.
+    Solo el mundo: la interfaz queda limpia encima. Los valores están en `data/look.js` (se ajustan sin tocar
+    código); lo dibuja `js/view/look.js`.
+  - Interfaz chica y callada, arriba a la izquierda: la vida es una barra fina, las vidas son cuadraditos y el
+    nivel, una línea finita con el número chico. Las balas, abajo a la derecha, en letra chica y color apagado.
+  - El minimapa sigue igual por ahora: se va en la etapa 53 (el mapa sin flecha).
+  - Prueba nueva: los valores de `data/look.js` están en rango. Falta medir cuánto cuesta por cuadro en una PC
+    común (en la vista de prueba el navegador estaba en segundo plano).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
