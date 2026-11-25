@@ -20,7 +20,11 @@ comprobar.
   muebles frenan el paso y las balas, también los chicos (se había recomendado que solo los grandes).
 
 ## Decisiones abiertas
-- Ninguna por ahora.
+- **Cuatro decisiones de Darkwood**, explicadas con sus opciones en `docs/DARKWOOD.md` (sección 4):
+  1. cómo se llevan el día y la noche con la horda que crece (recomendada: las dos, cada noche una oleada);
+  2. cuántas balas (recomendada: alcanzan sin sobrar, más un arma de mano);
+  3. mochila con lugar o ítems que se apilan (recomendada: las dos, la mochila para lo que se gasta);
+  4. qué tan oscuro fuera de la vista (recomendada: penumbra, más oscuro de noche).
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -830,7 +834,8 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Prueba nueva: el medio de cada mueble no deja pararse ni pasar una bala, en todos los pisos. Las pruebas de
     caminar hasta cada cuarto siguen pasando con los muebles puestos.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
-  - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
+  - *(lista armada: `docs/DARKWOOD.md`, con sus decisiones arriba)* **Darkwood como referencia, en la estética y en
+    las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
     arriba con campo de visión, oscuridad, sonido, armado de defensas, día y noche...) y qué no, con la regla de
     la casa: mecánicas sí, contenido no.
