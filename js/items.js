@@ -92,6 +92,6 @@
       L.toast(g, item.name + (copies > 1 ? ' ×' + copies : '') + ': ' + item.desc, L.data.rarities[item.rarity].color);
       opened = true;
     }
-    if (opened && g.spawning) L.fillChests(g);
+    if (opened && g.spawning && !g.explore) L.fillChests(g);
   };
 })(this.Lluvia = this.Lluvia || {});

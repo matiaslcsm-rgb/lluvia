@@ -38,7 +38,7 @@
         game: L.createGame({
           seed: (seed + i * 7919) >>> 0, characterId: charId, listen: isHuman && !opts.humanBot,
           viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720, storm: m.storm, pacts: m.pacts, forecast: m.forecast,
-          city: isHuman ? opts.city : null, explore: isHuman && m.explore, noSpawn: isHuman && m.explore,
+          city: isHuman ? opts.city : null, explore: isHuman && m.explore, noSpawn: isHuman && m.explore, night: isHuman && !!opts.night && !!opts.city,
           gunsOnly: isHuman && !!opts.gunsOnly, gun: isHuman ? opts.gun : null
         }),
         // Rivals get a spread of skills so some fall early and some go far.

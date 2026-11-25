@@ -26,6 +26,10 @@
   };
   L.clockOf = function (g) { return L.clockAt(g.time || 0); };
 
+  // Which night it is (1 the first): a night runs from the evening of one day to the morning of the next; the
+  // morning of day 1 is night 0.
+  L.nightOf = function (k) { return k.hour < 12 ? k.day - 1 : k.day; };
+
   // ---- The flashlight ----
   // F (input.light) turns it on or off. On, its battery runs down; off, it winds up again.
   L.updateClock = function (g, dt, input) {

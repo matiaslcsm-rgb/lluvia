@@ -10,10 +10,17 @@
   // solo: no rivals, duels or bets. gunsOnly: no automatic abilities or ulti; level-ups improve you and the gun.
   // horde: with only a gun the horde is gentler and slower to grow (like Risk of Rain: it builds up).
   //   pace: how fast the difficulty clock runs (0.5 = one step every 2 minutes); the rest multiply the horde.
-  // explore: building the map (2026-11-24, the user's call): no enemies, waves, chests, shrines or weather, no clock
-  //   on screen; you just walk the city. Set it to false to bring the horde back.
-  L.data.mode = { solo: true, gunsOnly: true, startGun: 'glock', explore: true,
-    horde: { pace: 0.5, hpMul: 0.65, dpsMul: 0.5, spawnMul: 0.5, bossFirst: 300, miniFirst: 450, waveFirst: 240 } };
+  // explore: building the map (2026-11-24, the user's call): no waves, chests, shrines or weather, no old clock on
+  //   screen; you walk the city.
+  // night: the zombies follow the clock of the day (docs/DARKWOOD.md, js/clock.js): a few loose ones by day, the
+  //   horde at night, each night harder. Without it (and without explore) the old horde by minutes comes back.
+  //   day / dark: zombies born per second and the most alive at once, by full day and at the darkest night (dusk
+  //   and dawn go in between); perNight: each night after the first adds that much (0.3 = +30%) to both;
+  //   leave: by day, a zombie past this many meters that you don't see goes away (one every so often) until there
+  //   are no more than the day's; level: how much tougher they get each night (difficulty steps).
+  L.data.mode = { solo: true, gunsOnly: true, startGun: 'glock', explore: true, night: true,
+    horde: { pace: 0.5, hpMul: 0.65, dpsMul: 0.5, spawnMul: 0.5, bossFirst: 300, miniFirst: 450, waveFirst: 240 },
+    nights: { day: { rate: 0.07, alive: 10 }, dark: { rate: 0.45, alive: 40 }, perNight: 0.3, leave: 30, leaveEvery: 1.5, level: 2 } };
 
   L.data.guns = [
     { id: 'glock', name: 'Glock 17', desc: 'Pistola de 17 balas. Mantené el clic para disparar.', color: '#ffe9a8',

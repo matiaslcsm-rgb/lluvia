@@ -51,3 +51,32 @@ test('reloj: faroles en las veredas, algunos rotos, y luz debajo de ellos', func
   assert.ok(L.lightAt(g, l0.x, l0.y, 0) > 0.9, 'debajo de un farol no hay luz');
   assert.strictEqual(L.lightAt(g, l0.x, l0.y, 1), 0, 'la luz de un farol llega a un piso de arriba');
 });
+
+test('zombis con el reloj: pocos de día, muchos de noche, más cada noche, y de día los de lejos se van', function () {
+  var L = Lluvia, K = L.data.clock, N = L.data.mode.nights, city = L.cityHome(1);
+  var g = L.createGame({ seed: 7, city: city, explore: true, noSpawn: true, night: true, gunsOnly: true, gun: 'glock', viewW: 1280, viewH: 720 });
+  var sp = L.cityFree(city, city.start.x, city.start.y);
+  g.player.x = sp.x; g.player.y = sp.y;
+  var at = function (day, h) { return ((day - 1) * 24 + h - K.start) * K.hour; };
+  var fill = function () { for (var i = 0; i < 600; i++) L.spawnByClock(g, 0.5); return g.enemies.length; };
+  assert.ok(g.spawning && g.night, 'con el reloj no salen zombis');
+  g.time = at(1, 12);
+  var noon = fill();
+  assert.ok(noon > 0 && noon <= N.day.alive, 'al mediodía hay ' + noon);
+  g.time = at(2, 0);
+  var night1 = fill();
+  assert.ok(night1 >= N.dark.alive * 0.9 && night1 > noon * 2, 'a la medianoche hay ' + night1);
+  var lvl1 = L.difficulty(g);
+  g.time = at(3, 0);
+  var night2 = fill();
+  assert.ok(night2 > night1, 'la segunda noche no hay más zombis: ' + night2 + ' contra ' + night1);
+  assert.ok(L.difficulty(g) > lvl1, 'la segunda noche no son más fuertes');
+  // Morning: the far ones leave, one at a time, leaving nothing behind.
+  g.time = at(3, 11);
+  var gems = g.gems.length;
+  g.enemies.forEach(function (e, i) { e.x = g.player.x + 4000 + i; e.y = g.player.y; });
+  for (var i = 0; i < 400; i++) { L.spawnByClock(g, 0.5); g.enemies = g.enemies.filter(function (e) { return !e.dead; }); }
+  assert.ok(g.enemies.length <= Math.round(N.day.alive * (1 + N.perNight * 2)), 'de día no se van: quedan ' + g.enemies.length);
+  assert.strictEqual(g.gems.length, gems, 'los que se van dejan experiencia');
+  assert.strictEqual(L.nightOf(L.clockAt(at(1, 10))), 0); assert.strictEqual(L.nightOf(L.clockAt(at(1, 22))), 1); assert.strictEqual(L.nightOf(L.clockAt(at(2, 3))), 1);
+});

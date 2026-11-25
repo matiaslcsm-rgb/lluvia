@@ -32,7 +32,11 @@
   };
 
   // The difficulty clock: one step every minute, the same for everyone. Starts at 1.
-  L.difficulty = function (g) { return 1 + Math.floor(g.time * (g.pace || 1) / 60); };
+  L.difficulty = function (g) {
+    // With the clock of the day (L.data.mode.night): a step for the dark, and `level` more for every night gone.
+    if (g.night && L.clockOf) { var k = L.clockOf(g); return 1 + L.data.mode.nights.level * Math.max(0, L.nightOf(k) - 1) + (k.light < 0.5 ? 1 : 0); }
+    return 1 + Math.floor(g.time * (g.pace || 1) / 60);
+  };
 
   // opts: { seed, characterId, viewW, viewH, noSpawn, explore, lives, listen } — listen: keep events for screen and sound;
   // explore: only the map (no horde, shrines or errands; the screen hides the clock)
@@ -50,7 +54,8 @@
       respawn: 0,          // seconds left before coming back after losing a life
       choice: null,        // the 3 options on screen after a level up, or null
       pendingLevels: 0,
-      spawning: !opts.noSpawn,
+      spawning: !opts.noSpawn || !!opts.night,
+      night: !!opts.night,   // the zombies follow the clock of the day (L.data.mode.night)
       explore: !!opts.explore,
       spawnAcc: 0,
       nextBoss: h.bossFirst,
@@ -104,7 +109,7 @@
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
     if (g.city && g.city.start) { var fr = L.cityFree(g.city, g.city.start.x, g.city.start.y); g.player.x = fr.x; g.player.y = fr.y; }
-    if (g.spawning) L.fillChests(g);
+    if (g.spawning && !g.explore) L.fillChests(g); // no chests while exploring the map (they come back with "juntar", stage 48)
     return g;
   };
 
@@ -224,7 +229,8 @@
     if (g.respawn > 0) {
       // While you are down the clock and the horde keep going, but nothing touches you.
       g.respawn -= dt;
-      if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
+      if (g.night) spawnByClock(g, dt);
+      else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
       updateTimed(g.effects, dt);
       updateTimed(g.toasts, dt);
       if (g.respawn <= 0) { g.respawn = 0; revive(g); }
@@ -234,7 +240,8 @@
     L.tickUlti(p, dt);
     movePlayer(g, dt, input);
     if (g.city && L.updateClock) L.updateClock(g, dt, input); // the flashlight (js/clock.js)
-    if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
+    if (g.night) spawnByClock(g, dt);
+    else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
     moveEnemies(g, dt);
     updateEnemyShots(g, dt);
@@ -313,6 +320,33 @@
       if (g.rng() < eliteChance) L.makeElite(e);
     }
   }
+
+  // Zombies by the clock of the day (L.data.mode.nights): few by day, many at night, more every night. By day the
+  // ones far away that you don't see go off, until there are no more than the day's.
+  function spawnByClock(g, dt) {
+    var N = L.data.mode.nights, h = L.data.horde, k = L.clockOf(g), dark = 1 - k.light, n = Math.max(1, L.nightOf(k));
+    var grow = 1 + N.perNight * (n - 1), rate = (N.day.rate + (N.dark.rate - N.day.rate) * dark) * grow;
+    var alive = Math.round((N.day.alive + (N.dark.alive - N.day.alive) * dark) * grow);
+    g.spawnAcc += rate * dt;
+    while (g.spawnAcc >= 1) {
+      g.spawnAcc -= 1;
+      if (g.enemies.length >= Math.min(alive, h.maxAlive)) continue;
+      var pt = ringPoint(g);
+      L.spawnEnemy(g, pickType(g, g.time / 60), pt.x, pt.y);
+    }
+    // By day, the extra ones leave: the farthest one you don't see, every so often.
+    g.leaveAcc = (g.leaveAcc || 0) + dt;
+    if (dark < 0.2 && g.enemies.length > alive && g.leaveAcc >= N.leaveEvery) {
+      g.leaveAcc = 0;
+      var p = g.player, far = N.leave * g.city.scale, best = null, bd = far;
+      g.enemies.forEach(function (e) {
+        var d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d > bd && !e.type.boss) { bd = d; best = e; }
+      });
+      if (best) { best.dead = true; best.gone = true; }
+    }
+  }
+  L.spawnByClock = spawnByClock;
 
   // A golden, tougher version of a creature: more health, size, damage, experience and gold.
   L.makeElite = function (e) {
@@ -628,6 +662,7 @@
     for (var i = 0; i < g.enemies.length; i++) {
       var e = g.enemies[i];
       if (!e.dead) { g.enemies[n++] = e; continue; }
+      if (e.gone) continue; // walked off (by day, js/game.js spawnByClock): leaves nothing
       if (g.gems.length < h.maxGems) g.gems.push({ x: e.x, y: e.y, v: e.xp, magnet: false });
       else g.gems[g.rng.int(g.gems.length)].v += e.xp; // too many on the floor: merge into an existing one
     }

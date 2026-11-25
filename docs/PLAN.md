@@ -897,6 +897,17 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Pruebas nuevas (`tests/reloj.test.js`): 12 horas en 40 minutos, día 2 a medianoche, el atardecer sin saltos;
     la linterna se prende y apaga con F, gasta y se recarga; de noche se ve menos que de día; los faroles están en
     la calle y alumbran solo la planta baja.
+- **2026-11-25: vuelven los zombis, con el reloj** (etapa 47; pedido del usuario: "sí, seguí").
+  - De día salen pocos (uno cada 14 s, hasta 10 a la vez). Al atardecer van saliendo más, y a medianoche llegan a
+    uno cada 2 s, hasta 40 a la vez. Cada noche después de la primera suma un 30% a las dos cosas, y los zombis
+    son más fuertes: dos escalones de dificultad por noche, más uno mientras está oscuro.
+  - A la mañana, los que sobran y están lejos (a más de 30 m) se van de a uno, sin dejar experiencia.
+  - Se ven solo dentro de tu cono y con luz (etapas 45 y 46). El minimapa ya no los muestra.
+  - Por ahora no hay cofres, santuarios ni encargos: vuelven con "juntar" (etapa 48) o más adelante.
+  - Los números están en `data/guns.js` (`nights`). El bot con día y noche: `node tools/solo.js 3 170 noche`
+    (tarda: unos 10 minutos por partida de dos días). Falta ajustarlos con lo que mida.
+  - Prueba nueva: al mediodía hay pocos, a medianoche muchos, la segunda noche más y más fuertes, y a la mañana
+    los de lejos se van.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

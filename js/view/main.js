@@ -58,11 +58,12 @@
     var mode = L.data.mode || {};
     match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta'),
       pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }), city: city,
-      solo: mode.solo, gunsOnly: mode.gunsOnly, gun: mode.startGun, explore: mode.explore });
+      solo: mode.solo, gunsOnly: mode.gunsOnly, gun: mode.startGun, explore: mode.explore, night: mode.night });
     var g = game(), sp = city.start || { x: city.size / 2, y: city.size / 2 }, fr = L.cityFree(city, sp.x, sp.y);
     g.player.x = fr.x; g.player.y = fr.y;
     if (msg) L.toast(g, msg, '#ff9a7a');
-    if (city.name) L.toast(g, g.explore ? 'Arrancás en la plaza de ' + city.name + '. Recorré el mapa: por ahora no hay nadie más.'
+    if (city.name) L.toast(g, g.night ? 'Arrancás en la plaza de ' + city.name + '. De día hay pocos zombis; de noche salen todos. F prende la linterna.'
+      : g.explore ? 'Arrancás en la plaza de ' + city.name + '. Recorré el mapa: por ahora no hay nadie más.'
       : 'Arrancás en la plaza de ' + city.name + '. El Sol Amarillo volvió loca a la gente: no te dejes agarrar.', '#ffd23f');
     reward = null;
     paused = false;

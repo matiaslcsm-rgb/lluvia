@@ -586,7 +586,8 @@
       ctx.stroke();
     });
     ctx.fillStyle = '#ff5a5a';
-    g.enemies.forEach(function (e) {
+    // With the field of view (js/sight.js) the map doesn't give away the zombies: you only know what you see.
+    if (!g.night) g.enemies.forEach(function (e) {
       var ex = mx(e.x), ey = my(e.y);
       if (ex > x0 && ex < x0 + size && ey > y0 && ey < y0 + size) ctx.fillRect(ex - 1.5, ey - 1.5, e.type.boss ? 6 : 3, e.type.boss ? 6 : 3);
     });
