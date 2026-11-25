@@ -12,6 +12,10 @@
   L.data = L.data || {};
   L.data.melee = {
     air: { max: 100, regen: 18, rest: 0.6, low: 15, slow: 1.7 }, // your air: refills after `rest` s; below `low`, blows `slow`x slower
+    run: { mul: 1.6, cost: 14 },       // Shift: running, this many times faster, air per second (the user: "necesita correr")
+    // Both mouse buttons at once: a shove (the user: "si usa los dos al mismo tiempo empuja"). Pushes the zombies in
+    // front back `back` m and stops them `stun` s, may drop them; no damage. With fists each button is one hand.
+    push: { reach: 0.9, back: 0.8, stun: 0.8, knock: 0.3, air: 12, every: 0.8, noise: 4, both: 0.12 },
     arc: 100,          // degrees in front of you a blow reaches
     downBonus: 2,      // a zombie lying on the floor takes this many times the damage
     hurtLife: 3,       // life you lose when you hurt your hands

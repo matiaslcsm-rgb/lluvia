@@ -8,6 +8,9 @@
     desaturate: 0.5,          // how much color the world loses
     tint: '#c8a93c',          // the Sun's sick yellow, laid softly over everything
     tintAmount: 0.35,
+    // The sun shines behind white clouds, yellow and violet (docs/LORE.md): a violet touch, strongest in the shadows.
+    violet: '#5b3a78',
+    violetAmount: 0.22,
     grime: '#d2cab8',         // a dirty, slightly dark wash (multiplied over the world)
     grimeAmount: 0.8,
     grain: { amount: 0.13, size: 160, fps: 18 },  // film grain: strength, size of its tile in px, changes per second

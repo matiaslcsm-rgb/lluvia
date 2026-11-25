@@ -1,5 +1,15 @@
 # El mundo de Lluvia
 
+## San Miguel bajo el Sol Amarillo (el juego de ahora)
+Lo de abajo es el mundo del juego anterior (Aguaverde y los Paraguas), guardado como referencia. El juego de ahora
+pasa en San Miguel.
+
+Un día el sol empezó a brillar amarillo y la gente se volvió loca: mutó, enloqueció, se volvió zombi.
+
+**El cielo** (pedido del usuario, 2026-11-25): las nubes son blancas, y detrás de ellas se ve el sol brillando con
+un amarillo tétrico y violáceo. Cuando llueve, **la lluvia es negra**. Todo lo que se ve en la ciudad tiene esa luz:
+amarilla enferma, con un tinte violeta en las sombras.
+
 ## Aguaverde
 Una ciudad de puertos, puentes y techos de chapa donde llueve sin parar desde hace cien años. Nadie sabe por qué
 empezó. Los viejos dicen que alguien le robó el sol al cielo, y que el cielo todavía lo está buscando.

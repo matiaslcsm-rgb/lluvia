@@ -62,7 +62,8 @@
       show([el('h1', null, 'LLUVIA'),
         el('p', 'tagline', 'San Miguel. Un día el sol empezó a brillar amarillo y la gente se volvió loca.'),
         button('Empezar', onStart),
-        el('p', 'hint', 'WASD: moverte · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
+        el('p', 'hint', 'WASD: moverte · Shift: correr · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
+        el('p', 'hint', 'A mano: cada botón una mano; los dos juntos, empujar'),
         el('p', 'hint', 'E: revisar muebles · H: venda · F: linterna · Tab: fabricar · G: molotov'),
         el('p', 'hint', 'P: pausa · M: sonido · Enter: empezar')]);
       L.ui.current = 'title';
@@ -220,6 +221,36 @@
       L.ui.current = 'choice';
     },
 
+    // Your inventory (js/loot.js): your hands, your pockets and each bag, with what is in every slot. A click uses
+    // it (a bandage heals, a weapon goes to your hand); the ✕ throws it away.
+    inventory: function (g, onClose) {
+      var p = g.player, Dl = L.data.loot, wrap = el('div', 'inv');
+      var hands = el('div', 'invbox');
+      hands.appendChild(el('div', 'invtitle', 'En las manos'));
+      hands.appendChild(el('div', 'invline', (p.gun ? p.gun.def.name + ' · ' + p.gun.ammo + ' en el cargador' : 'Sin arma de fuego')));
+      var md = L.meleeDef(p.melee.id);
+      hands.appendChild(el('div', 'invline', md.name + (md.dur ? ' · ' + Math.round(p.melee.dur / md.dur * 100) + '% de vida' : '')));
+      wrap.appendChild(hands);
+      g.pack.places.forEach(function (pl) {
+        var spec = Dl.containers[pl.id], box = el('div', 'invbox');
+        box.appendChild(el('div', 'invtitle', spec.name + ' · ' + pl.slots.length + '/' + spec.slots + (spec.big ? '' : ' · solo cosas chicas')));
+        pl.slots.forEach(function (sl, i) {
+          var row = el('div', 'invrow'), wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
+          var name = wd ? wd.name + (wd.dur ? ' (' + Math.round(sl.dur / wd.dur * 100) + '%)' : '') : L.lootText([[sl.id, sl.n]]);
+          var use = button(name, function () { if (L.packUse(g, pl, i)) L.ui.inventory(g, onClose); }, 'btn slot');
+          var drop = button('✕', function () { L.packDrop(g, pl, i); L.ui.inventory(g, onClose); }, 'btn ghost small');
+          drop.title = 'Tirar';
+          row.appendChild(use); row.appendChild(drop);
+          box.appendChild(row);
+        });
+        for (var k = pl.slots.length; k < spec.slots; k++) box.appendChild(el('div', 'invempty', '—'));
+        wrap.appendChild(box);
+      });
+      show([el('h2', null, 'Inventario'), wrap, button('Cerrar (I)', onClose, 'btn ghost'),
+        el('p', 'hint', 'Clic en algo para usarlo (una venda cura, un arma va a la mano) · ✕ para tirarlo · Las cosas grandes van en un bolso o una mochila')]);
+      L.ui.current = 'inventory';
+    },
+
     // What you can make (js/craft.js): one line per recipe with what it needs; the ones you can't make say why.
     craft: function (g, onClose) {
       var list = el('div', 'craft');
@@ -236,6 +267,7 @@
       L.ui.current = 'craft';
     },
 
+    // The pause, with the keys of the game.
     pause: function (onResume) {
       var vol = el('div', 'row');
       var label = el('span', 'volume', 'Volumen ' + Math.round(L.sound.volume() * 100) + '%');
@@ -245,7 +277,12 @@
       var opts = el('div', 'row');
       opts.appendChild(button('Temblor de pantalla: ' + (L.options.shake ? 'sí' : 'no'), function () { L.options.shake = !L.options.shake; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
       opts.appendChild(button('Letra grande: ' + (L.options.big ? 'sí' : 'no'), function () { L.options.big = !L.options.big; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
-      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
+      var keys = el('div', 'keys');
+      [['WASD', 'moverte'], ['Shift', 'correr'], ['Mouse', 'disparar o pegar'], ['Clic derecho', 'apuntar (a mano: la otra mano)'], ['Los dos botones', 'empujar'], ['R', 'recargar'], ['1 / 2', 'pistola / arma de mano'],
+        ['E', 'revisar muebles'], ['H', 'venda'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'sonido']].forEach(function (k) {
+        var r = el('div', 'keyrow'); r.appendChild(el('span', 'kbd', k[0])); r.appendChild(el('span', null, k[1])); keys.appendChild(r);
+      });
+      show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, keys, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
       L.ui.current = 'pause';
     },
 

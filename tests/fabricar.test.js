@@ -20,7 +20,9 @@ test('fabricar: vendas con trapos, puños vendados, botella rota; balas solo en 
   L.packAdd(g, 'chatarra', 4);
   assert.ok(/taller/.test(L.craftBlock(g, r('balas')) || ''), 'hace balas lejos de un taller');
   // Molotov: botella, trapo y nafta; G lo tira y prende fuego a lo que está ahí.
-  L.packAdd(g, 'botella', 1); L.packAdd(g, 'nafta', 1);
+  L.packAdd(g, 'botella', 1);
+  assert.strictEqual(L.packAdd(g, 'nafta', 1), 1, 'un bidón de nafta entra en un bolsillo');
+  L.wear(g, 'mochila'); L.packAdd(g, 'nafta', 1);
   assert.ok(L.craft(g, r('molotov')));
   var z = L.spawnEnemy(g, 'rastrero', p.x + Math.cos(g.player.aim || 0) * 3 * city.scale, p.y + Math.sin(g.player.aim || 0) * 3 * city.scale);
   z.floor = 0;

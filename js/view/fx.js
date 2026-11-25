@@ -41,7 +41,23 @@
             else if (e.elite) { S.play('elite'); float(ev.x, ev.y - 20, '+élite', '#ffd27a'); }
             else S.play('kill');
             break;
-          case 'shot': S.play('shot'); break;
+          case 'shot': S.play(L.currentGame && L.currentGame() && L.currentGame().night ? 'gun' : 'shot'); break;
+          // The city's sounds (js/guns.js, js/game.js, js/melee.js, js/loot.js, js/craft.js, js/senses.js).
+          case 'reload': S.play('reload'); break;
+          case 'empty': S.play('empty'); break;
+          case 'bodyhit': S.play('bodyhit'); break;
+          case 'headshot': S.play('headshot'); burst(ev.x, ev.y, '#5a1f1f', 10, 140, 0.4); break;
+          case 'swing': S.play('swing'); break;
+          case 'blow': S.play('blow'); break;
+          case 'break': S.play('break'); break;
+          case 'shove': S.play('shove'); break;
+          case 'rummage': S.play('rummage'); break;
+          case 'craft': S.play('craft'); break;
+          case 'skill': S.play('skill'); break;
+          case 'groan':
+            var me = L.currentGame && L.currentGame() && L.currentGame().player;
+            if (me) { var dd = Math.hypot(ev.x - me.x, ev.y - me.y) / 50; if (dd < 18) S.play('groan', 1 - dd / 18); }
+            break;
           case 'gem': S.play('gem'); break;
           case 'level': S.play('level'); burst(ev.x, ev.y, '#5fe0d0', 30, 220, 0.7); break;
           case 'chest':
@@ -54,7 +70,7 @@
           case 'lifeLost': S.play('lifeLost'); L.fx.shake(16); burst(ev.x, ev.y, '#ff6b81', 40, 260, 0.9); break;
           case 'fenix': S.play('legendary'); burst(ev.x, ev.y, '#ff5a5a', 60, 300, 1); break;
           case 'boss': S.play('boss'); L.fx.shake(6); break;
-          case 'explode': S.play('boom'); burst(ev.x, ev.y, '#ffb347', 26, 300, 0.5); L.fx.shake(4); break;
+          case 'explode': S.play('boom'); if (L.currentGame && L.currentGame() && L.currentGame().night) S.play('glass'); burst(ev.x, ev.y, '#ffb347', 26, 300, 0.5); L.fx.shake(4); break;
           case 'split': burst(ev.x, ev.y, '#e8d36a', 10, 120, 0.4); break;
           case 'spit': S.play('spit'); break;
         }

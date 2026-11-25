@@ -45,11 +45,43 @@ test('armas de mano: el golpe pega adelante y no atrás, gasta aire, el arma se 
   // A found weapon goes to the hand (only fists) or the backpack; 2 again swaps them.
   assert.ok(L.giveMelee(g, 'barra'));
   assert.strictEqual(p.melee.id, 'barra');
+  assert.ok(!L.giveMelee(g, 'hacha'), 'un hacha entra en un bolsillo');
+  L.wear(g, 'mochila');
   assert.ok(L.giveMelee(g, 'hacha'));
-  assert.ok(g.pack.slots.some(function (sl) { return sl.id === 'w:hacha'; }), 'la segunda arma no va a la mochila');
+  var carried = function (id) { return L.packWeapons(g).some(function (w) { return w.place.slots[w.i].id === id; }); };
+  assert.ok(carried('w:hacha'), 'la segunda arma no va a la mochila');
   L.updateMelee(g, 0.016, { slot2: true }); L.updateMelee(g, 0.016, {});
   assert.strictEqual(p.melee.id, 'hacha', '2 no cambia de arma');
-  assert.ok(g.pack.slots.some(function (sl) { return sl.id === 'w:barra'; }), 'la barra no vuelve a la mochila');
+  assert.ok(carried('w:barra'), 'la barra no vuelve a la mochila');
   L.updateMelee(g, 0.016, { slot1: true });
   assert.strictEqual(p.hand, 'gun', '1 no vuelve a la pistola');
+});
+
+test('correr gasta aire; a mano cada botón es una mano y los dos juntos empujan', function () {
+  var L = Lluvia, g = meleeGame(), p = g.player, s = g.city.scale;
+  p.hand = 'melee';
+  // Running: faster than walking, and it costs air.
+  var x0r = p.x, air0 = p.air;
+  for (var i = 0; i < 15; i++) L.update(g, 1 / 30, { x: 1, y: 0 });
+  var walk = p.x - x0r; p.x = x0r;
+  for (i = 0; i < 15; i++) L.update(g, 1 / 30, { x: 1, y: 0, run: true });
+  assert.ok(p.x - x0r > walk * 1.3 || walk < 1, 'correr no es más rápido');
+  assert.ok(p.air < air0, 'correr no gasta aire');
+  p.x = x0r; p.air = L.data.melee.air.max;
+  var air = p.air;
+  // Two hands: left then right, each with its own pace.
+  var z = L.spawnEnemy(g, 'rastrero', p.x + 0.6 * s, p.y); z.floor = 0;
+  g.time = 1;
+  L.updateMelee(g, 0.016, { fire: true }); g.time += 0.2; L.updateMelee(g, 0.016, { fire: true });
+  assert.ok(z.hp < z.maxHp, 'la mano izquierda no pega');
+  var hp = z.hp; g.time += 0.05;
+  L.updateMelee(g, 0.016, { aiming: true }); g.time += 0.2; L.updateMelee(g, 0.016, { aiming: true });
+  assert.ok(z.hp < hp, 'la mano derecha no pega mientras la izquierda descansa');
+  assert.ok(p.air < air, 'pegar no gasta aire');
+  // Both at once: a shove, no damage.
+  L.updateMelee(g, 0.016, {}); g.time += 1;
+  hp = z.hp; var x0 = z.x;
+  L.updateMelee(g, 0.016, { fire: true, aiming: true });
+  assert.ok(z.x > x0 + 0.3 * s, 'los dos botones no empujan');
+  assert.strictEqual(z.hp, hp, 'empujar lastima');
 });

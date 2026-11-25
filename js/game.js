@@ -286,14 +286,24 @@
   function movePlayer(g, dt, input) {
     var p = g.player, x = input.x || 0, y = input.y || 0;
     // Aiming (right button) you stand still; the sight closes (js/skills.js).
-    if (g.night && p.gun && L.updateAim) { if (input.aiming) { x = 0; y = 0; } L.updateAim(g, dt, input, !!(x || y)); }
+    if (g.night && p.gun && L.updateAim && p.hand !== 'melee') { if (input.aiming) { x = 0; y = 0; } L.updateAim(g, dt, input, !!(x || y)); }
+    // Running (Shift): faster, but it costs air and makes more noise (js/melee.js, data/melee.js run).
+    var run = 1;
+    if (g.night && input.run && (x || y) && p.air > L.data.melee.air.low && !input.aiming) {
+      run = L.data.melee.run.mul; p.running = true;
+      p.air = Math.max(0, p.air - L.data.melee.run.cost * dt); p.airRest = L.data.melee.air.rest;
+    } else p.running = false;
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
     if ((x || y) && !(p.gun && input.aimX !== undefined)) { p.dirX = x; p.dirY = y; } // the way you face (with a gun: where you aim)
     // Your steps make a little noise (js/senses.js).
-    if (g.night && (x || y)) { g.stepT = (g.stepT || 0) - dt; if (g.stepT <= 0) { g.stepT = 0.5; L.makeNoise(g, p.x, p.y, L.data.senses.noise.walk, p.floor, p); } }
+    if (g.night && (x || y)) {
+      g.stepT = (g.stepT || 0) - dt;
+      if (g.stepT <= 0) { g.stepT = 0.5; L.makeNoise(g, p.x, p.y, p.running ? L.data.senses.noise.run : L.data.senses.noise.walk, p.floor, p); }
+    }
     L.updateStance(p, len > 0.2, dt);
-    stepPlayer(g, x * p.stats.speed * dt, y * p.stats.speed * dt);
+    var slow = (g.pack ? 1 - L.packSlow(g) : 1) * run; // a bolso in your hand gets in the way (js/loot.js)
+    stepPlayer(g, x * p.stats.speed * slow * dt, y * p.stats.speed * slow * dt);
   }
 
   // ---- Horde ----
@@ -935,6 +945,7 @@
     // It knows where the shot came from now.
     e.mind = 'investigate'; e.goX = pr.ox; e.goY = pr.oy; e.linger = 4; e.look = 0;
     L.gainSkill(g, 'punteria', L.data.skills.list.punteria.body);
+    L.emit(g, 'bodyhit', e.x, e.y);
   }
 
   // ---- Experience ----

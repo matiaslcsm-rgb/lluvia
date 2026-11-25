@@ -101,7 +101,8 @@ del juego, no solo cómo se ve:
 - **Despejado:** se ve lejos. Con el Sol Amarillo al mediodía, la luz encandila un poco y los zombis están más
   quietos.
 - **Nublado:** luz más pareja y apagada.
-- **Lluvia:** el ruido de la lluvia tapa tus pasos y los de los zombis (se oye menos de los dos lados). Si dura,
+- **Lluvia:** **la lluvia es negra** (la historia, `docs/LORE.md`), cae de nubes blancas con el sol amarillo y
+  violáceo detrás. El ruido de la lluvia tapa tus pasos y los de los zombis (se oye menos de los dos lados). Si dura,
   las zonas bajas del mapa se inundan (esto es el paso 43 del plan, "el agua en lo bajo", que encaja acá).
 - **Tormenta:** lluvia fuerte, viento y rayos. Un rayo ilumina todo un instante, también de noche, y asusta.
 - **Niebla:** el cono de visión se achica. La de la madrugada es la peor.

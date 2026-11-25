@@ -122,25 +122,35 @@
     if (ms && !L.ui.current) { ctx.fillStyle = 'rgba(217,207,166,0.8)'; ctx.beginPath(); ctx.arc(ms.x, ms.y, 2.5, 0, Math.PI * 2); ctx.fill(); }
   }
 
-  // The backpack (js/loot.js), bottom left: a slot per item with how many; and, next to you, what E would search
+  // One slot's thing: a colored mark (a slanted bar for a weapon) and how many.
+  function slotIcon(ctx, sl, x, y, sz, C) {
+    var wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
+    ctx.fillStyle = wd ? wd.color : L.data.loot.items[sl.id].color;
+    if (wd) { ctx.save(); ctx.translate(x + sz / 2, y + sz / 2); ctx.rotate(-0.7); ctx.fillRect(-sz * 0.38, -2, sz * 0.76, 4); ctx.restore(); }
+    else ctx.fillRect(x + 5, y + 4, sz - 10, sz - 12);
+    if (!wd) { ctx.fillStyle = C.text; ctx.font = '600 9px system-ui, sans-serif'; ctx.textAlign = 'right'; ctx.fillText(sl.n, x + sz - 2, y + sz - 2); }
+  }
+
+  // What you carry (js/loot.js), bottom left: a slot per item with how many; and, next to you, what E would search
   // and how far along the search is.
   function packHud(ctx, g, p, camX, camY, W, H) {
-    var C = L.data.look.hud, Dl = L.data.loot, sz = 26, x0 = 18, y0 = H - 18 - sz;
+    var C = L.data.look.hud, Dl = L.data.loot, sz = 22, x = 18, y0 = H - 18 - sz;
     ctx.globalAlpha = 0.85;
-    for (var i = 0; i < g.pack.size; i++) {
-      var sl = g.pack.slots[i], x = x0 + i * (sz + 4);
-      ctx.fillStyle = 'rgba(12,11,9,0.6)'; ctx.fillRect(x, y0, sz, sz);
-      ctx.strokeStyle = 'rgba(207,198,168,0.25)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y0 + 0.5, sz - 1, sz - 1);
-      if (!sl) continue;
-      var wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
-      ctx.fillStyle = wd ? wd.color : Dl.items[sl.id].color;
-      if (wd) { ctx.save(); ctx.translate(x + sz / 2, y0 + sz / 2 - 2); ctx.rotate(-0.7); ctx.fillRect(-sz * 0.38, -2, sz * 0.76, 4); ctx.restore(); }
-      else ctx.fillRect(x + 6, y0 + 5, sz - 12, sz - 14);
-      ctx.fillStyle = C.text; ctx.font = '600 10px system-ui, sans-serif'; ctx.textAlign = 'right';
-      if (!wd) ctx.fillText(sl.n, x + sz - 3, y0 + sz - 3);
-    }
+    // Each place you carry things (pockets, riñonera, bolso, mochila), its name over its slots.
+    g.pack.places.forEach(function (pl) {
+      var spec = Dl.containers[pl.id];
+      ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
+      ctx.fillText(spec.name, x, y0 - 5);
+      for (var i = 0; i < spec.slots; i++) {
+        var sl = pl.slots[i], sx = x + i * (sz + 3);
+        ctx.fillStyle = 'rgba(12,11,9,0.62)'; ctx.fillRect(sx, y0, sz, sz);
+        ctx.strokeStyle = 'rgba(207,198,168,0.22)'; ctx.lineWidth = 1; ctx.strokeRect(sx + 0.5, y0 + 0.5, sz - 1, sz - 1);
+        if (sl) slotIcon(ctx, sl, sx, y0, sz, C);
+      }
+      x += spec.slots * (sz + 3) + 12;
+    });
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText('Mochila · E revisar · H venda · 2 arma de mano · Tab fabricar · G molotov', x0, y0 - 5);
+    ctx.fillText('I inventario · E revisar · H venda · Tab fabricar · G molotov', 18, y0 - 19);
     ctx.globalAlpha = 1;
     var tg = g.lootTarget;
     if (tg) {

@@ -51,6 +51,7 @@
       v.slot1 = L.input.key('Digit1'); // the gun
       v.slot2 = L.input.key('Digit2'); // the hand weapon (again: the next one in the backpack)
       v.throwIt = L.input.key('KeyG');   // throw a molotov
+      v.run = L.input.key('ShiftLeft') || L.input.key('ShiftRight'); // run
       v.reload = L.input.key('KeyR');
       v.light = L.input.key('KeyF'); // the flashlight
       v.use = L.input.key('KeyE');   // search a piece of furniture
@@ -80,6 +81,15 @@
     if (match && L.choose(game(), i)) L.ui.hide();
   }
 
+  // I: your inventory. The game waits while it is open.
+  function toggleInventory() {
+    if (!match || match.over || game().choice || !game().pack) return;
+    if (L.ui.current === 'inventory') { paused = false; L.ui.hide(); return; }
+    if (paused) return;
+    paused = true;
+    L.ui.inventory(game(), toggleInventory);
+  }
+
   // Tab: what you can make (js/craft.js). The game waits while the list is open.
   function toggleCraft() {
     if (!match || match.over || game().choice || !game().pack) return;
@@ -91,6 +101,7 @@
 
   function togglePause() {
     if (L.ui.current === 'craft') { toggleCraft(); return; }
+    if (L.ui.current === 'inventory') { toggleInventory(); return; }
     if (!match || match.over || game().choice) return;
     paused = !paused;
     if (paused) L.ui.pause(togglePause); else L.ui.hide();
@@ -128,7 +139,8 @@
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
-    else if (e.code === 'Tab') { e.preventDefault(); toggleCraft(); }
+    else if (e.code === 'Tab') { e.preventDefault(); if (L.ui.current !== 'inventory') toggleCraft(); }
+    else if (e.code === 'KeyI' && L.ui.current !== 'craft') toggleInventory();
     else if (L.ui.current === 'craft' && n !== undefined) L.ui.craftPick(n);
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
@@ -219,10 +231,33 @@
         L.ui.result(match, menu, reward, endless);
       }
     }
+    if (match && !paused && game().night) citySteps(game(), dt);
     if (match && match.duel && match.human.inDuel) L.renderDuel(match.duel, ctx, canvas.width, canvas.height, match.duel.players.indexOf(match.human));
     else L.render(game(), ctx, canvas.width, canvas.height, match);
     if (match && !match.over) L.tips.draw(ctx, canvas.width, paused ? 0 : dt);
     requestAnimationFrame(frame);
+  }
+
+  // Footsteps in the city: yours every 70 cm walked (louder running), and now and then the shuffle of the nearest
+  // zombie walking within 9 m (quieter the farther). No rain is heard until the weather comes.
+  var stepAt = null, stepLen = 0, zstepT = 0;
+  function citySteps(g, dt) {
+    var p = g.player, s = g.city.scale;
+    L.sound.rain(0);
+    if (stepAt) stepLen += Math.hypot(p.x - stepAt.x, p.y - stepAt.y);
+    stepAt = { x: p.x, y: p.y };
+    if (stepLen > 0.7 * s) { stepLen = 0; L.sound.play('step', p.running ? 1 : 0.6); }
+    zstepT -= dt;
+    if (zstepT <= 0) {
+      zstepT = 0.35;
+      var best = null, bd = 9 * s;
+      g.enemies.forEach(function (e) {
+        if (e.dead || (e.floor || 0) !== (p.floor || 0) || e.stun > 0) return;
+        var d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d < bd) { bd = d; best = e; }
+      });
+      if (best) L.sound.play('zstep', 1 - bd / (9 * s));
+    }
   }
 
   addEventListener('resize', resize);

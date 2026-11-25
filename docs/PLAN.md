@@ -1014,6 +1014,31 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
 - **2026-11-25: momento de prueba de la etapa 48** (lo acordado con el usuario: probar todo junto en momentos
   fijos). Pasan las 41 pruebas; las dos que fallaron eran pruebas viejas que no sabían que los muebles ahora también
   dan armas, y se corrigieron.
+- **2026-11-25: inventario, correr, piñas con las dos manos, menús, sonidos y el cielo** (pedido del usuario:
+  "agregale un inventario, lo que pueda llevar una persona normal en el cuerpo, y metamos mochilas, bolsos y
+  riñoneras; mejorá los menús e interfaces; agregá sonidos; la lluvia es negra, las nubes blancas y el sol atrás
+  brillando con un amarillo tétrico y violáceo"; y después: "el personaje necesita correr; peleando a mano, un clic
+  da con una mano y el otro con la otra; los dos al mismo tiempo empuja").
+  - **Lo que llevás encima** (`data/loot.js`, `containers`): arrancás con los bolsillos (4 lugares) y una riñonera
+    (4), donde solo entran cosas chicas. En los muebles aparecen un **bolso** (8 lugares, te frena un 6%) y una
+    **mochila** (12, te frena un 3%), donde entran también las grandes: tablas, bidones de nafta y las armas largas.
+    Una de cada tipo; si encontrás otra igual, queda en el mueble.
+  - **Inventario (I):** tus manos (la pistola y el arma de mano, con su desgaste) y cada lugar con lo que tiene.
+    Un clic usa (la venda cura, el arma va a la mano) y la ✕ lo tira. En la pantalla del juego, abajo a la izquierda,
+    se ven los lugares con sus casilleros.
+  - **Correr (Shift):** 1,6 veces más rápido, gasta aire y hace ruido (8 m en vez de 3).
+  - **A mano:** el clic izquierdo pega con una mano y el derecho con la otra, cada una a su ritmo; los dos juntos
+    empujan (cualquier arma de mano): los zombis de adelante van para atrás 80 cm, se frenan y a veces caen. No
+    lastima.
+  - **Menús:** colores de Darkwood (marrones, dorado gastado, letra con serifa en los títulos), la pausa con todas las
+    teclas, la pantalla de inicio con los controles nuevos.
+  - **Sonidos** (hechos con el navegador, sin archivos): el disparo de la Glock, la recarga, el clic sin balas, la
+    bala que pega en el cuerpo y en la cabeza, tus pasos (más fuertes corriendo), el arrastre del zombi más cercano
+    a menos de 9 m, los gruñidos, el golpe al aire y el que pega, el empujón, un arma que se rompe, revisar un
+    mueble, fabricar y el molotov que estalla. La lluvia del juego viejo ya no suena en la ciudad.
+  - **El cielo** (`docs/LORE.md`): nubes blancas, el sol amarillo tétrico y violáceo detrás, la lluvia negra (para el
+    clima, etapa 50). En la pantalla, un toque violeta en las sombras (`data/look.js`).
+  - Pasan las 42 pruebas.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

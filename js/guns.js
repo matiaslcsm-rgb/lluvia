@@ -23,10 +23,11 @@
     if (!gun || gun.reload > 0 || gun.ammo >= L.gunMag(gun)) return false;
     // With a backpack (js/loot.js) the bullets come from it: none left, no reload.
     if (g.pack && !L.packCount(g, 'balas')) {
-      if (!(g.noAmmoAt > g.time - 4)) { g.noAmmoAt = g.time; L.toast(g, 'Sin balas: revisá los muebles de las casas.', '#c26a4a'); }
+      if (!(g.noAmmoAt > g.time - 4)) { g.noAmmoAt = g.time; L.toast(g, 'Sin balas: revisá los muebles de las casas.', '#c26a4a'); L.emit(g, 'empty', g.player.x, g.player.y); }
       return false;
     }
     gun.reload = gun.def.reload * Math.max(0.4, g.player.stats.cooldownMul);
+    L.emit(g, 'reload', g.player.x, g.player.y);
     return true;
   };
 

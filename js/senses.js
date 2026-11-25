@@ -69,7 +69,7 @@
     if (e.mind === 'chase') {
       // Groans now and then: the ones nearby hear it and come too.
       e.groan -= dt;
-      if (e.groan <= 0) { e.groan = K.chase.groanEvery * (0.7 + g.rng() * 0.6); L.makeNoise(g, e.x, e.y, K.noise.groan, e.floor, e); }
+      if (e.groan <= 0) { e.groan = K.chase.groanEvery * (0.7 + g.rng() * 0.6); L.makeNoise(g, e.x, e.y, K.noise.groan, e.floor, e); L.emit(g, 'groan', e.x, e.y); }
       out.x = p.x; out.y = p.y; out.mul = 1; out.chase = true;
       return out;
     }

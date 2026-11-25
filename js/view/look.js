@@ -24,6 +24,13 @@
     // The Sun's yellow, soft.
     ctx.globalCompositeOperation = 'soft-light';
     ctx.globalAlpha = K.tintAmount; ctx.fillStyle = K.tint; ctx.fillRect(0, 0, W, H);
+    // The violet of the sun behind the clouds, in the shadows (it lightens nothing).
+    if (K.violetAmount) {
+      ctx.globalCompositeOperation = 'lighten';
+      ctx.globalAlpha = K.violetAmount * 0.35; ctx.fillStyle = K.violet; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.globalAlpha = K.violetAmount; ctx.fillRect(0, 0, W, H);
+    }
     // Grime: a little darker and dirtier.
     ctx.globalCompositeOperation = 'multiply';
     ctx.globalAlpha = K.grimeAmount; ctx.fillStyle = K.grime; ctx.fillRect(0, 0, W, H);

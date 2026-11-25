@@ -6,41 +6,99 @@
 
   function D() { return L.data.loot; }
 
-  // ---- The backpack ----
+  // ---- What you carry ----
+  // g.pack.places: your pockets and each bag you wear, in order ({ id: 'bolsillos' | 'rinonera' | ..., slots }).
+  // A slot holds one kind of thing up to its stack ({ id, n }), or one hand weapon ({ id: 'w:...', n: 1, dur }).
   L.makePack = function (g) {
-    g.pack = { slots: [], size: D().slots };
+    g.pack = { places: [] };
     g.searched = new Set();
     g.leftover = new Map();
+    D().wearing.forEach(function (k) { L.wear(g, k); });
     if (D().startAmmo) L.packAdd(g, 'balas', D().startAmmo);
     return g.pack;
   };
 
-  // Puts n of an item in the backpack: first on top of slots of the same item, then in empty slots. Returns how
-  // many didn't fit.
+  // Puts on a bag of kind k, if you don't wear one of that kind yet. Returns true if you put it on.
+  L.wear = function (g, k) {
+    if (g.pack.places.some(function (pl) { return pl.id === k; })) return false;
+    g.pack.places.push({ id: k, slots: [] });
+    return true;
+  };
+
+  function isBig(id) { return id.indexOf('w:') === 0 ? L.meleeDef(id.slice(2)).skill === 'media' : !!D().items[id].big; }
+  function room(pl) { return D().containers[pl.id].slots - pl.slots.length; }
+  function takes(pl, id) { return room(pl) > 0 && (!isBig(id) || D().containers[pl.id].big); }
+  L.packBig = isBig;
+
+  // Puts n of an item where it goes: first on top of slots of the same thing, then in a free slot of a place that
+  // takes it (small things fit anywhere; big ones only in a bolso or a mochila). Returns how many didn't fit.
   L.packAdd = function (g, id, n) {
-    var P = g.pack, stack = D().items[id].stack;
-    P.slots.forEach(function (sl) { if (n > 0 && sl.id === id && sl.n < stack) { var k = Math.min(n, stack - sl.n); sl.n += k; n -= k; } });
-    while (n > 0 && P.slots.length < P.size) { var k = Math.min(n, stack); P.slots.push({ id: id, n: k }); n -= k; }
+    var stack = D().items[id].stack;
+    g.pack.places.forEach(function (pl) { pl.slots.forEach(function (sl) { if (n > 0 && sl.id === id && sl.n < stack) { var k = Math.min(n, stack - sl.n); sl.n += k; n -= k; } }); });
+    g.pack.places.forEach(function (pl) { while (n > 0 && takes(pl, id)) { var k = Math.min(n, stack); pl.slots.push({ id: id, n: k }); n -= k; } });
     return n;
   };
-  L.packCount = function (g, id) { return g.pack ? g.pack.slots.reduce(function (a, sl) { return a + (sl.id === id ? sl.n : 0); }, 0) : 0; };
-  // Takes up to n of an item, from the last slots first. Returns how many it took.
+  // A hand weapon into a free slot that takes it. Returns true if it fit.
+  L.packAddWeapon = function (g, wid, dur) {
+    var id = 'w:' + wid, pl = g.pack.places.filter(function (q) { return takes(q, id); })[0];
+    if (!pl) return false;
+    pl.slots.push({ id: id, n: 1, dur: dur });
+    return true;
+  };
+  L.packCount = function (g, id) {
+    if (!g.pack) return 0;
+    return g.pack.places.reduce(function (a, pl) { return a + pl.slots.reduce(function (b, sl) { return b + (sl.id === id ? sl.n : 0); }, 0); }, 0);
+  };
+  // Takes up to n of an item, from the last places and slots first. Returns how many it took.
   L.packTake = function (g, id, n) {
-    var P = g.pack, took = 0;
-    for (var i = P.slots.length - 1; i >= 0 && took < n; i--) {
-      var sl = P.slots[i];
-      if (sl.id !== id) continue;
-      var k = Math.min(sl.n, n - took);
-      sl.n -= k; took += k;
-      if (!sl.n) P.slots.splice(i, 1);
+    var took = 0, P = g.pack.places;
+    for (var j = P.length - 1; j >= 0 && took < n; j--) {
+      var S = P[j].slots;
+      for (var i = S.length - 1; i >= 0 && took < n; i--) {
+        if (S[i].id !== id) continue;
+        var k = Math.min(S[i].n, n - took);
+        S[i].n -= k; took += k;
+        if (!S[i].n) S.splice(i, 1);
+      }
     }
     return took;
+  };
+  // Every hand weapon you carry: [{ place, i }].
+  L.packWeapons = function (g) {
+    var out = [];
+    g.pack.places.forEach(function (pl) { pl.slots.forEach(function (sl, i) { if (sl.id.indexOf('w:') === 0) out.push({ place: pl, i: i }); }); });
+    return out;
+  };
+  // How much what you wear slows you down (0 none).
+  L.packSlow = function (g) { return g.pack ? g.pack.places.reduce(function (a, pl) { return a + D().containers[pl.id].slow; }, 0) : 0; };
+  // Throws away what is in a slot.
+  L.packDrop = function (g, pl, i) { pl.slots.splice(i, 1); };
+  // Uses what is in a slot (the inventory screen): a bandage heals; a hand weapon goes to your hand.
+  L.packUse = function (g, pl, i) {
+    var sl = pl.slots[i], p = g.player;
+    if (!sl) return false;
+    if (sl.id === 'vendas') {
+      if (p.hp >= p.stats.maxHp) return false;
+      L.packTake(g, 'vendas', 1); p.hp = Math.min(p.stats.maxHp, p.hp + D().heal);
+      L.toast(g, 'Te vendaste.', '#e8e2d6');
+      return true;
+    }
+    if (sl.id.indexOf('w:') === 0) {
+      var was = p.melee;
+      p.melee = { id: sl.id.slice(2), dur: sl.dur };
+      pl.slots.splice(i, 1);
+      if (was && was.id !== 'pinas' && !L.packAddWeapon(g, was.id, was.dur)) { pl.slots.push({ id: 'w:' + was.id, n: 1, dur: was.dur }); }
+      p.hand = 'melee';
+      return true;
+    }
+    return false;
   };
 
   // "2 trapos, 1 venda"
   L.lootText = function (list) {
     return list.map(function (q) {
       if (q[0].indexOf('w:') === 0) return L.meleeDef(q[0].slice(2)).name.toLowerCase(); // a hand weapon
+      if (q[0].indexOf('c:') === 0) return 'una ' + D().containers[q[0].slice(2)].name.toLowerCase(); // a bag
       var nm = D().items[q[0]].name; return q[1] + ' ' + (q[1] === 1 ? nm[0] : nm[1]);
     }).join(', ');
   };
@@ -83,21 +141,22 @@
     var tg = L.searchTarget(g);
     g.lootTarget = tg;
     if (input && input.use && tg && !g.respawn) {
-      if (!g.search || g.search.key !== tg.key) g.search = { key: tg.key, t: 0 };
+      if (!g.search || g.search.key !== tg.key) { g.search = { key: tg.key, t: 0 }; L.emit(g, 'rummage', p.x, p.y); }
       g.search.t += dt;
       if (L.makeNoise && Math.floor(g.search.t * 2) !== Math.floor((g.search.t - dt) * 2)) L.makeNoise(g, p.x, p.y, L.data.senses.noise.search, p.floor, p);
       if (g.search.t >= D().search) {
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {
-          var rest = q[0].indexOf('w:') === 0 ? (L.giveMelee(g, q[0].slice(2)) ? 0 : 1) : L.packAdd(g, q[0], q[1]);
+          var rest = q[0].indexOf('w:') === 0 ? (L.giveMelee(g, q[0].slice(2)) ? 0 : 1) :
+            q[0].indexOf('c:') === 0 ? (L.wear(g, q[0].slice(2)) ? 0 : 1) : L.packAdd(g, q[0], q[1]);
           if (q[1] - rest > 0) got.push([q[0], q[1] - rest]);
           if (rest > 0) left.push([q[0], rest]);
         });
         g.searched.add(tg.key);
         if (left.length) g.leftover.set(tg.key, left); else g.leftover.delete(tg.key);
         var name = tg.t;
-        L.toast(g, got.length ? 'Encontraste: ' + L.lootText(got) + (left.length ? '. No entra todo en la mochila.' : '.') :
-          left.length ? 'La mochila está llena.' : 'No hay nada.', got.length ? '#d9cfa6' : '#8d8672');
+        L.toast(g, got.length ? 'Encontraste: ' + L.lootText(got) + (left.length ? '. No te entra todo: queda en el mueble.' : '.') :
+          left.length ? 'No te entra nada más.' : 'No hay nada.', got.length ? '#d9cfa6' : '#8d8672');
         L.emit(g, 'loot', p.x, p.y, { piece: name, got: got });
         g.search = null;
       }

@@ -32,11 +32,11 @@
     if (L.craftBlock(g, r)) return false;
     var made = r.make, id = made[0];
     // Room for it? (a weapon or a new kind of thing needs a slot)
-    if (id.indexOf('w:') === 0) { if (g.player.melee.id !== 'pinas' && g.pack.slots.length >= g.pack.size) return false; }
     Object.keys(r.need).forEach(function (k) { L.packTake(g, k, r.need[k]); });
     var rest = id.indexOf('w:') === 0 ? (L.giveMelee(g, id.slice(2)) ? 0 : 1) : L.packAdd(g, id, made[1]);
     if (rest) { Object.keys(r.need).forEach(function (k) { L.packAdd(g, k, r.need[k]); }); return false; } // no room: undo
     L.toast(g, 'Hiciste: ' + r.name + '.', '#d9cfa6');
+    L.emit(g, 'craft', g.player.x, g.player.y);
     return true;
   };
 

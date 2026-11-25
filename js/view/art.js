@@ -54,7 +54,13 @@
         var lpx = wd.len * 50 * (r / 10) * 0.6; // looks about its size
         ctx.strokeStyle = wd.color; ctx.lineWidth = Math.max(2, r * 0.22); ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(sw) * lpx, hy + Math.sin(sw) * lpx); ctx.stroke();
-      } else if (k > 0) { ctx.fillStyle = wd.color; ctx.beginPath(); ctx.arc(r * (1 + 0.6 * Math.sin(k * Math.PI)), 0, r * 0.28, 0, Math.PI * 2); ctx.fill(); }
+      } else if (k > 0) {
+        // Fists: the hand that punches goes forward (both for a shove).
+        var side = f.punchHand === 'right' ? 1 : f.punchHand === 'both' ? 0 : -1, ext = r * (1 + 0.6 * Math.sin(k * Math.PI));
+        ctx.fillStyle = wd.color;
+        if (side) { ctx.beginPath(); ctx.arc(ext, side * r * 0.45, r * 0.28, 0, Math.PI * 2); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(ext, -r * 0.4, r * 0.26, 0, Math.PI * 2); ctx.arc(ext, r * 0.4, r * 0.26, 0, Math.PI * 2); ctx.fill(); }
+      }
     } else if (f.gun) {
       ctx.fillStyle = '#151515'; ctx.fillRect(r * 1.05, -r * 0.13, r * 0.95, r * 0.26);
       if (f.gun.cd > 1 / f.gun.def.rate - 0.05) { ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(r * 2.15, 0, r * 0.35, 0, Math.PI * 2); ctx.fill(); }
