@@ -48,6 +48,7 @@
       v.aimY = g.player.y - canvas.height / 2 + mouse.y;
       v.fire = mouse.down;
       v.reload = L.input.key('KeyR');
+      v.light = L.input.key('KeyF'); // the flashlight
     }
     return v;
   }

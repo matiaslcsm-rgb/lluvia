@@ -233,6 +233,7 @@
     if (p.invuln > 0) p.invuln -= dt;
     L.tickUlti(p, dt);
     movePlayer(g, dt, input);
+    if (g.city && L.updateClock) L.updateClock(g, dt, input); // the flashlight (js/clock.js)
     if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
     moveEnemies(g, dt);

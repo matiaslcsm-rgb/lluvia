@@ -878,6 +878,25 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     cuadro en el partido entero.
   - Pruebas nuevas (`tests/vista.test.js`): el cono llega lejos y atrás solo lo pegado; las paredes tapan; las
     ventanas, las barandas y las camas dejan ver; los roperos tapan; arriba también tapan las paredes.
+- **2026-11-25: el reloj, el día y la noche** (etapa 46; pedido del usuario: "sí, seguí").
+  - El juego tiene su hora: 12 horas duran 40 minutos (una hora, 3 min 20 s). Arrancás el día 1 a las 9:00. El sol
+    sale a las 6 y se pone a las 18 (las estaciones lo van a correr en la etapa 51); amanecer y atardecer duran un
+    poco más de una hora cada uno, con la luz cambiando de a poco y un tinte naranja.
+  - De noche la ciudad se oscurece casi del todo. Se ve donde hay luz:
+    - **la linterna** (tecla F): alumbra el cono hasta 17 m. Gasta batería prendida y se recarga sola apagada (a
+      dínamo: todavía no hay pilas para juntar);
+    - **los faroles** de la calle, uno cada 36 m en las veredas, de lados alternados; anda menos de la mitad y
+      algunos parpadean;
+    - **las casas con luz**: 3 de cada 10 tienen la luz prendida; desde afuera brillan sus ventanas y adentro se ve
+      todo el piso.
+  - Sin luz, de noche ves hasta 5 m (la luna). Los zombis que estén más lejos y a oscuras no se ven, aunque estén
+    en tu cono.
+  - En pantalla, debajo de la vida: "☾ Día 1 · 22:00" y, de noche o si la usaste, la batería de la linterna.
+  - Los números están en `data/clock.js`; el cálculo en `js/clock.js` y el dibujo en `js/view/night.js`.
+  - Queda para más adelante: que las sombras de los edificios giren con el sol (hoy están siempre del mismo lado).
+  - Pruebas nuevas (`tests/reloj.test.js`): 12 horas en 40 minutos, día 2 a medianoche, el atardecer sin saltos;
+    la linterna se prende y apaga con F, gasta y se recarga; de noche se ve menos que de día; los faroles están en
+    la calle y alumbran solo la planta baja.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

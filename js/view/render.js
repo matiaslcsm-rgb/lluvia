@@ -91,8 +91,8 @@
 
   // The half-light: the screen darkened except inside the edge of what you see (L.sightPolygon), soft at the edge.
   var shadeCv = null;
-  function drawShade(ctx, g, p, camX, camY, W, H) {
-    var D = L.data.sight, poly = L.sightPolygon(g.city, p, aimOf(p));
+  function drawShade(ctx, poly, camX, camY, W, H) {
+    var D = L.data.sight;
     if (!shadeCv) shadeCv = document.createElement('canvas');
     if (shadeCv.width !== W || shadeCv.height !== H) { shadeCv.width = W; shadeCv.height = H; }
     var x = shadeCv.getContext('2d');
@@ -120,6 +120,17 @@
     for (var i = 0; i < g.lives; i++) { ctx.fillStyle = C.life; ctx.fillRect(x + i * 9, y + 16, 6, 6); }
     ctx.font = '600 11px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = C.dim;
     ctx.fillText('Nivel ' + p.level, x + Math.max(3, g.lives) * 9 + 6, y + 22);
+    // The clock of the day (js/clock.js) and, if it isn't full or it is on, the flashlight's battery.
+    if (L.clockOf) {
+      var k = L.clockOf(g), icon = k.phase === 'noche' ? '☾' : k.phase === 'dia' ? '☀' : '◐';
+      ctx.fillStyle = C.text;
+      ctx.fillText(icon + ' Día ' + k.day + ' · ' + (k.hh < 10 ? '0' : '') + k.hh + ':' + (k.mm < 10 ? '0' : '') + k.mm, x, y + 38);
+      var fl = p.flashlight;
+      if (fl && (fl.on || fl.battery < 1 || k.light < 0.5)) {
+        ctx.fillStyle = C.dim; ctx.fillText(fl.on ? 'Linterna' : 'Linterna (F)', x, y + 53);
+        bar(ctx, x + 62, y + 48, 50, 4, fl.battery, fl.on ? C.ammo : C.dim);
+      }
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -408,7 +419,12 @@
 
     // Enemies.
     // In the city you only see what is in your cone and not behind a wall (js/sight.js).
-    var sees = g.city && L.canSee && L.data.sight ? function (x, y, fl) { return L.canSee(g.city, p, aimOf(p), x, y, fl); } : null;
+    // At night only as far as your light reaches, or where a lamp or a lit house lights it (js/clock.js).
+    var reach = g.city && L.sightReach ? L.sightReach(g) : Infinity;
+    var sees = g.city && L.canSee && L.data.sight ? function (x, y, fl) {
+      if (!L.canSee(g.city, p, aimOf(p), x, y, fl)) return false;
+      return Math.hypot(x - p.x, y - p.y) <= reach || (L.lightAt && L.lightAt(g, x, y, fl) > 0.35);
+    } : null;
     g.enemies.forEach(function (e) {
       if (!visible(e.x, e.y, e.r)) return;
       if (sees && !sees(e.x, e.y, e.floor)) return;
@@ -482,7 +498,9 @@
     ctx.restore();
     if (!g.city) L.drawRain(ctx, W, H, dt, !!g.surge);
     else {
-      if (sees) drawShade(ctx, g, p, camX, camY, W, H); // half-light outside what you see
+      var poly = sees ? L.sightPolygon(g.city, p, aimOf(p)) : null;
+      if (L.drawNight) L.drawNight(ctx, g, p, camX, camY, W, H, poly, t); // night, dusk, dawn and lights (js/view/night.js)
+      if (sees) drawShade(ctx, poly, camX, camY, W, H); // half-light outside what you see
       if (L.drawLook) L.drawLook(ctx, W, H, t);        // muted colors, grain and dark corners (data/look.js)
     }
 
