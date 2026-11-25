@@ -1211,6 +1211,14 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - **Cambio de tecla (lo decidí yo):** el sonido se apaga ahora con la O, porque la M es el mapa.
   - Queda para más adelante la niebla de guerra y cargar el mapa de a partes.
   - Pruebas: 66 (nueva: mapa) y una mirada en el navegador (minimapa, mapa grande, M sin apagar el sonido).
+- **2026-11-25: niebla de guerra adentro y casas en el mapa** (pedido del usuario después de probar la etapa 64).
+  - Al entrar a un edificio, el interior está tapado. Lo que alcanza tu vista (el cono hacia donde mirás, lo que
+    tenés pegado y lo que alumbra la luz o la linterna) se destapa y queda recordado, también al salir. Cada piso se
+    recuerda aparte. Los nombres de las habitaciones que no viste no aparecen.
+  - El minimapa y el mapa grande dibujan las casas, y adentro las habitaciones que recorriste (con sus paredes) del
+    piso donde estás, o la planta baja. Antes quedaba oscuro porque solo había calles.
+  - Se guarda con la partida.
+  - Pruebas: 67 (nueva: adentro se ve solo lo que alumbra tu vista) y una mirada en el navegador.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

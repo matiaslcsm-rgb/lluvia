@@ -204,6 +204,9 @@
     level.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });
     ctx.strokeStyle = Hd.wallEdge; ctx.lineWidth = 0.45; ctx.stroke();
     ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.28; ctx.stroke();
+    // The fog of war inside: what you haven't seen of this floor is dark (js/explored.js), with soft edges.
+    var fog = insideFog(city._explored, plan, fl);
+    if (fog) { ctx.imageSmoothingEnabled = true; ctx.drawImage(fog, -1, -1, W + 2, plan.D + 2); }
     ctx.restore();
     // The outer wall, then (on the ground floor) the front and back doorways cut into it.
     ctx.lineJoin = 'miter';
@@ -226,12 +229,35 @@
     });
     // Room names, upright.
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 0.42px system-ui, sans-serif'; ctx.fillStyle = 'rgba(40,30,20,0.5)';
+    var X = city._explored, mem = X && X.inside[plan.index + ':' + fl];
     level.rooms.forEach(function (r) {
       var name = (Hd.rooms[r.type] || {}).name;
       if (!name || r.cells < 12) return;
+      if (X && !(mem && mem[Math.floor(r.cy) * W + Math.floor(r.cx)])) return; // a room you haven't seen: no name
       var m = L.housePoint(plan, r.cx, r.cy);
       ctx.fillText(name, m[0], m[1]);
     });
+  }
+
+  // The fog of a building's floor: a picture with one pixel per cell (and a border of one), dark where you haven't
+  // seen. Made again only when what you saw there changed. Null if you saw it all or there is no memory.
+  var fogs = new Map();
+  function insideFog(X, plan, fl) {
+    if (!X) return null;
+    var key = plan.index + ':' + fl, mem = X.inside[key], ver = X.ver[key] || 0, f = fogs.get(key);
+    if (f && f.ver === ver && f.X === X) return f.any ? f.cv : null;
+    var W = plan.W, D = plan.D, level = L.planLevel(plan, fl), cv = f ? f.cv : document.createElement('canvas');
+    cv.width = W + 2; cv.height = D + 2;
+    var c = cv.getContext('2d'), img = c.createImageData(W + 2, D + 2), d = img.data, any = false;
+    for (var y = 0; y < D; y++) for (var x = 0; x < W; x++) {
+      var k = y * W + x;
+      if (mem && mem[k] || !level.lab || level.lab[k] < 0) continue;
+      var o = ((y + 1) * (W + 2) + x + 1) * 4;
+      d[o] = 12; d[o + 1] = 12; d[o + 2] = 10; d[o + 3] = 255; any = true;
+    }
+    c.putImageData(img, 0, 0);
+    fogs.set(key, { ver: ver, X: X, cv: cv, any: any });
+    return any ? cv : null;
   }
 
   // A door between rooms (or, with `out`, a doorway to the street: it opens inward), seen from above: the leaf open
@@ -615,6 +641,50 @@
     });
     return { mx: mx, my: my };
   }
+  // The buildings in the box (same view as drawStreets): their footprints, and inside the ones you walked into, the
+  // rooms you saw (lit, with their walls) on the floor you are on there, or the ground floor.
+  function drawBuildings(ctx, g, cx, cy, k, bx, by, bw, bh) {
+    var city = g.city, M = city.map, s = city.scale, P = L.data.city.page, zs = city.cell * P;
+    if (!M || !city.zoneB) return;
+    var rx = bw / 2 / k, ry = bh / 2 / k, fp = city._fp || (city._fp = new Map()), done = new Set();
+    var ox = bx + bw / 2 - cx * k, oy = by + bh / 2 - cy * k;
+    var zx0 = Math.max(0, Math.floor((cx - rx) / zs)), zx1 = Math.min(city.pcols - 1, Math.floor((cx + rx) / zs));
+    var zy0 = Math.max(0, Math.floor((cy - ry) / zs)), zy1 = Math.floor((cy + ry) / zs);
+    ctx.fillStyle = '#4a463e'; ctx.beginPath();
+    for (var zy = zy0; zy <= zy1; zy++) for (var zx = zx0; zx <= zx1; zx++) {
+      (city.zoneB.get(zy * city.pcols + zx) || []).forEach(function (i) {
+        if (done.has(i)) return;
+        done.add(i);
+        var f = fp.get(i);
+        if (!f) { var raw = M.buildings[i][0], u = M.unit * s; f = []; for (var j = 0; j + 1 < raw.length; j += 2) f.push(raw[j] * u, raw[j + 1] * u); fp.set(i, f); }
+        for (var q = 0; q + 1 < f.length; q += 2) { var X = ox + f[q] * k, Y = oy + f[q + 1] * k; if (q) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }
+        ctx.closePath();
+      });
+    }
+    ctx.fill();
+    // Inside: the rooms you saw.
+    var E = g.explored, houses = city._houses, p = g.player, here = L.planHere(city, p);
+    if (!E || !houses) return;
+    Object.keys(E.inside).forEach(function (key) {
+      var parts = key.split(':'), plan = houses.get(+parts[0]), fl = +parts[1];
+      if (!plan || !done.has(plan.index) && plan !== here) return;
+      if (fl !== (plan === here ? p.floor || 0 : 0)) return;
+      var mem = E.inside[key], level = L.planLevel(plan, fl), f = plan.frame, cs = plan.cell, W = plan.W;
+      if (!level || !level.lab) return;
+      ctx.save();
+      ctx.translate(ox, oy); ctx.scale(k * s, k * s);
+      ctx.transform(f.ux * cs, f.uy * cs, f.vx * cs, f.vy * cs, f.ox, f.oy);
+      ctx.beginPath();
+      for (var y = 0; y < plan.D; y++) for (var x = 0; x < W; x++) { var c = y * W + x; if (mem[c] && level.lab[c] >= 0) ctx.rect(x - 0.03, y - 0.03, 1.06, 1.06); }
+      ctx.fillStyle = '#9c927c'; ctx.fill();
+      ctx.clip();
+      ctx.beginPath();
+      level.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });
+      ctx.strokeStyle = '#2a2622'; ctx.lineWidth = Math.max(0.25, 1.2 / (k * s * cs)); ctx.stroke();
+      ctx.restore();
+    });
+  }
+
   // Leaves in `ctx` only what the map remembers, over the box (the same view as drawStreets).
   function keepExplored(ctx, g, cx, cy, k, bx, by, bw, bh) {
     var mask = exploredMask(g), X = g.explored;
@@ -637,6 +707,7 @@
     var m = mm.getContext('2d');
     m.clearRect(0, 0, size, size);
     var at = drawStreets(m, city, p.x, p.y, k, 0, 0, size, size);
+    drawBuildings(m, g, p.x, p.y, k, 0, 0, size, size);
     m.fillStyle = '#ff5a5a';
     // With the field of view (js/sight.js) the map doesn't give away the zombies: you only know what you see.
     if (!g.night) g.enemies.forEach(function (e) {
@@ -667,6 +738,7 @@
     var ctx = cv.getContext('2d'), city = g.city, p = g.player, W = cv.width, H = cv.height;
     ctx.clearRect(0, 0, W, H);
     var at = drawStreets(ctx, city, view.cx, view.cy, view.k, 0, 0, W, H);
+    drawBuildings(ctx, g, view.cx, view.cy, view.k, 0, 0, W, H);
     keepExplored(ctx, g, view.cx, view.cy, view.k, 0, 0, W, H);
     ctx.save();
     ctx.globalCompositeOperation = 'destination-over';

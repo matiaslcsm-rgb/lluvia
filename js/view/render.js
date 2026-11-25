@@ -492,6 +492,7 @@
 
     if (g.city) {
       g.city._searched = g.searched || null; g.city._leftover = g.leftover || null; // searched furniture looks emptied
+      g.city._explored = g.explored || null; // what you saw inside: the rest is hidden (js/explored.js)
       L.drawCity(ctx, g.city, camX, camY, W, H, t);
       if (L.drawFlood) L.drawFlood(ctx, g, camX, camY, W, H); // flood water on the low ground (js/view/weather.js)
       L.drawCityInterior(ctx, g.city, p); // the house you are in, without its roof, on the floor you are on
