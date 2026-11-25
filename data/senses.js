@@ -12,6 +12,10 @@
     // between halves it.
     noise: { shot: 35, hit: 10, run: 8, walk: 3, search: 2, groan: 12 },
     hearing: { night: 1.6, wall: 0.5 },
+    // What YOU hear (stage 63, the user's answer 6 b: only the sound with direction, no marks on the screen): a sound
+    // is full within `full` m and fades out by `far` m; it leans to the ear on its side, all the way at `side` m
+    // sideways (`pan` at most, so the other ear still hears a little); a wall in between leaves `wall` of it.
+    ears: { full: 2, far: 30, side: 6, pan: 0.85, wall: 0.5 },
     wander: { speed: 0.3, turn: [2, 6], stop: 0.35 },  // share of their speed; seconds between turns; chance to stand
     investigate: { speed: 0.75, linger: 6 },          // goes to the noise, stays looking around this long
     chase: { lose: 4, search: 7, groanEvery: 3 },     // seconds without seeing you before it goes to the last spot;

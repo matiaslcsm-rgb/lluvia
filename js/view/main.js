@@ -278,7 +278,7 @@
         var d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d < bd) { bd = d; best = e; }
       });
-      if (best) L.sound.play('zstep', 1 - bd / (9 * s));
+      if (best) L.sound.play('zstep', 1 - bd / (9 * s), L.soundPlace ? L.soundPlace(g, best.x, best.y).pan : 0); // from its side
     }
   }
 

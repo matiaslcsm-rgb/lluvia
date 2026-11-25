@@ -94,4 +94,19 @@
     out.x = e.x + Math.cos(e.face) * 100; out.y = e.y + Math.sin(e.face) * 100; out.mul = e.idle ? 0 : K.wander.speed;
     return out;
   };
+
+  // ---- What you hear ----
+  // Where a sound at (x, y) comes from, for you: { vol (0-1), pan (-1 left, 1 right) }. The screen doesn't turn, so
+  // left and right are the screen's.
+  L.soundPlace = function (g, x, y) {
+    var p = g.player, E = S().ears, s = g.city ? g.city.scale : 50;
+    var dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy) / s;
+    var vol = d <= E.full ? 1 : Math.max(0, 1 - (d - E.full) / (E.far - E.full));
+    var pan = Math.max(-1, Math.min(1, dx / s / E.side)) * E.pan;
+    if (vol > 0 && g.city && L.sightRay && d > 1) {
+      var px = d * s, ray = L.sightRay(g.city, p, p.x, p.y, Math.atan2(dy, dx), px);
+      if (ray < px - g.city.cell) vol *= E.wall;
+    }
+    return { vol: vol, pan: pan };
+  };
 })(this.Lluvia = this.Lluvia || {});

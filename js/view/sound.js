@@ -4,6 +4,7 @@
 (function (L) {
   'use strict';
   var ac = null, master = null, rainGain = null, muted = false, last = {}, volume = 0.5, amp = 1, rainLevel = 1;
+  var out = null, src = null; // where this sound goes (a panner to its side, or the master); where it comes from
   try {
     muted = localStorage.getItem('lluvia.muted') === '1';
     var v = parseFloat(localStorage.getItem('lluvia.volume'));
@@ -18,6 +19,7 @@
     master = ac.createGain();
     master.gain.value = muted ? 0 : volume;
     master.connect(ac.destination);
+    out = master;
     startRain();
   }
 
@@ -41,7 +43,7 @@
     if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
     g.gain.setValueAtTime(vol * amp, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(master);
+    o.connect(g); g.connect(out);
     o.start(t); o.stop(t + dur + 0.02);
   }
 
@@ -52,7 +54,7 @@
     for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
     var src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
     src.buffer = buf; f.type = type || 'lowpass'; f.frequency.value = freq; g.gain.value = vol * amp;
-    src.connect(f); f.connect(g); g.connect(master);
+    src.connect(f); f.connect(g); g.connect(out);
     src.start(t);
   }
 
@@ -104,16 +106,28 @@
   };
 
   L.sound = {
-    // `k`: how loud this time (0-1, for something far away).
-    play: function (name, k) {
+    // `k`: how loud this time (0-1, for something far away). `pan`: from which side (-1 left, 1 right).
+    // In the city, a sound set with `from` is heard from where it happened (js/senses.js L.soundPlace, stage 63):
+    // quieter the farther, louder on its side, muffled behind a wall.
+    play: function (name, k, pan) {
       if (!ac || muted) return;
-      var s = SOUNDS[name], now = ac.currentTime;
-      if (!s || (last[name] && now - last[name] < s[0])) return;
+      var s = SOUNDS[name], now = ac.currentTime, g = L.currentGame && L.currentGame();
+      if (!s) return;
+      k = k === undefined ? 1 : k;
+      if (src && g && g.night && g.player && L.soundPlace) {
+        var sp = L.soundPlace(g, src.x, src.y);
+        k *= sp.vol; pan = sp.pan;
+        if (k < 0.02) return;
+      }
+      if (last[name] && now - last[name] < s[0]) return;
       last[name] = now;
-      amp = k === undefined ? 1 : Math.max(0, Math.min(1, k));
+      amp = Math.max(0, Math.min(1, k));
+      if (pan && ac.createStereoPanner) { out = ac.createStereoPanner(); out.pan.value = pan; out.connect(master); }
       s[1]();
-      amp = 1;
+      amp = 1; out = master;
     },
+    // Where the next sounds come from (world px), or null for "here" (menus, your own things).
+    from: function (x, y) { src = x === null || x === undefined ? null : { x: x, y: y }; },
     // How much rain is heard (0 none, 1 the old soft rain). The city has no rain until the weather comes.
     rain: function (level) { rainLevel = level; if (rainGain) rainGain.gain.value = 0.07 * level; },
     toggle: function () {

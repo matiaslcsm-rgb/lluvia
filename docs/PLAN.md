@@ -1195,6 +1195,12 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Está en los roperos (lo que no te ponés queda en el piso), lavarropas, talleres, cajas y autos.
   - Pruebas: 64 (nuevas: cuatro de ropa; cambiaron clima, inventario y revisar muebles), el bot 2 minutos y una
     mirada en el navegador (el recuadro Ropa del inventario, ponerse el camperón, la ropa en el piso).
+- **2026-11-25: sonido con dirección** (etapa 63).
+  - Cada ruido del mundo (zombis que gimen o caminan, golpes, tiros, muebles revisados, vidrios) suena del lado de
+    donde viene: a la izquierda de la pantalla, por el parlante izquierdo.
+  - Suena más bajo cuanto más lejos (se deja de oír a los 30 m) y la mitad si hay una pared en el medio.
+  - Lo tuyo suena al medio. Sin marcas en la pantalla, como pidió el usuario.
+  - Pruebas: 65 (nueva: oído) y una mirada en el navegador (el ruido de la izquierda sale por la izquierda).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

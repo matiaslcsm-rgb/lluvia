@@ -33,6 +33,7 @@
       var S = L.sound;
       for (var i = 0; i < events.length; i++) {
         var ev = events[i];
+        S.from(ev.x, ev.y); // heard from where it happened (stage 63)
         switch (ev.type) {
           case 'kill':
             var e = ev.extra;
@@ -57,7 +58,7 @@
           case 'thunder': S.play('thunder'); break;
           case 'groan':
             var me = L.currentGame && L.currentGame() && L.currentGame().player;
-            if (me) { var dd = Math.hypot(ev.x - me.x, ev.y - me.y) / 50; if (dd < 18) S.play('groan', 1 - dd / 18); }
+            if (me) S.play('groan'); // quieter the farther, from its side
             break;
           case 'gem': S.play('gem'); break;
           case 'level': S.play('level'); burst(ev.x, ev.y, '#5fe0d0', 30, 220, 0.7); break;
@@ -76,6 +77,7 @@
           case 'spit': S.play('spit'); break;
         }
       }
+      S.from(null);
       events.length = 0;
     },
 
