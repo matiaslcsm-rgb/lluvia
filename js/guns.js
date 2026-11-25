@@ -76,6 +76,7 @@
       }
       p.dirX = Math.cos(base); p.dirY = Math.sin(base);
       if (!def.flame || gun.ammo % 4 === 0) L.emit(g, 'shot', p.x, p.y);
+      if (L.makeNoise) L.makeNoise(g, p.x, p.y, L.data.senses.noise.shot, p.floor, p); // heard far (js/senses.js)
     }
     if (gun.cd < 0) gun.cd = 0;
     if (gun.ammo <= 0) L.reloadGun(g);

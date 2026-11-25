@@ -461,7 +461,9 @@
       // One on another floor (below you or above) shows faded.
       var otherFloor = g.city && (e.floor || 0) !== (p.floor || 0);
       if (otherFloor) ctx.globalAlpha = 0.3;
-      L.drawCreature(ctx, e, p.x, p.y, t);
+      // A zombie that thinks for itself looks where it is going (js/senses.js); the rest look at you.
+      if (e.face !== undefined) L.drawCreature(ctx, e, e.x + Math.cos(e.face) * 100, e.y + Math.sin(e.face) * 100, t);
+      else L.drawCreature(ctx, e, p.x, p.y, t);
       if (otherFloor) ctx.globalAlpha = 1;
       if (e.fuse > 0) { ctx.globalAlpha = 0.25; circle(ctx, e.x, e.y, e.type.bomb.radius, '#ff5a3d'); ctx.globalAlpha = 1; }
       if (e.mode === 'wind') {

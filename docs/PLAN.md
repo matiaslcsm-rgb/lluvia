@@ -956,6 +956,20 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     Pactos, Partida del día) queda en el código, fuera del menú.
   - En la ciudad tu personaje es una persona vista desde arriba: hombros con campera, cabeza con pelo, los brazos
     hacia la pistola que sostiene con las dos manos, y los pies que dan pasos al caminar. Mira hacia la mira.
+- **2026-11-25: zombis que buscan** (etapa 48b; `docs/ZOMBOID.md`, sección 2).
+  - Cada zombi deambula despacio (a veces se queda quieto y gira si choca una pared), va a ver de dónde vino un
+    ruido y se queda mirando un rato, y te persigue solo si te ve. Si te pierde 4 s, va adonde te vio por última
+    vez y busca 7 s.
+  - Te ven en un cono de 120°: de día hasta 16 m, de noche 6, pero con la linterna prendida, 24. Paredes y muebles
+    altos tapan.
+  - Oyen: un tiro a 35 m, revisar un mueble a 2, tus pasos a 3. De noche oyen 1,6 veces más lejos; con una pared en
+    el medio, la mitad.
+  - El que persigue gruñe cada 3 s y los que están a 12 m van a ver.
+  - **Los mismos zombis de día y de noche** (respuesta 9): hasta 30 a la vez, que nacen en la calle a entre 25 y
+    60 m, donde no los ves; uno que no te persigue y queda a más de 90 m se va. Por ahora solo zombis normales.
+  - Los números están en `data/senses.js` y en `data/guns.js` (`nights`).
+  - Pruebas nuevas (`tests/sentidos.test.js`, se corren en el momento de prueba): no te ven de espaldas; de día sí
+    a 9 m; de noche no sin luz, con linterna sí; oyen un tiro a 20 m y no tus pasos; el gruñido llama a otros.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

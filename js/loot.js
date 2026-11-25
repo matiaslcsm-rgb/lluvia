@@ -82,6 +82,7 @@
     if (input && input.use && tg && !g.respawn) {
       if (!g.search || g.search.key !== tg.key) g.search = { key: tg.key, t: 0 };
       g.search.t += dt;
+      if (L.makeNoise && Math.floor(g.search.t * 2) !== Math.floor((g.search.t - dt) * 2)) L.makeNoise(g, p.x, p.y, L.data.senses.noise.search, p.floor, p);
       if (g.search.t >= D().search) {
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {

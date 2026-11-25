@@ -12,15 +12,18 @@
   //   pace: how fast the difficulty clock runs (0.5 = one step every 2 minutes); the rest multiply the horde.
   // explore: building the map (2026-11-24, the user's call): no waves, chests, shrines or weather, no old clock on
   //   screen; you walk the city.
-  // night: the zombies follow the clock of the day (docs/DARKWOOD.md, js/clock.js): a few loose ones by day, the
-  //   horde at night, each night harder. Without it (and without explore) the old horde by minutes comes back.
-  //   day / dark: zombies born per second and the most alive at once, by full day and at the darkest night (dusk
-  //   and dawn go in between); perNight: each night after the first adds that much (0.3 = +30%) to both;
-  //   leave: by day, a zombie past this many meters that you don't see goes away (one every so often) until there
-  //   are no more than the day's; level: how much tougher they get each night (difficulty steps).
+  // night: the zombies live by the clock of the day and find you by noise and sight (js/senses.js). Without it
+  //   (and without explore) the old horde by minutes comes back.
+  //   day / dark: zombies born per second and the most alive at once by day and at night. For now the same (the
+  //   user's answer 9, docs/ZOMBOID.md): what changes at night are their senses (data/senses.js).
+  //   perNight: each night after the first adds that much to both (0 for now); level: difficulty steps per night.
+  //   near / far: they are born this many meters away, out of your sight; recycle: one farther than this that
+  //   isn't after you goes away (the city keeps its zombies around you); leave: by day, the extra ones past this
+  //   go, one every `leaveEvery` s. type: only plain zombies for now (the user's answer: "zombis normales").
   L.data.mode = { solo: true, gunsOnly: true, startGun: 'glock', explore: true, night: true,
     horde: { pace: 0.5, hpMul: 0.65, dpsMul: 0.5, spawnMul: 0.5, bossFirst: 300, miniFirst: 450, waveFirst: 240 },
-    nights: { day: { rate: 0.07, alive: 10 }, dark: { rate: 0.45, alive: 40 }, perNight: 0.3, leave: 30, leaveEvery: 1.5, level: 2 } };
+    nights: { day: { rate: 0.25, alive: 30 }, dark: { rate: 0.25, alive: 30 }, perNight: 0, leave: 30, leaveEvery: 1.5, level: 0,
+      near: 25, far: 60, recycle: 90, type: 'rastrero' } };
 
   L.data.guns = [
     { id: 'glock', name: 'Glock 17', desc: 'Pistola de 17 balas. Mantené el clic para disparar.', color: '#ffe9a8',

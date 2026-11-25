@@ -34,7 +34,7 @@
   // The difficulty clock: one step every minute, the same for everyone. Starts at 1.
   L.difficulty = function (g) {
     // With the clock of the day (L.data.mode.night): a step for the dark, and `level` more for every night gone.
-    if (g.night && L.clockOf) { var k = L.clockOf(g); return 1 + L.data.mode.nights.level * Math.max(0, L.nightOf(k) - 1) + (k.light < 0.5 ? 1 : 0); }
+    if (g.night && L.clockOf) return 1 + L.data.mode.nights.level * Math.max(0, L.nightOf(L.clockOf(g)) - 1);
     return 1 + Math.floor(g.time * (g.pace || 1) / 60);
   };
 
@@ -285,6 +285,8 @@
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
     if ((x || y) && !(p.gun && input.aimX !== undefined)) { p.dirX = x; p.dirY = y; } // the way you face (with a gun: where you aim)
+    // Your steps make a little noise (js/senses.js).
+    if (g.night && (x || y)) { g.stepT = (g.stepT || 0) - dt; if (g.stepT <= 0) { g.stepT = 0.5; L.makeNoise(g, p.x, p.y, L.data.senses.noise.walk, p.floor, p); } }
     L.updateStance(p, len > 0.2, dt);
     stepPlayer(g, x * p.stats.speed * dt, y * p.stats.speed * dt);
   }
@@ -330,12 +332,25 @@
     var grow = 1 + N.perNight * (n - 1), rate = (N.day.rate + (N.dark.rate - N.day.rate) * dark) * grow;
     var alive = Math.round((N.day.alive + (N.dark.alive - N.day.alive) * dark) * grow);
     g.spawnAcc += rate * dt;
+    var p0 = g.player, s = g.city.scale;
     while (g.spawnAcc >= 1) {
       g.spawnAcc -= 1;
       if (g.enemies.length >= Math.min(alive, h.maxAlive)) continue;
-      var pt = ringPoint(g);
-      L.spawnEnemy(g, pickType(g, g.time / 60), pt.x, pt.y);
+      // Somewhere on a street between `near` and `far` meters, where you don't see it.
+      for (var tries = 0; tries < 6; tries++) {
+        var a = g.rng() * TAU, r0 = (N.near + g.rng() * (N.far - N.near)) * s;
+        var pt = L.cityFree(g.city, p0.x + Math.cos(a) * r0, p0.y + Math.sin(a) * r0);
+        if (Math.hypot(pt.x - p0.x, pt.y - p0.y) < N.near * 0.8 * s) continue;
+        if (L.canSee && L.canSee(g.city, p0, p0.aim || 0, pt.x, pt.y, 0)) continue;
+        var z = L.spawnEnemy(g, N.type || pickType(g, g.time / 60), pt.x, pt.y);
+        z.floor = 0;
+        break;
+      }
     }
+    // The ones that are far and not after you go away: the city keeps its zombies around you.
+    g.enemies.forEach(function (e) {
+      if (!e.dead && e.mind !== 'chase' && Math.hypot(e.x - p0.x, e.y - p0.y) > N.recycle * s) { e.dead = true; e.gone = true; }
+    });
     // By day, the extra ones leave: the farthest one you don't see, every so often.
     g.leaveAcc = (g.leaveAcc || 0) + dt;
     if (dark < 0.2 && g.enemies.length > alive && g.leaveAcc >= N.leaveEvery) {
@@ -476,6 +491,8 @@
 
   function moveEnemies(g, dt) {
     var p = g.player, q = g._q, pullX = 0, pullY = 0, pullMax = 0, city = g.city, dir = g._dir || (g._dir = {}), mv = g._emv || (g._emv = {});
+    var brain = g._brain || (g._brain = {});
+    if (g.night) L.swapNoises(g); // last frame's noises are heard now (js/senses.js)
     // You upstairs (or in the basement): the creatures on the ground floor head for the stair that leads to you.
     var pf = p.floor || 0, go = city && pf ? L.stairToward(p.house, 0, pf) : null, gp = go ? (pf > 0 ? go.footPx : go.topPx) : null;
     if (city && !(g.flowT > 0)) { L.cityFlow(city, gp ? gp[0] : p.x, gp ? gp[1] : p.y); g.flowT = L.data.city.flowEvery; }
@@ -493,9 +510,17 @@
           dx = wp[0] - e.x; dy = wp[1] - e.y;
         }
       }
+      // A plain zombie with the clock of the day thinks for itself: wanders, investigates noises, chases you only when
+      // it sees you (js/senses.js).
+      var tt = e.type, thinks = g.night && city && !tt.boss && !tt.ranged && !tt.charge && !tt.summon && !tt.slam && !tt.bomb && !tt.pull, mul = 1, noFlow = false;
+      if (thinks) {
+        L.zombieThink(g, e, dt, brain);
+        mul = brain.mul;
+        if (!brain.chase) { dx = brain.x - e.x; dy = brain.y - e.y; noFlow = true; }
+      }
       var d = Math.sqrt(dx * dx + dy * dy) || 1;
       // Stunned enemies stand still; slowed ones move at half speed.
-      var sp = e.stun > 0 ? 0 : e.slow > 0 ? e.speed * 0.5 : e.speed;
+      var sp = (e.stun > 0 ? 0 : e.slow > 0 ? e.speed * 0.5 : e.speed) * mul;
       if (e.stun > 0) e.stun -= dt;
       if (e.slow > 0) e.slow -= dt;
       var t = e.type;
@@ -578,7 +603,8 @@
       var vx = dx / d * sp, vy = dy / d * sp;
       // In the city they go around the blocks, along the streets, until they are close (the flow field is on the
       // ground floor: not for one on a stair or upstairs).
-      if (city && d > 60 && !e.z && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
+      if (city && d > 60 && !e.z && !noFlow && L.cityDir(city, e.x, e.y, dir)) { vx = dir.x * sp; vy = dir.y * sp; }
+      if (thinks && (vx || vy)) e.face = Math.atan2(vy, vx); // it looks where it walks
       // Push away from overlapping neighbours so the horde spreads out instead of stacking.
       q.length = 0;
       g.grid.query(e.x, e.y, e.r + g.maxR, q);
@@ -597,6 +623,8 @@
       var push = Math.abs(sp) * 1.5;
       var ex = L.clamp(e.x + (vx + sx * push) * dt, e.r, g.arena - e.r), ey = L.clamp(e.y + (vy + sy * push) * dt, e.r, g.arena - e.r);
       if (city) { L.cityLevelMove(city, e, ex, ey, 4, mv); ex = mv.x; ey = mv.y; }
+      // A wanderer that walks into a wall turns away.
+      if (thinks && sp > 0 && Math.hypot(ex - e.x, ey - e.y) < sp * dt * 0.2) e.blocked = true;
       e.x = ex; e.y = ey;
       if (e.flash > 0) e.flash -= dt;
       var touch = Math.hypot(p.x - e.x, p.y - e.y);
