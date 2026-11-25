@@ -110,6 +110,18 @@
     ctx.drawImage(shadeCv, 0, 0);
   }
 
+  // The hand weapon out (js/melee.js), bottom right: its name, how worn it is, and a small sight.
+  function meleeHud(ctx, g, p, W, H) {
+    var C = L.data.look.hud, def = L.meleeDef(p.melee.id), x = W - 20, y = H - 26;
+    ctx.textAlign = 'right'; ctx.font = '700 15px system-ui, sans-serif'; ctx.fillStyle = C.ammo;
+    ctx.fillText(def.name, x, y);
+    ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.dim;
+    ctx.fillText((L.data.skills.list[def.skill] || {}).name + ' ' + L.skillLevel(p, def.skill) + ' · 1: arma · 2: mano', x, y - 20);
+    if (def.dur) bar(ctx, x - 120, y + 7, 120, 3, p.melee.dur / def.dur, p.melee.dur / def.dur < 0.25 ? C.low : C.ammo);
+    var ms = L.input && L.input.mouse;
+    if (ms && !L.ui.current) { ctx.fillStyle = 'rgba(217,207,166,0.8)'; ctx.beginPath(); ctx.arc(ms.x, ms.y, 2.5, 0, Math.PI * 2); ctx.fill(); }
+  }
+
   // The backpack (js/loot.js), bottom left: a slot per item with how many; and, next to you, what E would search
   // and how far along the search is.
   function packHud(ctx, g, p, camX, camY, W, H) {
@@ -120,12 +132,15 @@
       ctx.fillStyle = 'rgba(12,11,9,0.6)'; ctx.fillRect(x, y0, sz, sz);
       ctx.strokeStyle = 'rgba(207,198,168,0.25)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y0 + 0.5, sz - 1, sz - 1);
       if (!sl) continue;
-      ctx.fillStyle = Dl.items[sl.id].color; ctx.fillRect(x + 6, y0 + 5, sz - 12, sz - 14);
+      var wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
+      ctx.fillStyle = wd ? wd.color : Dl.items[sl.id].color;
+      if (wd) { ctx.save(); ctx.translate(x + sz / 2, y0 + sz / 2 - 2); ctx.rotate(-0.7); ctx.fillRect(-sz * 0.38, -2, sz * 0.76, 4); ctx.restore(); }
+      else ctx.fillRect(x + 6, y0 + 5, sz - 12, sz - 14);
       ctx.fillStyle = C.text; ctx.font = '600 10px system-ui, sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(sl.n, x + sz - 3, y0 + sz - 3);
+      if (!wd) ctx.fillText(sl.n, x + sz - 3, y0 + sz - 3);
     }
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText('Mochila · E revisar · H venda', x0, y0 - 5);
+    ctx.fillText('Mochila · E revisar · H venda · 2 arma de mano', x0, y0 - 5);
     ctx.globalAlpha = 1;
     var tg = g.lootTarget;
     if (tg) {
@@ -146,6 +161,7 @@
     ctx.globalAlpha = 0.85;
     bar(ctx, x, y, 150, 6, p.hp / p.stats.maxHp, C.life);
     bar(ctx, x, y + 9, 150, 2, p.xp / need, C.xp);
+    if (p.air !== undefined) bar(ctx, x + 156, y, 40, 6, p.air / L.data.melee.air.max, '#8aa7b5'); // your air (js/melee.js)
     for (var i = 0; i < g.lives; i++) { ctx.fillStyle = C.life; ctx.fillRect(x + i * 9, y + 16, 6, 6); }
     ctx.font = '600 11px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = C.dim;
     ctx.fillText('Nivel ' + p.level, x + Math.max(3, g.lives) * 9 + 6, y + 22);
@@ -605,7 +621,8 @@
     }
 
     if (m && !m.solo) { standings(ctx, m, W); duelStatus(ctx, m); betPanel(ctx, m, W, H); }
-    if (p.gun) gunHud(ctx, g, W, H);
+    if (p.gun && p.hand !== 'melee') gunHud(ctx, g, W, H);
+    else if (p.melee) meleeHud(ctx, g, p, W, H);
     if (g.pack) packHud(ctx, g, p, camX, camY, W, H);
     if (g.city) L.drawMinimap(ctx, g, W);
 

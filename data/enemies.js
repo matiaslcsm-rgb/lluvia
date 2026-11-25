@@ -16,7 +16,8 @@
   'use strict';
 
   L.data.enemies = [
-    { id: 'rastrero', name: 'Zombi', shape: 'blob', hp: 10, speed: 70, dps: 10, radius: 12, xp: 1, gold: 1, goldChance: 0.3, color: '#b04a5a', from: 0, weight: 6 },
+    { id: 'rastrero', name: 'Zombi', shape: 'blob', hp: 10, speed: 70, dps: 10, radius: 12, xp: 1, gold: 1, goldChance: 0.3, color: '#b04a5a', from: 0, weight: 6,
+      resist: { c: 1, k: 1.15, p: 0.9 } }, // how much each kind of blow hurts it (js/melee.js): an edge cuts it well
     { id: 'veloz', name: 'Corredor', shape: 'tri', hp: 6, speed: 135, dps: 6, radius: 9, xp: 1, gold: 1, goldChance: 0.3, color: '#d98a3a', from: 1, weight: 3 },
     { id: 'escupidor', name: 'Vomitador', shape: 'spitter', hp: 16, speed: 60, dps: 6, radius: 13, xp: 2, gold: 1, goldChance: 0.5, color: '#7a9a3a', from: 4, weight: 1.2,
       ranged: { range: 340, keep: 250, every: 2.4, speed: 240, damage: 7 } },

@@ -1,0 +1,55 @@
+// Hand weapons (js/melee.js, data/melee.js).
+
+function meleeGame() {
+  var L = Lluvia, city = L.cityHome(1);
+  var g = L.createGame({ seed: 9, city: city, explore: true, noSpawn: true, night: true, gunsOnly: true, gun: 'glock', viewW: 1280, viewH: 720 });
+  g.spawning = false;
+  var sp = L.cityFree(city, city.start.x, city.start.y);
+  g.player.x = sp.x; g.player.y = sp.y; g.player.aim = 0;
+  return g;
+}
+
+test('armas de mano: datos completos; matar a piñas cuesta mucho, con un hacha uno o dos golpes; la habilidad ayuda', function () {
+  var L = Lluvia, M = L.data.melee, S = L.data.skills.list, g = meleeGame();
+  M.weapons.forEach(function (w) {
+    var sum = (w.mix.c || 0) + (w.mix.k || 0) + (w.mix.p || 0);
+    assert.ok(Math.abs(sum - 1) < 0.01, w.id + ': su daño no suma 100%');
+    assert.ok(S[w.skill], w.id + ': habilidad que no existe');
+  });
+  Object.keys(L.data.loot.pieces).forEach(function (t) {
+    L.data.loot.pieces[t].forEach(function (row) { if (row[0].indexOf('w:') === 0) assert.ok(L.findById(M.weapons, row[0].slice(2)), t + ' da un arma que no existe: ' + row[0]); });
+  });
+  var z = L.spawnEnemy(g, 'rastrero', 0, 0), hits = function (id) { return Math.ceil(z.maxHp / L.meleeDamage(g, L.meleeDef(id), z)); };
+  assert.ok(hits('pinas') >= 10, 'a piñas se mata en ' + hits('pinas'));
+  assert.ok(hits('hacha') <= 2, 'con un hacha se mata en ' + hits('hacha'));
+  var before = hits('pinas');
+  L.gainSkill(g, 'mano', 99999);
+  assert.ok(hits('pinas') < before, 'con experiencia a mano no pega más fuerte');
+});
+
+test('armas de mano: el golpe pega adelante y no atrás, gasta aire, el arma se gasta y se rompe; 1 y 2 cambian de mano', function () {
+  var L = Lluvia, g = meleeGame(), p = g.player, s = g.city.scale;
+  assert.strictEqual(p.melee.id, 'pinas'); assert.strictEqual(p.hand, 'gun');
+  L.updateMelee(g, 0.016, { slot2: true }); L.updateMelee(g, 0.016, {});
+  assert.strictEqual(p.hand, 'melee', '2 no saca el arma de mano');
+  var front = L.spawnEnemy(g, 'rastrero', p.x + 0.6 * s, p.y), back = L.spawnEnemy(g, 'rastrero', p.x - 0.6 * s, p.y);
+  front.floor = back.floor = 0;
+  var hp = front.hp, air = p.air;
+  assert.strictEqual(L.swing(g), front, 'no le pega al de adelante');
+  assert.ok(front.hp < hp && back.hp === back.maxHp, 'le pegó al de atrás');
+  assert.ok(p.air < air, 'pegar no gasta aire');
+  // A fragile one breaks.
+  p.melee = { id: 'palita', dur: 2 };
+  L.swing(g); L.swing(g);
+  assert.strictEqual(p.melee.id, 'pinas', 'la palita no se rompe');
+  // A found weapon goes to the hand (only fists) or the backpack; 2 again swaps them.
+  assert.ok(L.giveMelee(g, 'barra'));
+  assert.strictEqual(p.melee.id, 'barra');
+  assert.ok(L.giveMelee(g, 'hacha'));
+  assert.ok(g.pack.slots.some(function (sl) { return sl.id === 'w:hacha'; }), 'la segunda arma no va a la mochila');
+  L.updateMelee(g, 0.016, { slot2: true }); L.updateMelee(g, 0.016, {});
+  assert.strictEqual(p.melee.id, 'hacha', '2 no cambia de arma');
+  assert.ok(g.pack.slots.some(function (sl) { return sl.id === 'w:barra'; }), 'la barra no vuelve a la mochila');
+  L.updateMelee(g, 0.016, { slot1: true });
+  assert.strictEqual(p.hand, 'gun', '1 no vuelve a la pistola');
+});

@@ -92,7 +92,7 @@
       terraza: [['tanque', 1.2, 1.2, 'wall'], ['soga', 3, 0.3, 'wall']],
       casilla: [['motor', 1.2, 0.8, 'wall']],
       sotano: [['estante', 1.6, 0.5, 'wall', 2], ['cajas', 0.8, 0.8, 'wall', 3]],
-      galpon: [['banco', 1.8, 0.7, 'wall'], ['estante', 1.6, 0.5, 'wall', 2], ['cajas', 0.8, 0.8, 'wall', 2]],
+      galpon: [['taller', 1.8, 0.7, 'wall'], ['estante', 1.6, 0.5, 'wall', 2], ['cajas', 0.8, 0.8, 'wall', 2]],
       garage: [['auto', 1.8, 4.2, 'wall'], ['estante', 1.6, 0.5, 'wall']],
       local: [['mostrador', 2.0, 0.6, 'wall'], ['estante', 1.6, 0.5, 'wall', 3], ['gondola', 2.4, 0.8, 'center', 6]],
       deposito: [['estante', 1.6, 0.5, 'wall', 4], ['cajas', 0.8, 0.8, 'wall', 4]],

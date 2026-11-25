@@ -323,6 +323,12 @@
       box(c, -w / 2 + w * 0.4, -d / 2 + d * 0.35, w * 0.6, d * 0.65, '#a7834f', '#6e5232');
     },
     banco: function (c, w, d) { box(c, -w / 2, -d / 2, w, d, '#8b6a45', DARK); },
+    // A workbench, with a vise and a few tools on it.
+    taller: function (c, w, d) {
+      box(c, -w / 2, -d / 2, w, d, '#7a5a3c', DARK);
+      box(c, w / 2 - 0.35, -d / 2 + 0.08, 0.25, 0.3, '#5c6168');
+      box(c, -w / 2 + 0.2, -d / 2 + 0.15, 0.5, 0.06, '#8d949a'); box(c, -w / 2 + 0.3, -d / 2 + 0.3, 0.35, 0.05, '#6b4a2e');
+    },
     auto: function (c, w, d) {
       c.fillStyle = '#7d2f2a'; c.beginPath();
       if (c.roundRect) c.roundRect(-w / 2, -d / 2, w, d, 0.4); else c.rect(-w / 2, -d / 2, w, d);

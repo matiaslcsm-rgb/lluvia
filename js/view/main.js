@@ -48,6 +48,8 @@
       v.aimY = g.player.y - canvas.height / 2 + mouse.y;
       v.fire = mouse.down;
       v.aiming = mouse.right; // right button: aim, standing still
+      v.slot1 = L.input.key('Digit1'); // the gun
+      v.slot2 = L.input.key('Digit2'); // the hand weapon (again: the next one in the backpack)
       v.reload = L.input.key('KeyR');
       v.light = L.input.key('KeyF'); // the flashlight
       v.use = L.input.key('KeyE');   // search a piece of furniture

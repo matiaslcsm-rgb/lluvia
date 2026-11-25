@@ -39,7 +39,10 @@
 
   // "2 trapos, 1 venda"
   L.lootText = function (list) {
-    return list.map(function (q) { var nm = D().items[q[0]].name; return q[1] + ' ' + (q[1] === 1 ? nm[0] : nm[1]); }).join(', ');
+    return list.map(function (q) {
+      if (q[0].indexOf('w:') === 0) return L.meleeDef(q[0].slice(2)).name.toLowerCase(); // a hand weapon
+      var nm = D().items[q[0]].name; return q[1] + ' ' + (q[1] === 1 ? nm[0] : nm[1]);
+    }).join(', ');
   };
 
   // ---- Searching ----
@@ -86,7 +89,7 @@
       if (g.search.t >= D().search) {
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {
-          var rest = L.packAdd(g, q[0], q[1]);
+          var rest = q[0].indexOf('w:') === 0 ? (L.giveMelee(g, q[0].slice(2)) ? 0 : 1) : L.packAdd(g, q[0], q[1]);
           if (q[1] - rest > 0) got.push([q[0], q[1] - rest]);
           if (rest > 0) left.push([q[0], rest]);
         });

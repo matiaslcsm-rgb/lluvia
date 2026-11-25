@@ -8,7 +8,14 @@
     need: [10, 20, 35, 50, 70, 90, 115, 140, 170, 200],
     list: {
       // Aim: every headshot teaches a lot, a body shot a little.
-      punteria: { name: 'Puntería', headshot: 10, body: 2 }
+      punteria: { name: 'Puntería', headshot: 10, body: 2 },
+      // Close combat (the user's answer 3): a tree. Every blow teaches `cuerpo` a little (it makes all blows hurt
+      // more and cost less air) and the weapon's own branch more: mano (fists), corta (short weapons) or media
+      // (middle reach). A kill teaches more than a blow.
+      cuerpo: { name: 'Cuerpo a cuerpo', hit: 1, kill: 3 },
+      mano: { name: 'Combate a mano', hit: 2, kill: 8 },
+      corta: { name: 'Arma corta', hit: 2, kill: 8 },
+      media: { name: 'Media distancia', hit: 2, kill: 8 }
     },
     // Aiming (right mouse button held: you stand still and the sight closes). Extra spread in radians, added to the
     // gun's own: from the hip, walking, and aimed at level 0 and at level 10; seconds it takes to close at level 0

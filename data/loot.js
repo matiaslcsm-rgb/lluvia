@@ -22,26 +22,31 @@
       botella: { name: ['botella', 'botellas'], stack: 4, color: '#6f9a6a' },
       comida: { name: ['lata de comida', 'latas de comida'], stack: 5, color: '#c9a640' }
     },
-    // What each piece of furniture may have: [item, chance, fewest, most]. Each line is rolled once.
+    // What each piece of furniture may have: [item, chance, fewest, most]. Each line is rolled once. "w:..." is a
+    // hand weapon (data/melee.js), always one.
     // Pieces not listed (beds, pews, toilets...) have nothing to search.
     pieces: {
-      ropero: [['trapos', 0.6, 1, 3], ['vendas', 0.2, 1, 1], ['balas', 0.12, 3, 8]],
-      mesita: [['balas', 0.15, 2, 6], ['vendas', 0.2, 1, 1]],
-      mesada: [['botella', 0.4, 1, 1], ['trapos', 0.3, 1, 2], ['comida', 0.35, 1, 1]],
-      heladera: [['comida', 0.5, 1, 2], ['botella', 0.3, 1, 1]],
-      estante: [['chatarra', 0.4, 1, 3], ['clavos', 0.4, 4, 10], ['botella', 0.2, 1, 1], ['tablas', 0.2, 1, 1]],
-      cajas: [['tablas', 0.3, 1, 2], ['clavos', 0.3, 3, 8], ['chatarra', 0.3, 1, 2], ['trapos', 0.3, 1, 2]],
-      escritorio: [['balas', 0.1, 2, 6], ['chatarra', 0.2, 1, 1]],
+      ropero: [['trapos', 0.6, 1, 3], ['vendas', 0.2, 1, 1], ['balas', 0.12, 3, 8], ['w:cinturon', 0.25, 1, 1], ['w:hockey', 0.04, 1, 1]],
+      mesita: [['balas', 0.15, 2, 6], ['vendas', 0.2, 1, 1], ['w:americano', 0.04, 1, 1], ['w:destornillador', 0.06, 1, 1]],
+      mesada: [['botella', 0.4, 1, 1], ['trapos', 0.3, 1, 2], ['comida', 0.35, 1, 1], ['w:tenedor', 0.3, 1, 1], ['w:cuchillo', 0.25, 1, 1],
+        ['w:cuchilla', 0.08, 1, 1], ['w:rodillo', 0.1, 1, 1], ['w:sarten', 0.12, 1, 1], ['w:pava', 0.1, 1, 1]],
+      heladera: [['comida', 0.5, 1, 2], ['botella', 0.3, 1, 1], ['w:sifon', 0.1, 1, 1]],
+      estante: [['chatarra', 0.4, 1, 3], ['clavos', 0.4, 4, 10], ['botella', 0.2, 1, 1], ['tablas', 0.2, 1, 1], ['w:martillo', 0.12, 1, 1],
+        ['w:destornillador', 0.12, 1, 1], ['w:llave', 0.08, 1, 1], ['w:barra', 0.05, 1, 1], ['w:cadena', 0.04, 1, 1], ['w:machete', 0.03, 1, 1]],
+      cajas: [['tablas', 0.3, 1, 2], ['clavos', 0.3, 3, 8], ['chatarra', 0.3, 1, 2], ['trapos', 0.3, 1, 2], ['w:ladrillo', 0.15, 1, 1], ['w:fierro', 0.05, 1, 1]],
+      escritorio: [['balas', 0.1, 2, 6], ['chatarra', 0.2, 1, 1], ['w:hockey', 0.04, 1, 1]],
       archivero: [['chatarra', 0.3, 1, 1], ['balas', 0.1, 2, 5]],
-      gondola: [['comida', 0.5, 1, 2], ['botella', 0.3, 1, 1], ['vendas', 0.15, 1, 1]],
-      mostrador: [['balas', 0.15, 3, 8], ['comida', 0.2, 1, 1]],
-      maquina: [['chatarra', 0.6, 2, 4], ['nafta', 0.2, 1, 1]],
-      motor: [['nafta', 0.5, 1, 1], ['chatarra', 0.3, 1, 2]],
-      auto: [['nafta', 0.5, 1, 1], ['chatarra', 0.4, 1, 2]],
+      gondola: [['comida', 0.5, 1, 2], ['botella', 0.3, 1, 1], ['vendas', 0.15, 1, 1], ['w:sifon', 0.06, 1, 1]],
+      mostrador: [['balas', 0.15, 3, 8], ['comida', 0.2, 1, 1], ['w:americano', 0.04, 1, 1], ['w:matafuegos', 0.06, 1, 1]],
+      maquina: [['chatarra', 0.6, 2, 4], ['nafta', 0.2, 1, 1], ['w:barra', 0.2, 1, 1], ['w:llave', 0.15, 1, 1], ['w:hacha', 0.04, 1, 1]],
+      motor: [['nafta', 0.5, 1, 1], ['chatarra', 0.3, 1, 2], ['w:matafuegos', 0.3, 1, 1], ['w:llave', 0.15, 1, 1]],
+      auto: [['nafta', 0.5, 1, 1], ['chatarra', 0.4, 1, 2], ['w:llave', 0.2, 1, 1], ['w:cadena', 0.1, 1, 1]],
       lavatorio: [['vendas', 0.35, 1, 2]],
-      lavarropas: [['trapos', 0.4, 1, 2]],
-      pileta: [['trapos', 0.3, 1, 1]],
-      tanque: [['chatarra', 0.3, 1, 1]]
+      lavarropas: [['trapos', 0.4, 1, 2], ['w:escoba', 0.3, 1, 1], ['w:palita', 0.3, 1, 1]],
+      pileta: [['trapos', 0.3, 1, 1], ['w:escoba', 0.2, 1, 1]],
+      tanque: [['chatarra', 0.3, 1, 1]],
+      taller: [['w:martillo', 0.3, 1, 1], ['w:destornillador', 0.2, 1, 1], ['w:llave', 0.2, 1, 1], ['w:pala', 0.1, 1, 1], ['w:rastrillo', 0.1, 1, 1],
+        ['w:machete', 0.06, 1, 1], ['w:hacha', 0.05, 1, 1], ['clavos', 0.4, 4, 12]]
     }
   };
 })(this.Lluvia = this.Lluvia || {});

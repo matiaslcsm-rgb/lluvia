@@ -981,6 +981,26 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     veces. Se ve arriba a la izquierda, al lado de la hora.
   - Pruebas nuevas (`tests/punteria.test.js`, para el momento de prueba): la Puntería sube y se frena en 10; apuntar
     cierra, caminar abre, más nivel cierra más; la bala tiene que pasar por la cabeza y la Puntería la agranda.
+- **2026-11-25: armas de mano** (etapa 48d; `docs/ZOMBOID.md`, sección 1 y respuestas 2 a 4).
+  - 26 armas en `data/melee.js`: piñas (siempre), puños vendados, puño con cinturón, puño americano, tenedor,
+    cuchillo, cuchilla de asado, rodillo, sartén, pava, sifón, ladrillo, martillo, destornillador, llave inglesa,
+    barra de metal, fierro de construcción, palita de barrer, palo de escoba, palo de hockey, matafuegos, pala,
+    rastrillo, cadena de bicicleta, machete y hacha.
+  - Cada una tiene daño, alcance, velocidad, cuántos golpes aguanta (según qué tan frágil es: la palita 10, la barra
+    300), chance de voltear, ruido y aire por golpe. Su daño se reparte en contundente, cortante y punzante; el
+    zombi normal recibe un poco más de lo cortante y un poco menos de lo punzante.
+  - **Habilidades de pelea** (`data/skills.js`, 10 niveles): cuerpo a cuerpo (todos los golpes: más daño, menos
+    aire) y sus ramas, combate a mano, arma corta y media distancia. Cada golpe y cada muerte dan experiencia.
+  - A piñas un zombi normal necesita unos 15 golpes (8 con la habilidad al máximo), y a veces te lastimás las manos.
+    Con un hacha, uno o dos golpes. Un zombi volteado recibe el doble.
+  - **1** saca la pistola, **2** el arma de mano; con el arma de mano en la mano, **2** de nuevo la cambia por la
+    siguiente de la mochila. El clic izquierdo pega hacia la mira. Cuando un arma se rompe quedás a piñas.
+  - Se encuentran revisando muebles: los cuchillos, la sartén y la pava en las mesadas; la escoba y la palita en el
+    lavadero; el cinturón en los roperos; martillos, llaves y barras en estantes y en el taller de los galpones
+    (el banco de trabajo ahora se llama "taller", para que no se confunda con los bancos de la iglesia); el
+    matafuegos en las salas de máquinas.
+  - En pantalla: el aire, una barra al lado de la vida; abajo a la derecha, el arma, su habilidad y su desgaste.
+  - Pruebas nuevas (`tests/armas.test.js`, para el momento de prueba).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
