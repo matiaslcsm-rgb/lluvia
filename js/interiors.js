@@ -990,6 +990,7 @@
     var m = r + WALL_HALF * plan.scale, o = plan.outline, w = (level || plan.upper).wallsPx;
     for (var i = 0; i < o.length; i++) { var q = o[i], n = o[(i + 1) % o.length]; if (segDist(x, y, [q[0], q[1], n[0], n[1]]) < m) return false; }
     for (i = 0; i < w.length; i++) if (segDist(x, y, w[i]) < m) return false;
+    if (L.solidNear && L.solidNear((level || plan.upper).solidPx, x, y, r)) return false; // furniture (js/furnish.js)
     return true;
   }
 

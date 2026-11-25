@@ -27,12 +27,15 @@
   }
 
   // Cells where nothing goes on floor f: a door's swing on both sides, the doorways out, the stairs that reach this
-  // floor with the room to stand at their ends, a building's stair lanes.
+  // floor with the room to stand at their ends, a building's stair lanes. Also each of those spots as a list of
+  // cells (`zones`): the furniture must leave a way between them.
   function blockedCells(plan, f, level) {
-    var W = plan.W, D = plan.D, cs = plan.cell, block = new Uint8Array(W * D), reach = Math.ceil(H().door / cs);
+    var W = plan.W, D = plan.D, cs = plan.cell, block = new Uint8Array(W * D), reach = Math.ceil(H().door / cs), zones = [];
     var box = function (x0, y0, x1, y1) {
+      var z = [];
       for (var y = Math.max(0, Math.floor(y0)); y < Math.min(D, Math.ceil(y1)); y++)
-        for (var x = Math.max(0, Math.floor(x0)); x < Math.min(W, Math.ceil(x1)); x++) block[y * W + x] = 1;
+        for (var x = Math.max(0, Math.floor(x0)); x < Math.min(W, Math.ceil(x1)); x++) { block[y * W + x] = 1; z.push(y * W + x); }
+      zones.push(z);
     };
     var door = function (g) {
       if (g[0] === g[2]) box(g[0] - reach, Math.min(g[1], g[3]) - 0.5, g[0] + reach, Math.max(g[1], g[3]) + 0.5);
@@ -46,7 +49,62 @@
       box(st.x0 - ax, st.y0 - ay, st.x1 + ax, st.y1 + ay);
     });
     (plan.lanes || []).forEach(function (ln) { box(ln.x0 - 1, ln.y0 - 1, ln.x1 + 1, ln.y1 + 1); });
+    block.zones = zones;
     return block;
+  }
+
+  // Which of a room's spots (doors, stairs) are joined by a way 1 m wide (2 × 2 free cells) that no furniture
+  // stands on, off the walls by a cell (on a turned house the walls eat about that much of the walk grid): a group
+  // number per spot (-1: none touches it).
+  // `loose`: for a room too thin for that, any free cell will do.
+  function linksOf(W, D, lab, used, k, zones, bb, loose) {
+    var open = function (x, y) {
+      var c = y * W + x;
+      if (lab[c] !== k || used[c]) return false;
+      return loose || x > 0 && y > 0 && x + 1 < W && y + 1 < D && lab[c - 1] === k && lab[c + 1] === k && lab[c - W] === k && lab[c + W] === k;
+    };
+    var node = function (x, y) {
+      if (loose) return x >= 0 && y >= 0 && x < W && y < D && open(x, y);
+      return x >= 0 && y >= 0 && x + 1 < W && y + 1 < D && open(x, y) && open(x + 1, y) && open(x, y + 1) && open(x + 1, y + 1);
+    };
+    var comp = new Int32Array(W * D).fill(-1), n = 0, stack = [];
+    for (var y = bb[1]; y <= bb[3]; y++) for (var x = bb[0]; x <= bb[2]; x++) {
+      if (comp[y * W + x] >= 0 || !node(x, y)) continue;
+      comp[y * W + x] = n; stack.push(y * W + x);
+      while (stack.length) {
+        var c = stack.pop(), cx = c % W, cy = (c - cx) / W;
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+          var nx = cx + d[0], ny = cy + d[1];
+          if (nx < 0 || ny < 0 || comp[ny * W + nx] >= 0 || !node(nx, ny)) return;
+          comp[ny * W + nx] = n; stack.push(ny * W + nx);
+        });
+      }
+      n++;
+    }
+    // A spot touches a group if one of its cells is covered by a 2 × 2 block of it.
+    var groups = zones.map(function (z) {
+      for (var i = 0; i < z.length; i++) {
+        var x = z[i] % W, y = (z[i] - x) / W;
+        for (var j = 0; j < (loose ? 1 : 4); j++) { var nx = x - (j & 1), ny = y - (j >> 1); if (nx >= 0 && ny >= 0 && comp[ny * W + nx] >= 0) return comp[ny * W + nx]; }
+      }
+      return -1;
+    });
+    return { groups: groups, comp: comp, bb: bb, W: W };
+  }
+  // Every two spots joined before are still joined, and no bit of floor you could walk to from them before is cut
+  // off now (a desk closing a corner of the room).
+  function stillJoined(before, after) {
+    var a = before.groups, b = after.groups, i, j;
+    for (i = 0; i < a.length; i++) for (j = i + 1; j < a.length; j++)
+      if (a[i] >= 0 && a[i] === a[j] && !(b[i] >= 0 && b[i] === b[j])) return false;
+    var mainA = {}, mainB = {}, W = before.W, bb = before.bb;
+    a.forEach(function (g) { if (g >= 0) mainA[g] = 1; });
+    b.forEach(function (g) { if (g >= 0) mainB[g] = 1; });
+    for (var y = bb[1]; y <= bb[3]; y++) for (var x = bb[0]; x <= bb[2]; x++) {
+      var c = y * W + x;
+      if (mainA[before.comp[c]] && after.comp[c] >= 0 && !mainB[after.comp[c]]) return false;
+    }
+    return true;
   }
 
   // Furnishes one floor. `pts`: the footprint in meters (pieces stay inside it, off the outer wall).
@@ -71,6 +129,21 @@
       if (!list) return;
       var bb = [W, D, -1, -1], cellsOf = [];
       for (var c0 = 0; c0 < lab.length; c0++) if (lab[c0] === k) { cellsOf.push(c0); var qx0 = c0 % W, qy0 = Math.floor(c0 / W); bb[0] = Math.min(bb[0], qx0); bb[1] = Math.min(bb[1], qy0); bb[2] = Math.max(bb[2], qx0); bb[3] = Math.max(bb[3], qy0); }
+      // The furniture is solid: the room's doors and stairs must stay joined as they were.
+      var zones = block.zones.map(function (z) { return z.filter(function (c) { return lab[c] === k; }); }).filter(function (z) { return z.length; });
+      var loose = false, joined = linksOf(W, D, lab, used, k, zones, bb, false);
+      if (joined.groups.every(function (g) { return g < 0; })) return; // too thin for a way through: no furniture
+      var fits = function (q) {
+        var y, x, ok;
+        for (y = q.y0; y < q.y0 + q.sy; y++) for (x = q.x0; x < q.x0 + q.sx; x++) used[y * W + x] = 1;
+        var now = linksOf(W, D, lab, used, k, zones, bb, loose);
+        ok = stillJoined(joined, now);
+        for (y = q.y0; y < q.y0 + q.sy; y++) for (x = q.x0; x < q.x0 + q.sx; x++) used[y * W + x] = 0;
+        if (ok) joined = now; // the next piece is checked against the room as it is then
+        return ok;
+      };
+      // Tries up to 8 candidates, in the order given, and takes the first that leaves the way open.
+      var firstFit = function (list) { for (var i = 0; i < list.length && i < 8; i++) if (fits(list[i])) return list[i]; return null; };
       var place = function (pc) {
         var n = pc[4] || 1, before = out.length, bw = Math.ceil(pc[1] / cs - 0.01), bd = Math.ceil((pc[2] + (pc[3] === 'wall' ? 0.06 : 0)) / cs - 0.01); // a wall piece stands 6 cm off it
         for (var c = 0; c < n; c++) {
@@ -99,7 +172,8 @@
               // In the middle: free all round, a cell's width.
               if (ok && pc[3] !== 'wall') for (y = y0 - 1; y <= y0 + sy && ok; y++) for (x = x0 - 1; x <= x0 + sx && ok; x++) {
                 if (x >= x0 && x < x0 + sx && y >= y0 && y < y0 + sy) continue;
-                if (at(x, y) === k ? used[y * W + x] || block[y * W + x] : n === 1) ok = false; // rows may touch a wall
+                // (rows may touch a wall; a row keeps 1 m from the next one, so you can walk between them)
+                if (at(x, y) === k ? used[y * W + x] || block[y * W + x] || (n > 1 && keep[y * W + x]) : n === 1) ok = false;
               }
               if (!ok) continue;
               // The piece itself, flush with the back of its box.
@@ -112,22 +186,24 @@
           });
           if (!cands.length) break;
           var pick;
-          if (pc[3] === 'wall') pick = cands[Math.floor(rng() * cands.length)];
-          else if (n > 1) {
+          if (pc[3] === 'wall') {
+            for (var sh = cands.length - 1; sh > 0; sh--) { var o = Math.floor(rng() * (sh + 1)), tmp = cands[sh]; cands[sh] = cands[o]; cands[o] = tmp; }
+            pick = firstFit(cands);
+          } else if (n > 1) {
             // Rows all look at the room's first piece against a wall (the blackboard, the altar), or at the front: a piece
             // looks toward its back (a desk with its chair in front), so the same way that piece faces.
             var lead = out.filter(function (q) { return q.room === k && q.wall; })[0], want = lead ? lead.face : [0, 1];
             cands.sort(function (a, b) { return a.y0 - b.y0 || a.x0 - b.x0; });
-            pick = cands.filter(function (q) { return q.fc[0] === want[0] && q.fc[1] === want[1]; })[0];
-            if (!pick) break;
-          }
-          else {
+            pick = firstFit(cands.filter(function (q) { return q.fc[0] === want[0] && q.fc[1] === want[1]; }));
+          } else {
             cands.sort(function (a, b) { return Math.hypot(a.cx - r.cx, a.cy - r.cy) - Math.hypot(b.cx - r.cx, b.cy - r.cy); });
-            pick = cands[0];
+            pick = firstFit(cands);
           }
+          if (!pick) break;
           for (var y = pick.y0; y < pick.y0 + pick.sy; y++) for (var x = pick.x0; x < pick.x0 + pick.sx; x++) used[y * W + x] = 1;
-          // A cell's width in front of it stays clear for the next ones.
+          // A cell's width in front of it stays clear for the next ones; all round it, for a piece in rows.
           var fx = pick.fc[0], fy = pick.fc[1];
+          if (pc[3] !== 'wall' && n > 1) for (y = pick.y0 - 1; y <= pick.y0 + pick.sy; y++) for (x = pick.x0 - 1; x <= pick.x0 + pick.sx; x++) if (at(x, y) === k && !used[y * W + x]) keep[y * W + x] = 1;
           for (var j = 0; j < (fx ? pick.sy : pick.sx); j++) {
             var qx = fx ? (fx > 0 ? pick.x0 + pick.sx : pick.x0 - 1) : pick.x0 + j, qy = fx ? pick.y0 + j : (fy > 0 ? pick.y0 + pick.sy : pick.y0 - 1);
             if (at(qx, qy) === k) keep[qy * W + qx] = 1;
@@ -214,6 +290,30 @@
       level.furniture = furnishLevel(plan, f, level, pts, rng);
       level.windows = windowsOf(plan, f, level, pts, canSee);
     });
+    if (plan.scale) floors.forEach(function (f) { var lv = L.planLevel(plan, f); if (!lv.solidPx) lv.solidPx = lv.furniture.map(function (q) { return solidOf(plan, q); }); });
     return plan;
+  };
+
+  // A piece as a solid box in px, for bodies and bullets: center (x, y), the unit axes across it (ax, ay) and toward
+  // its front (fx, fy), and half its width and depth (hw, hd). `pts`: its corners, at least 50 cm a side (a walk
+  // cell, so a thin blackboard still closes the ground floor's grid).
+  function solidOf(plan, q) {
+    var f = plan.frame, s = plan.scale, m = L.housePoint(plan, q.cx, q.cy);
+    var fx = f.ux * q.face[0] + f.vx * q.face[1], fy = f.uy * q.face[0] + f.vy * q.face[1], ax = -fy, ay = fx;
+    var o = { x: m[0] * s, y: m[1] * s, ax: ax, ay: ay, fx: fx, fy: fy, hw: q.w / 2 * s, hd: q.d / 2 * s };
+    var gw = Math.max(q.w, 0.5) / 2 * s, gd = Math.max(q.d, 0.5) / 2 * s;
+    o.pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (c) { return [o.x + ax * gw * c[0] + fx * gd * c[1], o.y + ay * gw * c[0] + fy * gd * c[1]]; });
+    return o;
+  }
+
+  // Is (x, y) px within r of a piece?
+  L.solidNear = function (list, x, y, r) {
+    for (var i = 0; list && i < list.length; i++) {
+      var o = list[i], dx = x - o.x, dy = y - o.y;
+      if (Math.abs(dx) > o.hw + o.hd + r || Math.abs(dy) > o.hw + o.hd + r) continue;
+      var a = dx * o.ax + dy * o.ay, b = dx * o.fx + dy * o.fy, qa = L.clamp(a, -o.hw, o.hw), qb = L.clamp(b, -o.hd, o.hd);
+      if ((a === qa && b === qb) || Math.hypot(a - qa, b - qb) < r) return true;
+    }
+    return false;
   };
 })(this.Lluvia = this.Lluvia || {});

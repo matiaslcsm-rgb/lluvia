@@ -230,6 +230,16 @@
       h.doorsPx.forEach(function (d) { clearDoor(city, a, x0, y0, d, function (x, y) { return inPolygon(h.outline, x, y) && free(x, y); }); });
       h.exitSegsPx.forEach(function (d) { clearDoor(city, a, x0, y0, d, free); });
     });
+    // The ground floor's furniture is solid too (js/furnish.js).
+    // A small or thin piece may cover no cell's center: its middle line is stamped too.
+    houses.forEach(function (h) {
+      (h.solidPx || []).forEach(function (o) {
+        fillZone(city, a, x0, y0, o.pts, null, 0);
+        var long = o.hw >= o.hd, ux = long ? o.ax : o.fx, uy = long ? o.ay : o.fy, half = long ? o.hw : o.hd;
+        stampWall(city, a, x0, y0, o.x - ux * half, o.y - uy * half, o.x + ux * half, o.y + uy * half, null);
+        stampWall(city, a, x0, y0, o.x, o.y, o.x, o.y, null); // and its very middle
+      });
+    });
     if (cars) for (i = 0; i < cars.length; i++) fillZone(city, a, x0, y0, cars[i].pts, null, 0);
     if (city.pages.size >= C.maxPages) city.pages.delete(city.pages.keys().next().value); // the oldest goes
     city.pages.set(z, a);

@@ -79,8 +79,8 @@
     // Furniture of each room (js/furnish.js), in the order it is placed: [piece, width, depth, where, how many,
     // [width, depth] if it doesn't fit].
     // Width along the wall it stands against, depth out from it, in meters. where: 'wall' (its back against a wall)
-    // or 'center' (free all round; with a count, in rows: pews, desks, shelves). For now it is only drawn: you
-    // walk over it (decision: docs/PLAN.md).
+    // or 'center' (free all round; with a count, in rows: pews, desks, shelves). It is solid: you
+    // can't walk or shoot through any of it (decision: docs/PLAN.md).
     furniture: {
       dormitorio: [['cama', 1.4, 1.9, 'wall', 1, [0.9, 1.9]], ['ropero', 1.2, 0.6, 'wall'], ['mesita', 0.45, 0.4, 'wall']],
       living: [['sillon', 2.0, 0.85, 'wall'], ['tele', 1.2, 0.4, 'wall'], ['mesa', 2.2, 1.7, 'center']],

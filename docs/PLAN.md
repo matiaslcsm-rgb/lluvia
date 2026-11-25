@@ -16,14 +16,11 @@ comprobar.
 - **2026-11-20 (decisión del usuario):** un duelo cada **2 minutos** en vez de 3, para acortar la partida (con las
   ultis y las fusiones duraba 40-50 minutos). Con eso, en 4 partidas simuladas dura 30-41 minutos: todavía más que
   los 20-25 del diseño; el resto se ajusta en la etapa 7.
+- **2026-11-24 (decisión del usuario):** "quiero que todos los muebles y objetos sean objetos físicos": todos los
+  muebles frenan el paso y las balas, también los chicos (se había recomendado que solo los grandes).
 
 ## Decisiones abiertas
-- **(decisión) ¿Los muebles frenan el paso?** Hoy solo se dibujan: se camina por encima de camas y mesas.
-  - A) Que los muebles grandes (camas, mesas, roperos, estantes, máquinas, autos) frenen el paso y sirvan para
-    cubrirse de los tiros; los chicos (mesitas, inodoros, sillas) siguen pasables. **Recomendada**, cuando haya
-    enemigos adentro de las casas: ahí se nota y se puede medir con partidas simuladas.
-  - B) Que frenen todos.
-  - C) Dejarlos como dibujo, sin efecto.
+- Ninguna por ahora.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -814,11 +811,24 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     pasillo. La de calle abre para adentro.
   - **Ventanas**: en la pared de afuera de cada cuarto, una cada 4 m (chicas en baños y lavaderos), salvo donde
     hay otro edificio pegado, en la terraza, el sótano, pasillos y palieres.
-  - Por ahora los muebles solo se dibujan (ver la decisión abierta de arriba).
+  - Al principio los muebles solo se dibujaban; ver la entrada siguiente.
   - Pruebas nuevas (`tests/muebles.test.js`): en todo el mapa de prueba, cada mueble adentro de su cuarto, sin
     pisarse, sin tapar puertas ni escaleras; 9 de cada 10 dormitorios con cama, baños con inodoro, cocinas con
     mesada y aulas con pupitres; ventanas sobre la pared de afuera y ninguna en la terraza.
   - Sigue: mirar los pisos en el visor del mapa; después, que los muebles frenen el paso (si se decide).
+- **2026-11-24: muebles sólidos** (decisión del usuario: "quiero que todos los muebles y objetos sean objetos
+  físicos").
+  - Todos los muebles frenan a las personas y a los bichos, y paran las balas, en planta baja y en los pisos de
+    arriba. En planta baja entran a la grilla por la que se camina, como las paredes; arriba, cada mueble es una caja
+    que se mide justo.
+  - Para que un mueble no deje a nadie encerrado, al ubicarlo se revisa que entre las puertas y escaleras del cuarto
+    siga habiendo un paso de 1 m, separado de las paredes, y que no corte ningún pedazo del cuarto al que antes se
+    llegaba (un escritorio que cierra un rincón). Si cierra algo, se prueba en otro lugar. Un cuarto demasiado
+    angosto para ese paso queda sin muebles.
+  - Las filas (bancos de iglesia, pupitres, góndolas) dejan 1 m entre una y otra. En los edificios girados la
+    grilla de planta baja se come un poco de ese metro, así que entre algunas filas se pasa justo.
+  - Prueba nueva: el medio de cada mueble no deja pararse ni pasar una bala, en todos los pisos. Las pruebas de
+    caminar hasta cada cuarto siguen pasando con los muebles puestos.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - **Darkwood como referencia, en la estética y en las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde

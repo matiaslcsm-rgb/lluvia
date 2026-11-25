@@ -76,3 +76,24 @@ test('ventanas: sobre la pared de afuera, no en la terraza ni contra otro edific
   }
   assert.ok(total > 1000, 'pocas ventanas: ' + total);
 });
+
+test('muebles sólidos: no se puede parar ni disparar a través de un mueble, en planta baja ni arriba', function () {
+  var L = Lluvia, city = L.cityHome(1), M = city.map, s = city.scale, checked = [0, 0];
+  for (var i = 0; i < M.buildings.length; i++) {
+    var p = L.cityHouse(city, i);
+    if (!p) continue;
+    [0].concat(Object.keys(p.levels).map(Number)).forEach(function (f) {
+      var lv = L.planLevel(p, f);
+      assert.strictEqual(lv.solidPx.length, lv.furniture.length, 'en ' + i + ' muebles sin cuerpo');
+      lv.furniture.forEach(function (q, k) {
+        var o = lv.solidPx[k];
+        // The middle of the piece is closed to bodies and to bullets (L.cityLevelOpen is what bullets ask).
+        assert.ok(!L.cityLevelOpen(city, f, p, o.x, o.y), 'en ' + i + ' piso ' + f + ' se atraviesa ' + q.t);
+        if (!f) assert.ok(!L.cityFits(city, o.x, o.y, L.data.city.body), 'en ' + i + ' alguien se para sobre ' + q.t);
+        else assert.ok(!L.cityUpperFits(p, o.x, o.y, L.data.city.body, lv), 'en ' + i + ' piso ' + f + ' alguien se para sobre ' + q.t);
+        checked[f ? 1 : 0]++;
+      });
+    });
+  }
+  assert.ok(checked[0] > 1000 && checked[1] > 200, 'pocos muebles mirados: ' + checked);
+});
