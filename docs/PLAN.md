@@ -18,13 +18,18 @@ comprobar.
   los 20-25 del diseño; el resto se ajusta en la etapa 7.
 - **2026-11-24 (decisión del usuario):** "quiero que todos los muebles y objetos sean objetos físicos": todos los
   muebles frenan el paso y las balas, también los chicos (se había recomendado que solo los grandes).
+- **2026-11-24 (decisión del usuario):** Darkwood (`docs/DARKWOOD.md`): "sí a todas las recomendadas":
+  - día y noche junto con la horda que crece: cada noche una oleada más dura, que se aguanta en un refugio;
+  - balas que alcanzan sin sobrar, más un arma de mano;
+  - los ítems de cofre se siguen apilando; la mochila con lugar es para lo que se gasta;
+  - penumbra fuera del campo de visión, más oscuro de noche.
+  Y sumar el ciclo de día y noche, el clima y las estaciones, con un día de 12 horas que dura 40 minutos.
 
 ## Decisiones abiertas
-- **Cuatro decisiones de Darkwood**, explicadas con sus opciones en `docs/DARKWOOD.md` (sección 4):
-  1. cómo se llevan el día y la noche con la horda que crece (recomendada: las dos, cada noche una oleada);
-  2. cuántas balas (recomendada: alcanzan sin sobrar, más un arma de mano);
-  3. mochila con lugar o ítems que se apilan (recomendada: las dos, la mochila para lo que se gasta);
-  4. qué tan oscuro fuera de la vista (recomendada: penumbra, más oscuro de noche).
+- **Dos decisiones del reloj**, explicadas en `docs/DARKWOOD.md` (sección 5):
+  5. ¿la noche también dura 40 minutos? (recomendada: sí, 12 y 12 horas, y la estación corre el amanecer y el
+     atardecer);
+  6. ¿cuánto dura una partida? (recomendada: larga y se guarda sola; cada estación 3 días, se gana con un año).
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -157,6 +162,20 @@ el terreno alto y bajo. "Avanzá como vos creas". En este orden:
     la de arriba, sobre la escalera solo chocás con la baranda y los bichos suben igual que vos.
 43. **El agua en lo bajo:** el mapa ya tiene la altura real del terreno (0 a 43 m). Con la lluvia, las zonas bajas
     se inundan: el agua frena, corta el paso y obliga a buscar lo alto.
+
+### Octava temporada — Darkwood: oscuridad, noche, clima y estaciones
+Pedido y decisiones del usuario (2026-11-24, ver "Decisiones tomadas" y `docs/DARKWOOD.md`). Cada etapa se juega
+al terminarla. El paso 43 ("el agua en lo bajo") pasa a ser parte del clima, en la etapa 50.
+44. **Estética:** paleta apagada y sucia, grano, viñeta e interfaz mínima.
+45. **Campo de visión:** el cono hacia donde apuntás, la penumbra, paredes y muebles que tapan la vista.
+46. **El reloj y el día y la noche:** la hora (12 horas en 40 minutos), la luz que cambia, linterna, faroles y luces.
+47. **Los zombis vuelven:** pocos de día, la oleada de noche, cada noche más dura.
+48. **Juntar, mochila y fabricar:** revisar muebles, materiales, banco de trabajo.
+49. **Refugio y barricadas:** tablas, muebles contra las puertas, zombis que rompen; dormir.
+50. **El clima:** lluvia, tormenta, niebla, calor y frío, con su efecto en el juego; el agua inunda lo bajo.
+51. **Guardar y estaciones:** guardado automático; verano, otoño, invierno y primavera, con sus días, clima y árboles.
+52. **Sonido con dirección**, comerciante, armas de mano que se gastan, sangrado y correr que cansa.
+53. **Mutaciones con contra** y el mapa sin flecha.
 
 ### Más adelante: autos y vehículos
 Idea del usuario (2026-11-24): que algún día el juego tenga autos y vehículos. Hoy los autos estacionados son
@@ -834,7 +853,7 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Prueba nueva: el medio de cada mueble no deja pararse ni pasar una bala, en todos los pisos. Las pruebas de
     caminar hasta cada cuarto siguen pasando con los muebles puestos.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
-  - *(lista armada: `docs/DARKWOOD.md`, con sus decisiones arriba)* **Darkwood como referencia, en la estética y en
+  - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
     la del Darkwood, en mecánicas también". Antes de tocar nada, armar una lista de qué se toma (vista desde
     arriba con campo de visión, oscuridad, sonido, armado de defensas, día y noche...) y qué no, con la regla de
