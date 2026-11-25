@@ -62,7 +62,8 @@
       show([el('h1', null, 'LLUVIA'),
         el('p', 'tagline', 'San Miguel. Un día el sol empezó a brillar amarillo y la gente se volvió loca.'),
         button('Empezar', onStart),
-        el('p', 'hint', 'WASD: moverte · Mouse: apuntar y disparar · R: recargar · E: revisar muebles · H: venda · F: linterna'),
+        el('p', 'hint', 'WASD: moverte · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
+        el('p', 'hint', 'E: revisar muebles · H: venda · F: linterna · Tab: fabricar · G: molotov'),
         el('p', 'hint', 'P: pausa · M: sonido · Enter: empezar')]);
       L.ui.current = 'title';
     },
@@ -217,6 +218,22 @@
       if (options.some(function (o) { return o.type === 'fusion'; })) nodes.splice(1, 0, el('p', 'tagline', '¡Hay una fusión disponible! Convierte tu habilidad en una versión mucho más fuerte.'));
       show(nodes);
       L.ui.current = 'choice';
+    },
+
+    // What you can make (js/craft.js): one line per recipe with what it needs; the ones you can't make say why.
+    craft: function (g, onClose) {
+      var list = el('div', 'craft');
+      L.data.craft.recipes.forEach(function (r, i) {
+        var why = L.craftBlock(g, r), need = L.lootText(Object.keys(r.need).map(function (k) { return [k, r.need[k]]; }));
+        var b = button((i + 1) + '. ' + r.name + ' — ' + need + (r.at ? ' (en un taller)' : '') + (why ? ' · ' + why : ''), function () {
+          if (L.craft(g, r)) L.ui.craft(g, onClose); else L.ui.flash(L.craftBlock(g, r) || 'No hay lugar en la mochila');
+        }, why ? 'btn ghost' : 'btn');
+        list.appendChild(b);
+      });
+      L.ui.craftPick = function (n) { var r = L.data.craft.recipes[n]; if (r && L.craft(g, r)) L.ui.craft(g, onClose); };
+      show([el('h2', null, 'Fabricar'), list, button('Cerrar (Tab)', onClose, 'btn ghost'),
+        el('p', 'hint', 'Con el número o un clic. Lo simple se hace en cualquier lado; lo demás, al lado de un taller.')]);
+      L.ui.current = 'craft';
     },
 
     pause: function (onResume) {

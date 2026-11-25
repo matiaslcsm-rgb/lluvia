@@ -10,7 +10,7 @@ function lootGame() {
 test('mochila: apila, se llena y devuelve lo que no entra', function () {
   var L = Lluvia, D = L.data.loot, g = lootGame();
   assert.strictEqual(L.packCount(g, 'balas'), D.startAmmo, 'no arranca con las balas de más');
-  Object.keys(D.pieces).forEach(function (t) { D.pieces[t].forEach(function (row) { assert.ok(D.items[row[0]], t + ' da algo que no existe: ' + row[0]); }); });
+  Object.keys(D.pieces).forEach(function (t) { D.pieces[t].forEach(function (row) { assert.ok(row[0].indexOf('w:') === 0 || D.items[row[0]], t + ' da algo que no existe: ' + row[0]); }); });
   assert.strictEqual(L.packAdd(g, 'trapos', 12), 0);
   assert.strictEqual(g.pack.slots.filter(function (s) { return s.id === 'trapos'; }).length, 2, '12 trapos no ocupan 2 casilleros');
   var rest = L.packAdd(g, 'clavos', 1000);
@@ -56,7 +56,8 @@ test('lo que no entra queda en el mueble; vendas curan; las balas salen de la mo
   // A full backpack: what a piece holds stays in it.
   for (var i = 0; i < D.slots; i++) g.pack.slots[i] = { id: 'clavos', n: D.items.clavos.stack };
   var plan = { index: 5 }, k = 0, t = null, list = null;
-  for (k = 0; k < 200 && !(list && list.length); k++) { t = 'ropero'; list = L.lootOf(plan, 0, k, t); }
+  var things = function (l) { return l && l.some(function (q) { return q[0].indexOf('w:') !== 0; }); }; // weapons go to the hand
+  for (k = 0; k < 200 && !things(list); k++) { t = 'ropero'; list = L.lootOf(plan, 0, k, t); }
   g.lootTarget = null;
   var key = '5:0:' + (k - 1);
   var orig = L.searchTarget;

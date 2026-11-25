@@ -244,6 +244,7 @@
     if (g.city && L.updateClock) L.updateClock(g, dt, input); // the flashlight (js/clock.js)
     if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
+    if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);

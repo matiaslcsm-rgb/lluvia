@@ -140,7 +140,7 @@
       if (!wd) ctx.fillText(sl.n, x + sz - 3, y0 + sz - 3);
     }
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText('Mochila · E revisar · H venda · 2 arma de mano', x0, y0 - 5);
+    ctx.fillText('Mochila · E revisar · H venda · 2 arma de mano · Tab fabricar · G molotov', x0, y0 - 5);
     ctx.globalAlpha = 1;
     var tg = g.lootTarget;
     if (tg) {
@@ -509,6 +509,17 @@
       circle(ctx, s.x, s.y, s.r, s.hail ? '#e8f6ff' : '#8aa04a');
     });
     g.projectiles.forEach(function (pr) { L.drawShot(ctx, pr); });
+    // Molotov fires (flickering) and bottles in the air (js/craft.js).
+    (g.fires || []).forEach(function (f) {
+      if ((f.floor || 0) !== (p.floor || 0)) return;
+      var fl = 0.85 + Math.sin(t * 17 + f.x) * 0.1, gr = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * fl);
+      gr.addColorStop(0, 'rgba(255,200,90,0.85)'); gr.addColorStop(0.5, 'rgba(230,110,40,0.6)'); gr.addColorStop(1, 'rgba(120,40,10,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * fl, 0, TAU); ctx.fill();
+    });
+    (g.throws || []).forEach(function (th) {
+      var k = Math.min(1, th.t / L.data.craft.molotov.flight), x = th.x + (th.tx - th.x) * k, y = th.y + (th.ty - th.y) * k - Math.sin(k * Math.PI) * 30;
+      circle(ctx, x, y, 4, '#6f9a6a'); circle(ctx, x, y - 4, 2.5, '#ffb347');
+    });
     drawKit(ctx, p);
 
     // Buildings standing up, then treetops over the people (see-through around you).

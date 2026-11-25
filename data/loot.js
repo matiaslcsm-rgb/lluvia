@@ -20,7 +20,8 @@
       nafta: { name: ['bidón de nafta', 'bidones de nafta'], stack: 3, color: '#c0533a' },
       chatarra: { name: ['pieza de chatarra', 'piezas de chatarra'], stack: 10, color: '#6f767c' },
       botella: { name: ['botella', 'botellas'], stack: 4, color: '#6f9a6a' },
-      comida: { name: ['lata de comida', 'latas de comida'], stack: 5, color: '#c9a640' }
+      comida: { name: ['lata de comida', 'latas de comida'], stack: 5, color: '#c9a640' },
+      molotov: { name: ['molotov', 'molotovs'], stack: 3, color: '#d8713a' }
     },
     // What each piece of furniture may have: [item, chance, fewest, most]. Each line is rolled once. "w:..." is a
     // hand weapon (data/melee.js), always one.

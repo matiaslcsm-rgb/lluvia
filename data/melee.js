@@ -20,6 +20,7 @@
       { id: 'vendados', name: 'Puños vendados', skill: 'mano', dmg: 0.9, mix: { c: 1 }, reach: 0.55, speed: 2.2, dur: 40, knock: 0.04, noise: 4, air: 6, hurt: 0, color: '#e8e2d6', len: 0 },
       { id: 'cinturon', name: 'Puño con cinturón', skill: 'mano', dmg: 1.3, mix: { c: 0.85, k: 0.15 }, reach: 0.6, speed: 1.9, dur: 60, knock: 0.06, noise: 5, air: 7, hurt: 0.02, color: '#5a3a24', len: 0 },
       { id: 'americano', name: 'Puño americano', skill: 'mano', dmg: 2.0, mix: { c: 0.9, p: 0.1 }, reach: 0.55, speed: 2.2, dur: 300, knock: 0.1, noise: 5, air: 6, hurt: 0, color: '#a8adb2', len: 0 },
+      { id: 'botellarota', name: 'Botella rota', skill: 'corta', dmg: 2.6, mix: { k: 0.8, p: 0.2 }, reach: 0.6, speed: 1.8, dur: 8, knock: 0, noise: 3, air: 6, color: '#6f9a6a', len: 0.22 },
       { id: 'tenedor', name: 'Tenedor', skill: 'corta', dmg: 1.0, mix: { p: 0.9, k: 0.1 }, reach: 0.6, speed: 2.2, dur: 12, knock: 0, noise: 2, air: 5, color: '#c8cdd2', len: 0.2 },
       { id: 'cuchillo', name: 'Cuchillo de cocina', skill: 'corta', dmg: 2.4, mix: { k: 0.7, p: 0.3 }, reach: 0.65, speed: 2.0, dur: 40, knock: 0.02, noise: 3, air: 6, color: '#d4d8dc', len: 0.3 },
       { id: 'cuchilla', name: 'Cuchilla de asado', skill: 'corta', dmg: 3.2, mix: { k: 0.8, c: 0.1, p: 0.1 }, reach: 0.7, speed: 1.6, dur: 60, knock: 0.05, noise: 4, air: 8, color: '#bfc4c8', len: 0.38 },

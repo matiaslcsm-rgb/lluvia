@@ -50,6 +50,7 @@
       v.aiming = mouse.right; // right button: aim, standing still
       v.slot1 = L.input.key('Digit1'); // the gun
       v.slot2 = L.input.key('Digit2'); // the hand weapon (again: the next one in the backpack)
+      v.throwIt = L.input.key('KeyG');   // throw a molotov
       v.reload = L.input.key('KeyR');
       v.light = L.input.key('KeyF'); // the flashlight
       v.use = L.input.key('KeyE');   // search a piece of furniture
@@ -79,7 +80,17 @@
     if (match && L.choose(game(), i)) L.ui.hide();
   }
 
+  // Tab: what you can make (js/craft.js). The game waits while the list is open.
+  function toggleCraft() {
+    if (!match || match.over || game().choice || !game().pack) return;
+    if (L.ui.current === 'craft') { paused = false; L.ui.hide(); return; }
+    if (paused) return;
+    paused = true;
+    L.ui.craft(game(), toggleCraft);
+  }
+
   function togglePause() {
+    if (L.ui.current === 'craft') { toggleCraft(); return; }
     if (!match || match.over || game().choice) return;
     paused = !paused;
     if (paused) L.ui.pause(togglePause); else L.ui.hide();
@@ -117,6 +128,8 @@
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
+    else if (e.code === 'Tab') { e.preventDefault(); toggleCraft(); }
+    else if (L.ui.current === 'craft' && n !== undefined) L.ui.craftPick(n);
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
     else if (e.code === 'KeyR' && match && !paused && !match.solo) send();

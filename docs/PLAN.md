@@ -1001,6 +1001,19 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     matafuegos en las salas de máquinas.
   - En pantalla: el aire, una barra al lado de la vida; abajo a la derecha, el arma, su habilidad y su desgaste.
   - Pruebas nuevas (`tests/armas.test.js`, para el momento de prueba).
+- **2026-11-25: fabricar y el molotov** (etapa 48e).
+  - **Tab** abre la lista de lo que se puede hacer (el juego espera mientras está abierta); se fabrica con un clic o
+    con el número. Cada línea dice qué usa y, si no se puede, por qué.
+  - En cualquier lado: venda (2 trapos), puños vendados (1 venda), botella rota (1 botella, un arma de mano nueva),
+    molotov (botella, trapo y nafta). Al lado de un taller: 5 balas con 2 de chatarra y 2 tablas con clavos y
+    chatarra (las tablas sirven para las barricadas de la etapa 49).
+  - **G** tira un molotov hacia la mira, hasta 12 m (se frena en la primera pared): estalla en un fuego de 2,2 m
+    que dura 8 s y quema a los zombis que pisan (el fuego sí los mata, no solo la cabeza) y a vos si te metés. Se
+    oye a 14 m.
+  - Los números están en `data/craft.js`.
+- **2026-11-25: momento de prueba de la etapa 48** (lo acordado con el usuario: probar todo junto en momentos
+  fijos). Pasan las 41 pruebas; las dos que fallaron eran pruebas viejas que no sabían que los muebles ahora también
+  dan armas, y se corrigieron.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
