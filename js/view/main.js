@@ -101,7 +101,17 @@
     L.ui.craft(game(), toggleCraft);
   }
 
+  // K: your body's status (js/health.js). The game waits while it is open.
+  function toggleStatus() {
+    if (!match || match.over || game().choice || !game().pack || !L.ui.status) return;
+    if (L.ui.current === 'status') { paused = false; L.ui.hide(); return; }
+    if (paused) return;
+    paused = true;
+    L.ui.status(game(), toggleStatus);
+  }
+
   function togglePause() {
+    if (L.ui.current === 'status') { toggleStatus(); return; }
     if (L.ui.current === 'craft') { toggleCraft(); return; }
     if (L.ui.current === 'inventory') { toggleInventory(); return; }
     if (!match || match.over || game().choice) return;
@@ -142,7 +152,8 @@
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
     else if (e.code === 'Tab') { e.preventDefault(); if (L.ui.current !== 'inventory') toggleCraft(); }
-    else if (e.code === 'KeyI' && L.ui.current !== 'craft') toggleInventory();
+    else if (e.code === 'KeyI' && L.ui.current !== 'craft' && L.ui.current !== 'status') toggleInventory();
+    else if (e.code === 'KeyK' && L.ui.current !== 'craft' && L.ui.current !== 'inventory') toggleStatus();
     else if (L.ui.current === 'craft' && n !== undefined) L.ui.craftPick(n);
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);

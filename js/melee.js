@@ -84,7 +84,7 @@
     if (!def) return null; // that hand holds something else
     var held = p.hands && p.hands[side];
     var t = L.skillLevel(p, def.skill) / n, tc = L.skillLevel(p, 'cuerpo') / n;
-    var time = 1 / (def.speed * (1 + 0.4 * t)) * (p.air < A.low ? A.slow : 1);
+    var time = 1 / (def.speed * (1 + 0.4 * t)) * (p.air < A.low ? A.slow : 1) * (1 + (p.bluntSlow || 0)); // hard blows slow you (js/health.js)
     // A readied blow (right button held with a long weapon) hurts more and drops more.
     var ready = p.ready || 0; p.ready = 0;
     if (hand === 'right') p.swingCdR = time; else p.swingCd = time;

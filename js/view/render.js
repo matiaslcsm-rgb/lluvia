@@ -191,6 +191,13 @@
     var C = L.data.look.hud, x = 18, y = 20;
     ctx.globalAlpha = 0.85;
     bar(ctx, x, y, 150, 6, p.hp / p.stats.maxHp, C.life);
+    // The life the wounds took away (js/health.js): the end of the bar, blocked.
+    if (p.capLost > 0) {
+      var lost = Math.min(1, p.stats.maxHp - L.lifeCap(g) > 0 ? 1 - L.lifeCap(g) / p.stats.maxHp : 0);
+      ctx.fillStyle = 'rgba(60,14,12,0.9)'; ctx.fillRect(x + 150 * (1 - lost), y, 150 * lost, 6);
+      ctx.strokeStyle = 'rgba(160,60,50,0.7)'; ctx.lineWidth = 1;
+      for (var hx = x + 150 * (1 - lost); hx < x + 150; hx += 4) { ctx.beginPath(); ctx.moveTo(hx, y + 6); ctx.lineTo(hx + 4, y); ctx.stroke(); }
+    }
     bar(ctx, x, y + 9, 150, 2, p.xp / need, C.xp);
     if (p.air !== undefined) bar(ctx, x + 156, y, 40, 6, p.air / L.data.melee.air.max, '#8aa7b5'); // your air (js/melee.js)
     // Your energy (js/rest.js): a full bar is 100; after sleeping well fed the extra shows brighter over it.
@@ -226,6 +233,16 @@
       }
       if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
       else if (p.energy !== undefined && p.energy < L.data.rest.sightLow && !p.asleep) { ctx.fillStyle = C.low; ctx.fillText('Sueño (Z: dormir)', x, y + 83); }
+      // What your body has (js/health.js): K opens the status window.
+      if (p.wounds) {
+        var hb = [];
+        if (L.bleeding(p).length) hb.push('Sangrando');
+        if (p.infection) hb.push(p.infection.fever ? 'Fiebre' : 'Infección' + (p.infection.started ? ' ' + p.infection.doses + '/' + p.infection.need : ''));
+        if (p.bluntSlow > 0) hb.push('Golpeado');
+        if (p.kitT > 0) hb.push('Kit ' + Math.ceil(p.kitT) + ' h');
+        if (p.recovering) hb.push('Recuperándote');
+        if (hb.length) { ctx.fillStyle = L.bleeding(p).length || p.infection ? C.low : C.dim; ctx.fillText(hb.join(' · ') + ' (K: estado)', x, y + 98); }
+      }
       else if (p.blocking) { ctx.fillStyle = C.text; ctx.fillText('Cubriéndote', x, y + 83); }
       if (g.weather && L.floodAt(g, p.x, p.y) > 0.05) { ctx.fillStyle = C.dim; ctx.fillText('En el agua: ' + L.floodAt(g, p.x, p.y).toFixed(1) + ' m', x + 120, y + 83); }
       var fl = p.flashlight;
@@ -632,6 +649,18 @@
       if (L.drawNight) L.drawNight(ctx, g, p, camX, camY, W, H, poly, t); // night, dusk, dawn and lights (js/view/night.js)
       if (sees) drawShade(ctx, poly, camX, camY, W, H); // half-light outside what you see
       if (L.drawWeather) L.drawWeather(ctx, g, W, H, dt);  // black rain, fog, lightning (js/view/weather.js)
+      // The edges of the screen (docs/CUERPO.md section 5): a red pulse while bleeding without a bandage, a green
+      // sickly haze while an infection moves on.
+      if (p.wounds && L.bleeding(p).length) {
+        var pulse = 0.25 + 0.2 * Math.sin(t * 5), rg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.65);
+        rg.addColorStop(0, 'rgba(140,10,10,0)'); rg.addColorStop(1, 'rgba(140,10,10,' + pulse + ')');
+        ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+      }
+      if (p.infection && (p.infection.fever || p.infection.h > 8)) {
+        var k2 = p.infection.fever ? 0.4 : 0.22, gg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.7);
+        gg.addColorStop(0, 'rgba(90,120,40,0)'); gg.addColorStop(1, 'rgba(90,120,40,' + (k2 + 0.06 * Math.sin(t * 1.3)) + ')');
+        ctx.fillStyle = gg; ctx.fillRect(0, 0, W, H);
+      }
       if (p.asleep) {                                        // asleep (js/rest.js): eyes closed, the clock running
         ctx.fillStyle = 'rgba(4,4,8,0.82)'; ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = '#b9ad86'; ctx.textAlign = 'center'; ctx.font = '600 18px system-ui, sans-serif';

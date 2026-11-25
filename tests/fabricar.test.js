@@ -7,7 +7,7 @@ test('fabricar: vendas con trapos, puños vendados, botella rota; balas solo en 
   var sp = L.cityFree(city, city.start.x, city.start.y), p = g.player, r = function (id) { return L.findById(R, id); };
   p.x = sp.x; p.y = sp.y;
   R.forEach(function (rc) {
-    Object.keys(rc.need).forEach(function (k) { assert.ok(L.data.loot.items[k], rc.id + ' usa algo que no existe: ' + k); });
+    Object.keys(rc.need).forEach(function (key) { key.split('|').forEach(function (k) { assert.ok(L.data.loot.items[k], rc.id + ' usa algo que no existe: ' + k); }); });
     var m = rc.make[0];
     assert.ok(m.indexOf('w:') === 0 ? L.findById(L.data.melee.weapons, m.slice(2)) : L.data.loot.items[m], rc.id + ' hace algo que no existe');
   });

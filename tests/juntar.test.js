@@ -87,7 +87,7 @@ test('lo que no entra queda en el mueble; vendas curan; las balas salen de la mo
   g.pack.places[0].slots = [{ id: 'vendas', n: 1 }];
   p.hp = 10;
   L.updateLoot(g, 0.016, { heal: true });
-  assert.strictEqual(p.hp, 10 + D.heal, 'la venda no cura');
+  assert.strictEqual(p.hp, 10 + L.data.health.heal, 'la venda no cura');
   assert.strictEqual(L.packCount(g, 'vendas'), 0);
   // Bullets: a reload fills only as far as the backpack has.
   var gun = p.gun;

@@ -111,6 +111,7 @@
     if (opts.night && L.makeNeeds) L.makeNeeds(g); // eating and drinking (js/needs.js)
     if (opts.night && L.makeWeather) L.makeWeather(g); // the weather (js/weather.js)
     if (opts.night && L.makeRest) L.makeRest(g); // energy and sleep (js/rest.js)
+    if (opts.night && L.makeHealth) L.makeHealth(g); // wounds, bleeding, infection (js/health.js)
     if (opts.night) g.lives = 1;                   // one life, as in Project Zomboid (the user's answer 10)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
@@ -256,6 +257,7 @@
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
     if (g.night && L.updateNeeds) L.updateNeeds(g, gdt);        // eating, drinking, fainting (js/needs.js)
+    if (g.night && L.updateHealth) L.updateHealth(g, dt, gdt);  // wounds, bleeding, infection, recovering (js/health.js)
     if (g.night && L.updateWeather) L.updateWeather(g, gdt);     // rain, storm, fog, heat, cold, flooding (js/weather.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
@@ -273,7 +275,7 @@
     updateTimed(g.effects, dt);
     updateTimed(g.toasts, dt);
     var regen = p.stats.regen + p.stats.stillRegen * (p.still || 0);
-    p.hp = Math.min(p.stats.maxHp, regen >= 0 || p.hp <= 1 ? p.hp + Math.max(0, regen) * dt : Math.max(1, p.hp + regen * dt)); // a drain never kills
+    p.hp = Math.min(L.lifeCap && p.wounds ? L.lifeCap(g) : p.stats.maxHp, regen >= 0 || p.hp <= 1 ? p.hp + Math.max(0, regen) * dt : Math.max(1, p.hp + regen * dt)); // a drain never kills
     if (p.hurt > 0) p.hurt -= dt;
     checkLevel(g);
   }
@@ -324,6 +326,7 @@
     L.updateStance(p, len > 0.2, dt);
     var slow = (g.pack ? 1 - L.packSlow(g) : 1) * run; // a bolso in your hand gets in the way (js/loot.js)
     if (g.weather) slow *= 1 - L.floodSlow(g, p.x, p.y);  // wading in flood water (js/weather.js)
+    if (p.bluntSlow) slow *= 1 - p.bluntSlow;              // hard blows slow you down until paracetamol (js/health.js)
     stepPlayer(g, x * p.stats.speed * slow * dt, y * p.stats.speed * slow * dt);
   }
 
@@ -678,6 +681,7 @@
           }
         }
         p.hp -= bite; p.hurt = 0.15;
+        if (g.night && L.takeWound) L.takeWound(g, bite, e); // its blows leave wounds (js/health.js)
       }
       if (e.burnTtl > 0) {
         e.burnTtl -= dt;

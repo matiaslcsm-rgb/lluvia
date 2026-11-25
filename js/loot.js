@@ -290,8 +290,14 @@
 
   // ---- Searching ----
   // What a piece holds: rolled from its place (building, floor, piece), so it is always the same.
+  // Is this building a pharmacy? Some of the shops, always the same ones.
+  L.isPharmacy = function (plan) {
+    if (!plan || plan.layout !== 'shop') return false;
+    var h = ((plan.index + 11) * 2654435761) >>> 0;
+    return (h % 1000) / 1000 < D().pharmacy;
+  };
   L.lootOf = function (plan, f, k, t) {
-    var table = D().pieces[t];
+    var table = L.isPharmacy(plan) && D().pharmacyPieces[t] || D().pieces[t];
     if (!table) return [];
     var seed = ((plan.index + 1) * 73856093) ^ ((f + 7) * 19349663) ^ ((k + 1) * 83492791), rng = L.makeRng((seed >>> 0) || 1), out = [];
     table.forEach(function (row) {

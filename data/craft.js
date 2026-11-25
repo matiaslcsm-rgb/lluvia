@@ -14,6 +14,8 @@
       { id: 'botellarota', name: 'Botella rota', need: { botella: 1 }, make: ['w:botellarota', 1] },
       { id: 'molotov', name: 'Molotov', need: { botella: 1, trapos: 1, nafta: 1 }, make: ['molotov', 1] },
       { id: 'balas', name: 'Balas', need: { chatarra: 2 }, make: ['balas', 5], at: 'taller' },
+      // A home first aid kit (the user): 1 bandage, plaster or rag ("a|b": any of them) and 1 alcohol or sanitizer.
+      { id: 'kitCasero', name: 'Kit casero de primeros auxilios', need: { 'vendas|curitas|trapos': 1, 'alcohol|sanitizante': 1 }, make: ['kitCasero', 1] },
       { id: 'tablas', name: 'Tablas (de un mueble roto)', need: { clavos: 4, chatarra: 1 }, make: ['tablas', 2], at: 'taller' }
     ],
     // The molotov (G throws it toward the sight): it flies up to `range` m, bursts into a fire of `radius` m that

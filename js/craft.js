@@ -19,10 +19,23 @@
   };
 
   // Can recipe r be made now? Returns null if so, else why not ("falta: 1 trapo", "hace falta un taller").
+  // A need "a|b|c" is any of them: the first one you have enough of (or null).
+  function pick(g, key, n) { return key.split('|').filter(function (id) { return L.packCount(g, id) >= n; })[0] || null; }
+  // "1 venda, curita o trapo, 1 alcohol o sanitizante"
+  L.needText = function (need) {
+    return Object.keys(need).map(function (key) {
+      var n = need[key], ids = key.split('|'), names = ids.map(function (id) { var nm = L.data.loot.items[id].name; return n === 1 ? nm[0] : nm[1]; });
+      return n + ' ' + (names.length > 1 ? names.slice(0, -1).join(', ') + ' o ' + names[names.length - 1] : names[0]);
+    }).join(', ');
+  };
   L.craftBlock = function (g, r) {
-    var miss = [];
-    Object.keys(r.need).forEach(function (id) { var have = L.packCount(g, id); if (have < r.need[id]) miss.push([id, r.need[id] - have]); });
-    if (miss.length) return 'falta: ' + L.lootText(miss);
+    var miss = {};
+    Object.keys(r.need).forEach(function (key) {
+      if (pick(g, key, r.need[key])) return;
+      var have = Math.max.apply(null, key.split('|').map(function (id) { return L.packCount(g, id); }));
+      miss[key] = r.need[key] - have;
+    });
+    if (Object.keys(miss).length) return 'falta: ' + L.needText(miss);
     if (r.at === 'taller' && !L.nearBench(g)) return 'hace falta un taller';
     return null;
   };
@@ -32,9 +45,10 @@
     if (L.craftBlock(g, r)) return false;
     var made = r.make, id = made[0];
     // Room for it? (a weapon or a new kind of thing needs a slot)
-    Object.keys(r.need).forEach(function (k) { L.packTake(g, k, r.need[k]); });
+    var used = Object.keys(r.need).map(function (key) { return [pick(g, key, r.need[key]), r.need[key]]; });
+    used.forEach(function (u) { L.packTake(g, u[0], u[1]); });
     var rest = id.indexOf('w:') === 0 ? (L.giveMelee(g, id.slice(2)) ? 0 : 1) : L.packAdd(g, id, made[1]);
-    if (rest) { Object.keys(r.need).forEach(function (k) { L.packAdd(g, k, r.need[k]); }); return false; } // no room: undo
+    if (rest) { used.forEach(function (u) { L.packAdd(g, u[0], u[1]); }); return false; } // no room: undo
     L.toast(g, 'Hiciste: ' + r.name + '.', '#d9cfa6');
     L.emit(g, 'craft', g.player.x, g.player.y);
     g.player.xp += 3; // crafting teaches you (the user's answer 9)

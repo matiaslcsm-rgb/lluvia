@@ -273,11 +273,69 @@
       L.ui.current = 'inventory';
     },
 
+    // Your body (js/health.js, docs/CUERPO.md section 5): your wounds, what you have and what slows you down, and a
+    // button for each treatment you carry.
+    status: function (g, onClose) {
+      var p = g.player, H = L.data.health, N = L.data.needs, again = function () { L.ui.status(g, onClose); };
+      var box = el('div', 'invbox wide'), list = [];
+      var cap = L.lifeCap(g);
+      box.appendChild(el('div', 'invtitle', 'Vida ' + Math.ceil(p.hp) + ' de ' + Math.round(cap) + (p.capLost > 0 ? ' (las heridas te sacaron ' + Math.round(p.stats.maxHp - cap) + ' de ' + p.stats.maxHp + ')' : '')));
+      (p.wounds || []).forEach(function (w) {
+        var K = H.kinds[w.kind], bits = [K.name];
+        if (w.bleed) bits.push(w.band === 'kit' ? 'con el kit' : w.band ? 'vendada' + (w.band === 'trapo' ? ' con un trapo' : '') : 'sangra');
+        if (w.dis) bits.push('desinfectada');
+        if (w.kind === 'c') bits.push(w.eased ? 'aliviado' : 'te frena');
+        bits.push('hace ' + Math.floor(w.age) + ' h');
+        list.push(bits.join(' · '));
+      });
+      if (!list.length) list.push('Sin heridas.');
+      list.forEach(function (t) { box.appendChild(el('div', 'invline', t)); });
+      var st = [];
+      if (p.infection) st.push(p.infection.fever ? 'Fiebre: la infección avanza (perdés vida y energía, te podés desmayar).' :
+        p.infection.started ? 'Infección en tratamiento: dosis ' + p.infection.doses + '/' + p.infection.need + ', la próxima en ' + Math.max(0, Math.ceil(p.infection.next)) + ' h.' :
+        'Infección: tomá antibiótico (con agua). Sin tratar, en unas horas viene la fiebre.');
+      if (p.kitT > 0) st.push('Kit de primeros auxilios: ' + Math.ceil(p.kitT) + ' h más sin perder vida.');
+      if (p.bluntSlow > 0) st.push('Golpeado: te movés y pegás ' + Math.round(p.bluntSlow * 100) + '% más lento (el paracetamol lo alivia).');
+      if (p.paraT > 0) st.push('Paracetamol: ' + Math.ceil(p.paraT) + ' h.');
+      if (p.watered >= N.drink.every) st.push('Tenés sed.');
+      if (p.fed >= N.eat.every) st.push('Tenés hambre.');
+      if (p.energy !== undefined && p.energy < L.data.rest.sightLow) st.push('Tenés sueño: ves menos lejos.');
+      if (L.defenses(g)) st.push('Defensas altas: es más difícil infectarte.');
+      if (p.capLost > 0) {
+        var miss = [];
+        if (p.infection) miss.push('curar la infección');
+        if (L.bleeding(p).length) miss.push('parar el sangrado');
+        if (!(p.paraT > 0)) miss.push('tomar paracetamol');
+        if (p.fed >= N.eat.every || p.watered >= N.drink.every) miss.push('comer y tomar agua');
+        st.push(miss.length ? 'Para recuperarte falta: ' + miss.join(', ') + '; y después dormir.' : 'Listo para recuperarte: dormí (Z). Un día de sueño te deja como nuevo.');
+      }
+      var sb = el('div', 'invbox wide');
+      sb.appendChild(el('div', 'invtitle', 'Estado'));
+      (st.length ? st : ['Estás bien.']).forEach(function (t) { sb.appendChild(el('div', 'invline', t)); });
+      // Treatments you carry.
+      var tb = el('div', 'invbox wide');
+      tb.appendChild(el('div', 'invtitle', 'Lo que podés usar'));
+      var any = false;
+      ['kitFarmacia', 'kitCasero', 'vendas', 'curitas', 'trapos', 'alcohol', 'sanitizante', 'paracetamol', 'antibiotico', 'botiquin'].forEach(function (id) {
+        if (!L.packCount(g, id)) return;
+        var acts = [];
+        L.itemActions(g, { id: id, n: 1 }, function (label, run) { acts.push({ label: label, run: run }); });
+        acts.forEach(function (a) {
+          any = true;
+          tb.appendChild(button(a.label + ': ' + L.lootText([[id, L.packCount(g, id)]]), function () { a.run(); again(); }, 'btn slot'));
+        });
+      });
+      if (!any) tb.appendChild(el('div', 'invline', 'Nada que te sirva ahora.'));
+      var inv = el('div', 'inv'); inv.appendChild(box); inv.appendChild(sb); inv.appendChild(tb);
+      show([el('h2', null, 'Estado'), inv, button('Cerrar (K)', onClose, 'btn ghost')]);
+      L.ui.current = 'status';
+    },
+
     // What you can make (js/craft.js): one line per recipe with what it needs; the ones you can't make say why.
     craft: function (g, onClose) {
       var list = el('div', 'craft');
       L.data.craft.recipes.forEach(function (r, i) {
-        var why = L.craftBlock(g, r), need = L.lootText(Object.keys(r.need).map(function (k) { return [k, r.need[k]]; }));
+        var why = L.craftBlock(g, r), need = L.needText(r.need);
         var b = button((i + 1) + '. ' + r.name + ' — ' + need + (r.at ? ' (en un taller)' : '') + (why ? ' · ' + why : ''), function () {
           if (L.craft(g, r)) L.ui.craft(g, onClose); else L.ui.flash(L.craftBlock(g, r) || 'No hay lugar en la mochila');
         }, why ? 'btn ghost' : 'btn');
@@ -301,7 +359,7 @@
       opts.appendChild(button('Letra grande: ' + (L.options.big ? 'sí' : 'no'), function () { L.options.big = !L.options.big; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
       var keys = el('div', 'keys');
       [['WASD', 'moverte'], ['Shift', 'correr'], ['Mouse', 'disparar o pegar'], ['Clic derecho', 'apuntar (a mano: la otra mano)'], ['Los dos botones', 'empujar'], ['R', 'recargar'], ['1 / 2', 'pistola / arma de mano'],
-        ['Espacio', 'cubrirte'], ['E', 'revisar muebles (o llenar botellas en una pileta)'], ['H', 'venda'], ['Z', 'dormir (mejor en una cama) o despertarte'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'sonido']].forEach(function (k) {
+        ['Espacio', 'cubrirte'], ['E', 'revisar muebles (o llenar botellas en una pileta)'], ['H', 'venda'], ['Z', 'dormir (mejor en una cama) o despertarte'], ['K', 'estado: heridas y remedios'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'sonido']].forEach(function (k) {
         var r = el('div', 'keyrow'); r.appendChild(el('span', 'kbd', k[0])); r.appendChild(el('span', null, k[1])); keys.appendChild(r);
       });
       show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, keys, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);
