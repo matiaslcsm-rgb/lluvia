@@ -62,9 +62,16 @@ comprobar.
   archivos pide aprobar cada uno); la botella vacía se rellena en una canilla; agua y comida y el desmayo como están;
   sigue el clima, y también cubrirse; guardar la partida y las estaciones, todavía sin definir.
 
+- **2026-11-25 (decisión del usuario, después de probarlo):** sigue el sistema viejo de subir de nivel (la mejora de
+  la Glock sirve para probar); energía, dormir y comida juntos; tirar cosas al piso y menú de clic derecho; manos,
+  bolsillos y mochila como Project Zomboid; salud con heridas, sangrado, kits, infección y antibióticos; refugio y
+  barricadas para cuando estén el lore, el jugador y el mapa; sin zombis nuevos por ahora; al morir te despertás
+  donde dormiste por última vez y tu cuerpo queda para ir a buscarlo (la partida no se pierde); estaciones de 7 días,
+  y después un sistema de ropa; más adelante la cordura. Todo en `docs/CUERPO.md`.
+
 ## Decisiones abiertas
-- El nombre del juego (el usuario lo está pensando).
-- Guardar la partida y las estaciones (el usuario todavía no lo definió).
+- El nombre del juego (el usuario lo está pensando; le propuse 5).
+- Guardar la partida.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -216,6 +223,17 @@ al terminarla. El paso 43 ("el agua en lo bajo") pasa a ser parte del clima, en 
 51. **Guardar y estaciones:** guardado automático; verano, otoño, invierno y primavera, con sus días, clima y árboles.
 52. **Sonido con dirección**, comerciante, armas de mano que se gastan, sangrado y correr que cansa.
 53. **Mutaciones con contra** y el mapa sin flecha.
+
+### Novena temporada — el cuerpo (`docs/CUERPO.md`)
+Pedido del usuario (2026-11-25), en este orden:
+54. **Energía y dormir:** la barra de energía, la cama, dormir bien comido, ver menos sin dormir.
+55. **Tirar y el menú de clic derecho:** las cosas quedan en el piso y se juntan.
+56. **Manos, bolsillos y mochila:** dos manos, dos bolsillos, la comida y el agua como tiempo que te dura.
+57. **Salud:** heridas por tipo de daño, vida máxima, sangrado, kits, infección, antibióticos, paracetamol, la
+    ventana de estado.
+58. **Morir:** despertar donde dormiste y el cuerpo que queda.
+59. **Estaciones** (y después la ropa).
+Más adelante: la cordura; refugio y barricadas; otros sobrevivientes.
 
 ### Más adelante: autos y vehículos
 Idea del usuario (2026-11-24): que algún día el juego tenga autos y vehículos. Hoy los autos estacionados son

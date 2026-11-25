@@ -114,7 +114,7 @@
 
   // The edge of what `ent` sees, aiming at angle `aim`: points [x, y] in px around it, in order of angle.
   L.sightPolygon = function (city, ent, aim) {
-    var D = S(), s = city.scale, half = D.cone * Math.PI / 360, far = D.range * s, near = D.near * s, out = [];
+    var D = S(), s = city.scale * (ent.sightMul || 1), half = D.cone * Math.PI / 360, far = D.range * s, near = D.near * s, out = []; // sleepy: less (js/rest.js)
     var n = D.rays, inCone = Math.max(24, Math.round(n * 0.75)), rest = n - inCone;
     var add = function (a, len) { var d = ray(city, ent, ent.x, ent.y, a, len); out.push([ent.x + Math.cos(a) * d, ent.y + Math.sin(a) * d]); };
     for (var i = 0; i <= inCone; i++) add(aim - half + 2 * half * i / inCone, far);
@@ -125,7 +125,7 @@
   // Does `ent`, aiming at `aim`, see the spot (x, y) px? In the cone or close by, nothing in between, same floor.
   L.canSee = function (city, ent, aim, x, y, floor) {
     if ((floor || 0) !== (ent.floor || 0)) return false;
-    var D = S(), s = city.scale, dx = x - ent.x, dy = y - ent.y, d = Math.hypot(dx, dy);
+    var D = S(), s = city.scale * (ent.sightMul || 1), dx = x - ent.x, dy = y - ent.y, d = Math.hypot(dx, dy);
     if (d < 1) return true;
     var ang = Math.atan2(dy, dx), diff = Math.abs(((ang - aim) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI);
     if (d > D.near * s && (diff > D.cone * Math.PI / 360 || d > D.range * s)) return false;

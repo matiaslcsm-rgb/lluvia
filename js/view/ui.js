@@ -281,7 +281,7 @@
       opts.appendChild(button('Letra grande: ' + (L.options.big ? 'sí' : 'no'), function () { L.options.big = !L.options.big; L.saveOptions(); L.ui.pause(onResume); }, 'btn small'));
       var keys = el('div', 'keys');
       [['WASD', 'moverte'], ['Shift', 'correr'], ['Mouse', 'disparar o pegar'], ['Clic derecho', 'apuntar (a mano: la otra mano)'], ['Los dos botones', 'empujar'], ['R', 'recargar'], ['1 / 2', 'pistola / arma de mano'],
-        ['Espacio', 'cubrirte'], ['E', 'revisar muebles (o llenar botellas en una pileta)'], ['H', 'venda'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'sonido']].forEach(function (k) {
+        ['Espacio', 'cubrirte'], ['E', 'revisar muebles (o llenar botellas en una pileta)'], ['H', 'venda'], ['Z', 'dormir (mejor en una cama) o despertarte'], ['F', 'linterna'], ['I', 'inventario'], ['Tab', 'fabricar'], ['G', 'molotov'], ['M', 'sonido']].forEach(function (k) {
         var r = el('div', 'keyrow'); r.appendChild(el('span', 'kbd', k[0])); r.appendChild(el('span', null, k[1])); keys.appendChild(r);
       });
       show([el('h2', null, 'Pausa'), button('Seguir', onResume), vol, opts, keys, el('p', 'hint', 'M: sonido ' + (L.sound.muted() ? 'apagado' : 'prendido'))]);

@@ -57,6 +57,7 @@
       v.light = L.input.key('KeyF'); // the flashlight
       v.use = L.input.key('KeyE');   // search a piece of furniture
       v.heal = L.input.key('KeyH');  // a bandage
+      v.sleep = L.input.key('KeyZ'); // sleep or wake up (js/rest.js)
     }
     return v;
   }

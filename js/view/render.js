@@ -172,6 +172,12 @@
     bar(ctx, x, y, 150, 6, p.hp / p.stats.maxHp, C.life);
     bar(ctx, x, y + 9, 150, 2, p.xp / need, C.xp);
     if (p.air !== undefined) bar(ctx, x + 156, y, 40, 6, p.air / L.data.melee.air.max, '#8aa7b5'); // your air (js/melee.js)
+    // Your energy (js/rest.js): a full bar is 100; after sleeping well fed the extra shows brighter over it.
+    if (p.energy !== undefined) {
+      var R = L.data.rest;
+      bar(ctx, x + 202, y, 40, 6, Math.min(1, p.energy / R.max), p.energy < R.sightLow ? C.low : '#b9a35a');
+      if (p.energy > R.max) { ctx.fillStyle = '#f0dc8a'; ctx.fillRect(x + 202, y + 7, 40 * Math.min(1, (p.energy - R.max) / (R.fedMax - R.max)), 2); }
+    }
     for (var i = 0; i < g.lives; i++) { ctx.fillStyle = C.life; ctx.fillRect(x + i * 9, y + 16, 6, 6); }
     ctx.font = '600 11px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = C.dim;
     ctx.fillText('Nivel ' + p.level, x + Math.max(3, g.lives) * 9 + 6, y + 22);
@@ -198,6 +204,7 @@
         ctx.fillText(bits.join(' · '), x, y + 68);
       }
       if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
+      else if (p.energy !== undefined && p.energy < L.data.rest.sightLow && !p.asleep) { ctx.fillStyle = C.low; ctx.fillText('Sueño (Z: dormir)', x, y + 83); }
       else if (p.blocking) { ctx.fillStyle = C.text; ctx.fillText('Cubriéndote', x, y + 83); }
       if (g.weather && L.floodAt(g, p.x, p.y) > 0.05) { ctx.fillStyle = C.dim; ctx.fillText('En el agua: ' + L.floodAt(g, p.x, p.y).toFixed(1) + ' m', x + 120, y + 83); }
       var fl = p.flashlight;
@@ -596,6 +603,13 @@
       if (L.drawNight) L.drawNight(ctx, g, p, camX, camY, W, H, poly, t); // night, dusk, dawn and lights (js/view/night.js)
       if (sees) drawShade(ctx, poly, camX, camY, W, H); // half-light outside what you see
       if (L.drawWeather) L.drawWeather(ctx, g, W, H, dt);  // black rain, fog, lightning (js/view/weather.js)
+      if (p.asleep) {                                        // asleep (js/rest.js): eyes closed, the clock running
+        ctx.fillStyle = 'rgba(4,4,8,0.82)'; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#b9ad86'; ctx.textAlign = 'center'; ctx.font = '600 18px system-ui, sans-serif';
+        ctx.fillText(p.asleep.bed ? 'Durmiendo en la cama…' : 'Durmiendo en el piso…', W / 2, H / 2 - 8);
+        ctx.font = '13px system-ui, sans-serif'; ctx.fillStyle = '#8d8672';
+        ctx.fillText('Energía ' + Math.round(p.energy) + ' · Z para despertarte', W / 2, H / 2 + 16);
+      }
       if (L.drawLook) L.drawLook(ctx, W, H, t);        // muted colors, grain and dark corners (data/look.js)
     }
 

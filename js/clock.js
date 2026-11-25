@@ -24,7 +24,7 @@
       h >= K.sunrise + half && h < K.sunset - half ? 'dia' : 'noche';
     return { day: day, hour: h, hh: Math.floor(h), mm: Math.floor((h % 1) * 60), light: daylight(h), phase: phase };
   };
-  L.clockOf = function (g) { return L.clockAt(g.time || 0); };
+  L.clockOf = function (g) { return L.clockAt((g.time || 0) + (g.slept || 0)); }; // g.slept: what sleeping skipped (js/rest.js)
 
   // Which night it is (1 the first): a night runs from the evening of one day to the morning of the next; the
   // morning of day 1 is night 0.
@@ -47,7 +47,7 @@
     var s = g.city.scale, D = L.data.sight, K = C(), light = L.clockOf(g).light, fl = g.player.flashlight;
     if (g.weather && g.weather.flashT > 0) return D.range * s; // a lightning lights everything
     var dark = fl && fl.on ? Math.max(K.moon, K.flashlight.range) : K.moon;
-    return (dark + (D.range - dark) * light) * s * (L.wx ? L.wx(g, 'sight') : 1); // fog and rain see less (js/weather.js)
+    return (dark + (D.range - dark) * light) * s * (L.wx ? L.wx(g, 'sight') : 1) * (g.player.sightMul || 1); // fog and rain see less (js/weather.js), and sleepy too (js/rest.js)
   };
 
   // ---- Street lamps ----

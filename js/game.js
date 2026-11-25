@@ -110,6 +110,7 @@
     if (opts.night && L.makeHands) L.makeHands(g); // fists and hand weapons (js/melee.js)
     if (opts.night && L.makeNeeds) L.makeNeeds(g); // eating and drinking (js/needs.js)
     if (opts.night && L.makeWeather) L.makeWeather(g); // the weather (js/weather.js)
+    if (opts.night && L.makeRest) L.makeRest(g); // energy and sleep (js/rest.js)
     if (opts.night) g.lives = 1;                   // one life, as in Project Zomboid (the user's answer 10)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
@@ -243,13 +244,19 @@
     }
     if (p.invuln > 0) p.invuln -= dt;
     L.tickUlti(p, dt);
+    // Asleep (js/rest.js): the clock runs fast (gdt: seconds of the game's clock) and you do nothing but wake up.
+    var gdt = dt;
+    if (g.night && L.updateRest) {
+      L.updateRest(g, dt, dt * L.timeRate(g), input);
+      if (p.asleep) { gdt = dt * L.timeRate(g); g.slept = (g.slept || 0) + gdt - dt; input = {}; }
+    }
     movePlayer(g, dt, input);
-    if (g.city && L.updateClock) L.updateClock(g, dt, input); // the flashlight (js/clock.js)
+    if (g.city && L.updateClock) L.updateClock(g, gdt, input); // the flashlight (js/clock.js)
     if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
-    if (g.night && L.updateNeeds) L.updateNeeds(g, dt);         // eating, drinking, fainting (js/needs.js)
-    if (g.night && L.updateWeather) L.updateWeather(g, dt);     // rain, storm, fog, heat, cold, flooding (js/weather.js)
+    if (g.night && L.updateNeeds) L.updateNeeds(g, gdt);        // eating, drinking, fainting (js/needs.js)
+    if (g.night && L.updateWeather) L.updateWeather(g, gdt);     // rain, storm, fog, heat, cold, flooding (js/weather.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
