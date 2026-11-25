@@ -37,12 +37,19 @@ comprobar.
   normales, que a los tiros solo mueren con un tiro en la cabeza; y una puntería que mejora con cada tiro en la
   cabeza.
 
+- **2026-11-25 (decisión del usuario):** respuestas 1 a 10 sobre la mezcla con Zomboid (`docs/ZOMBOID.md`, arriba de
+  todo): las armas se rompen según su fragilidad; habilidades de pelea en árbol (cuerpo a cuerpo → a mano, arma
+  corta, media distancia), que también mejoran el aire; daño contundente, cortante y punzante con una mezcla por
+  arma; las armas de mano matan según el enemigo y la experiencia, a mano limpia muy difícil y lastima las manos;
+  **por ahora los mismos zombis de día y de noche**, que de día ven más lejos y de noche oyen más lejos (cambia la
+  etapa 47); un tiro en el cuerpo frena un segundo y, según arma, bala y tiro, voltea o hace tambalear.
+- **2026-11-25 (decisión del usuario):** respuestas 11 a 15: apuntar con clic derecho; la bala tiene que pasar por la
+  cabeza dibujada y la Puntería la agranda; todas las habilidades en 10 niveles; más habilidades si son coherentes
+  con el juego; el orden propuesto. **Pruebas:** nada de medir todo en cada paso; se prueba todo junto en momentos
+  acordados de la producción (el primero, al terminar la etapa 48).
+
 ## Decisiones abiertas
-- **Dos decisiones de armas y puntería**, explicadas en `docs/ZOMBOID.md` (sección 4):
-  1. ¿las armas de mano matan? (recomendada: sí, los golpes van a la cabeza; las fuertes en uno o dos, las piñas en
-     muchos);
-  2. ¿cómo se apunta a la cabeza? (recomendada: la bala tiene que pasar por la cabeza dibujada; el clic derecho
-     cierra la mira y la Puntería la cierra más y agranda la cabeza para tus balas).
+- Ninguna por ahora.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
