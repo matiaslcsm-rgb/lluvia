@@ -13,11 +13,17 @@
   function rand(g, r) { return r[0] + g.rng() * (r[1] - r[0]); }
 
   // The next kind: by weight, never the same twice in a row.
+  // The season makes some kinds likelier (data/seasons.js).
+  function weightOf(g, k) {
+    var s = L.clockOf ? L.clockOf(g).season : null, m = s && s.def.weather[k];
+    return D().kinds[k].weight * (m === undefined ? 1 : m);
+  }
+  L.weatherWeight = weightOf;
   function pick(g, not) {
-    var K = D().kinds, ids = Object.keys(K).filter(function (k) { return k !== not; }), total = 0;
-    ids.forEach(function (k) { total += K[k].weight; });
+    var K = D().kinds, ids = Object.keys(K).filter(function (k) { return k !== not && weightOf(g, k) > 0; }), total = 0;
+    ids.forEach(function (k) { total += weightOf(g, k); });
     var r = g.rng() * total;
-    for (var i = 0; i < ids.length; i++) { r -= K[ids[i]].weight; if (r < 0) return ids[i]; }
+    for (var i = 0; i < ids.length; i++) { r -= weightOf(g, ids[i]); if (r < 0) return ids[i]; }
     return ids[0];
   }
 
@@ -65,6 +71,12 @@
       L.toast(g, 'El tiempo cambia: ' + D().kinds[W.id].name.toLowerCase() + '.', '#b9ad86');
     }
     if (W.blend < 1) W.blend = Math.min(1, W.blend + hours / D().blend);
+    // A new season: it says so.
+    var season = L.clockOf(g).season;
+    if (season && g.seasonId !== season.id) {
+      if (g.seasonId) L.toast(g, 'Llegó ' + (season.id === 'otono' ? 'el otoño' : season.id === 'invierno' ? 'el invierno' : season.id === 'verano' ? 'el verano' : 'la primavera') + '.', '#d9cfa6');
+      g.seasonId = season.id;
+    }
     // The water: up while it rains, down when it stops.
     var rain = L.wx(g, 'rain');
     W.rise = rain > 0.05 ? Math.min(F.max, W.rise + F.rise * rain * hours) : Math.max(0, W.rise - F.fall * hours);

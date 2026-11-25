@@ -217,12 +217,12 @@
     if (L.clockOf) {
       var k = L.clockOf(g), icon = k.phase === 'noche' ? '☾' : k.phase === 'dia' ? '☀' : '◐';
       ctx.fillStyle = C.text;
-      ctx.fillText(icon + ' Día ' + k.day + ' · ' + (k.hh < 10 ? '0' : '') + k.hh + ':' + (k.mm < 10 ? '0' : '') + k.mm + (L.weatherName ? ' · ' + L.weatherName(g) : ''), x, y + 38);
+      ctx.fillText(icon + ' Día ' + k.day + (k.season ? ' · ' + k.season.name : '') + ' · ' + (k.hh < 10 ? '0' : '') + k.hh + ':' + (k.mm < 10 ? '0' : '') + k.mm + (L.weatherName ? ' · ' + L.weatherName(g) : ''), x, y + 38);
       // Your aim (js/skills.js): its level and how far to the next.
       if (L.skillOf && g.night) {
         var sk = L.skillOf(p, 'punteria'), need = L.data.skills.need[sk.level];
-        ctx.fillStyle = C.dim; ctx.fillText('Puntería ' + sk.level, x + 120, y + 38);
-        if (need) bar(ctx, x + 182, y + 33, 40, 3, sk.xp / need, C.xp);
+        ctx.fillStyle = C.dim; ctx.fillText('Puntería ' + sk.level, x + 250, y + 38);
+        if (need) bar(ctx, x + 312, y + 33, 40, 3, sk.xp / need, C.xp);
       }
       // Hunger, thirst and how heavy you go (js/needs.js, js/loot.js).
       if (g.night && p.fed !== undefined) {

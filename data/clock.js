@@ -6,7 +6,7 @@
   L.data.clock = {
     hour: 200,            // real seconds per hour of the game (12 hours in 40 minutes)
     start: 9,             // the hour you start at
-    sunrise: 6,           // the sun comes up (the seasons will move it: stage 51)
+    sunrise: 6,           // the sun comes up (each season moves it: data/seasons.js)
     sunset: 18,           // and goes down
     twilight: 1.2,        // hours that dawn and dusk last, half before and half after
     // How the city looks at each moment, over the colors of data/look.js.

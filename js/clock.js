@@ -6,23 +6,34 @@
 
   function C() { return L.data.clock; }
 
-  // Daylight at a given hour: 0 at night, 1 by day, a smooth step through dawn and dusk.
-  function daylight(h) {
+  // Daylight at a given hour: 0 at night, 1 by day, a smooth step through dawn and dusk. `rise` and `set`: the
+  // season's (data/seasons.js); without them, data/clock.js's.
+  function daylight(h, rise, set) {
     var K = C(), half = K.twilight / 2, smooth = function (t) { t = L.clamp(t, 0, 1); return t * t * (3 - 2 * t); };
-    if (h < K.sunrise - half || h > K.sunset + half) return 0;
-    if (h < K.sunrise + half) return smooth((h - (K.sunrise - half)) / K.twilight);
-    if (h > K.sunset - half) return 1 - smooth((h - (K.sunset - half)) / K.twilight);
+    if (rise === undefined) { rise = K.sunrise; set = K.sunset; }
+    if (h < rise - half || h > set + half) return 0;
+    if (h < rise + half) return smooth((h - (rise - half)) / K.twilight);
+    if (h > set - half) return 1 - smooth((h - (set - half)) / K.twilight);
     return 1;
   }
   L.daylight = daylight;
 
-  // The clock at `time` seconds into the game: { day (1, 2...), hour (0-24, with fractions), hh, mm, light, phase }.
-  // phase: 'dia', 'atardecer', 'noche' or 'amanecer'.
+  // The season of a day (data/seasons.js): { id, name, def, dayIn (1-7) }, or null without seasons.
+  L.seasonOf = function (day) {
+    var S = L.data.seasons;
+    if (!S) return null;
+    var k = Math.floor((day - 1) / S.days), id = S.order[k % S.order.length];
+    return { id: id, name: S.kinds[id].name, def: S.kinds[id], dayIn: (day - 1) % S.days + 1 };
+  };
+
+  // The clock at `time` seconds into the game: { day (1, 2...), hour (0-24, with fractions), hh, mm, light, phase,
+  // season }. phase: 'dia', 'atardecer', 'noche' or 'amanecer'.
   L.clockAt = function (time) {
     var K = C(), total = K.start + time / K.hour, day = Math.floor(total / 24) + 1, h = total - (day - 1) * 24, half = K.twilight / 2;
-    var phase = h >= K.sunrise - half && h < K.sunrise + half ? 'amanecer' : h >= K.sunset - half && h < K.sunset + half ? 'atardecer' :
-      h >= K.sunrise + half && h < K.sunset - half ? 'dia' : 'noche';
-    return { day: day, hour: h, hh: Math.floor(h), mm: Math.floor((h % 1) * 60), light: daylight(h), phase: phase };
+    var season = L.seasonOf(day), rise = season ? season.def.sunrise : K.sunrise, set = season ? season.def.sunset : K.sunset;
+    var phase = h >= rise - half && h < rise + half ? 'amanecer' : h >= set - half && h < set + half ? 'atardecer' :
+      h >= rise + half && h < set - half ? 'dia' : 'noche';
+    return { day: day, hour: h, hh: Math.floor(h), mm: Math.floor((h % 1) * 60), light: daylight(h, rise, set), phase: phase, season: season };
   };
   L.clockOf = function (g) { return L.clockAt((g.time || 0) + (g.slept || 0)); }; // g.slept: what sleeping skipped (js/rest.js)
 
