@@ -13,6 +13,9 @@
   } catch (e) { /* storage blocked or broken: start a fresh notebook */ }
   L.saveProfile = function () { try { localStorage.setItem('lluvia.profile', JSON.stringify(L.profile)); } catch (e) { /* not saved */ } };
 
+  // Where the saved game is kept (js/save.js): this browser.
+  try { L.store = window.localStorage; } catch (e) { L.store = null; }
+
   function game() { return match && match.human.game; }
   L.currentGame = game; // for looking at the running game from the browser console
 
@@ -27,16 +30,16 @@
   // (L.ui.mapPick + L.loadCity can still download any other place; they are not on the menu for now.)
   // Building the whole city takes about a second: it is built once and kept for the next matches.
   var homeCity = null;
-  function start(characterId, isDaily) {
+  function start(characterId, isDaily, save) {
     daily = !!isDaily;
-    var seed = daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
-    if (homeCity) { begin(characterId, seed, homeCity, null); return; }
+    var seed = save ? save.seed : daily ? L.dailySeed(new Date()) : (Date.now() >>> 0) || 1;
+    if (homeCity) { begin(characterId, seed, homeCity, null, save); return; }
     L.ui.loading('Armando San Miguel...');
     setTimeout(function () {
       homeCity = L.cityHome(seed);
       // The real map's trees, crosswalks and terrain are worked out here too, not on the first frame.
       if (homeCity.map) { L.mapdraw.prepare(homeCity.map); L.mapdraw.terrain(homeCity.map); }
-      begin(characterId, seed, homeCity, null);
+      begin(characterId, seed, homeCity, null, save);
     }, 30);
   }
 
@@ -62,7 +65,7 @@
     return v;
   }
 
-  function begin(characterId, seed, city, msg) {
+  function begin(characterId, seed, city, msg, save) {
     L.fx.clear();
     var mode = L.data.mode || {};
     match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta'),
@@ -71,7 +74,9 @@
     var g = game(), sp = city.start || { x: city.size / 2, y: city.size / 2 }, fr = L.cityFree(city, sp.x, sp.y);
     g.player.x = fr.x; g.player.y = fr.y;
     if (msg) L.toast(g, msg, '#ff9a7a');
-    if (city.name) L.toast(g, g.night ? 'Arrancás en la plaza de ' + city.name + '. De día hay pocos zombis; de noche salen todos. F prende la linterna.'
+    // Continuar: back where you lay down in a bed (js/save.js).
+    if (save && L.applySave(g, save)) L.toast(g, 'Seguís donde te acostaste en la cama.', '#b9ad86');
+    else if (city.name) L.toast(g, g.night ? 'Arrancás en la plaza de ' + city.name + '. De día hay pocos zombis; de noche salen todos. F prende la linterna.'
       : g.explore ? 'Arrancás en la plaza de ' + city.name + '. Recorré el mapa: por ahora no hay nadie más.'
       : 'Arrancás en la plaza de ' + city.name + '. El Sol Amarillo volvió loca a la gente: no te dejes agarrar.', '#ffd23f');
     reward = null;
@@ -141,12 +146,16 @@
   }
 
   // The start screen; you play the first character (the old character select stays in the code, off the menu).
-  function menu() { match = null; L.ui.title(function () { start(L.data.characters[0].id); }); }
+  function menu() {
+    match = null;
+    var save = L.readSave();
+    L.ui.title(function () { start(L.data.characters[0].id); }, save ? function () { start(L.data.characters[0].id, false, L.readSave()); } : null);
+  }
   function endless() { if (L.startEndless(match)) { seen.over = false; L.ui.hide(); } }
 
   addEventListener('keydown', function (e) {
     var n = /^(Digit|Numpad)[1-8]$/.test(e.code) ? Number(e.code.slice(-1)) - 1 : undefined;
-    if (L.ui.current === 'title' && e.code === 'Enter') start(L.data.characters[0].id);
+    if (L.ui.current === 'title' && e.code === 'Enter') start(L.data.characters[0].id, false, L.readSave()); // Enter: Continuar if there is a saved game
     else if (L.ui.current === 'select' && n !== undefined && L.data.characters[n] && L.isUnlocked(L.profile, L.data.characters[n].id)) start(L.data.characters[n].id);
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);

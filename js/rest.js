@@ -41,7 +41,10 @@
     p.asleep = { bed: !!bed, slept: 0 };
     p.fedSleep = wellFed(p);
     p.bed = { x: p.x, y: p.y, floor: p.floor || 0, house: p.house || null };
-    L.toast(g, bed ? 'Te acostaste en la cama.' : 'Te acostaste en el piso: se descansa peor.', '#b9ad86');
+    // In a bed the game saves (js/save.js; the user's answer 4 b): "Continuar" brings you back here.
+    var saved = bed && L.writeSave && L.writeSave(g);
+    L.toast(g, bed ? 'Te acostaste en la cama.' + (saved ? ' Partida guardada.' : '') : 'Te acostaste en el piso: se descansa peor.', '#b9ad86');
+    if (bed) L.emit(g, 'bedSave', p.x, p.y);
     return true;
   };
 

@@ -58,14 +58,16 @@
     },
 
     // The start screen of San Miguel (the old character select of the rain game is gone from the menu).
-    title: function (onStart) {
+    title: function (onStart, onContinue) {
       show([el('h1', null, 'SOL LOCO'),
         el('p', 'tagline', 'San Miguel. La tormenta de lluvia negra se fue, pero ya no hay estrellas, una barrera negra rodea la ciudad y de ella salen ellos.'),
-        button('Empezar', onStart),
+        onContinue ? button('Continuar', onContinue) : null,
+        button(onContinue ? 'Empezar de nuevo' : 'Empezar', onStart),
+        onContinue ? el('p', 'hint', 'La partida se guarda cuando te acostás en una cama. Empezar de nuevo la borra la próxima vez que dormís en una.') : null,
         el('p', 'hint', 'WASD: moverte · Shift: correr · Mouse: disparar · clic derecho: apuntar · R: recargar · 1: pistola · 2: arma de mano'),
         el('p', 'hint', 'A mano: cada botón una mano; los dos juntos, empujar · Espacio: cubrirte'),
         el('p', 'hint', 'E: revisar muebles o juntar · H: venda · Z: dormir · K: estado · F: linterna · Tab: fabricar · G: molotov'),
-        el('p', 'hint', 'P: pausa · M: sonido · Enter: empezar')]);
+        el('p', 'hint', 'P: pausa · M: sonido · Enter: ' + (onContinue ? 'continuar' : 'empezar'))].filter(Boolean));
       L.ui.current = 'title';
     },
 

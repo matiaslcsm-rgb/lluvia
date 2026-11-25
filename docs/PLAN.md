@@ -1178,6 +1178,15 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Arreglado: el aviso viejo "perdiste una vida y la mitad del oro" salía al empezar.
   - Pruebas: 59 (nuevas: dormir, manos, salud, morir, estaciones), una partida de 4 minutos con el bot y una
     mirada en el navegador (inventario, menú, estado, cosas en el piso).
+- **2026-11-25: Sol Loco — aire, nombre, lore y guardar** (etapas 60 y 61).
+  - **Aire:** dura un 30% más y vuelve un 30% más rápido.
+  - **Nombre:** la pantalla de inicio dice SOL LOCO, con una línea del lore nuevo (`docs/LORE.md`).
+  - **Guardar:** al acostarte en una cama se guarda la partida (en el piso no). En la pantalla de inicio aparece
+    **Continuar** (y Enter también continúa): volvés despierto al lado de la cama, a esa hora, con todo lo que
+    tenías (mochila, manos, heridas, energía, nivel, habilidades, la mejora de la pistola, los muebles revisados,
+    tu cuerpo si habías muerto). Los zombis no se guardan: vienen otros. "Empezar de nuevo" arranca otra partida, y
+    la guardada se reemplaza la próxima vez que dormís en una cama.
+  - Pruebas: una nueva (guardar) y una mirada en el navegador (guardar, recargar la página, Continuar).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
