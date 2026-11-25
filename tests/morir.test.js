@@ -8,7 +8,7 @@ test('morir: te despertás donde dormiste, entero; tu cuerpo queda con tus cosas
   var p = g.player, s = city.scale, sp = L.cityFree(city, city.start.x, city.start.y);
   p.x = sp.x; p.y = sp.y;
   // Sleep here a moment: this is where you'll wake up.
-  L.sleep(g); L.wake(g);
+  p.energy = 50; L.sleep(g); L.wake(g);
   var bed = { x: p.x, y: p.y };
   // Walk away with a backpack, water and a weapon, hurt.
   var far = L.cityFree(city, sp.x + 30 * s, sp.y);

@@ -1116,6 +1116,43 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Pruebas: 48 (nuevas: el clima cambia, niebla y lluvia achican la vista, el rayo ilumina, el frío lastima de
     noche afuera, la inundación sube en lo bajo y no en lo alto y baja al parar, cubrirse frena, la pileta llena
     botellas) y una partida corta con el bot.
+- **2026-11-25: el cuerpo — energía y sueño, manos y mochila, tirar al piso, salud, morir, estaciones** (etapas
+  54 a 59, pedido del usuario después de probarlo; todo en `docs/CUERPO.md`).
+  - **Energía y dormir (Z):** la barra baja con las horas despierto (más rápido corriendo). Con poca energía el aire
+    vuelve más lento y alcanza para menos; con sueño ves menos lejos. Z te acuesta: en una cama descansás el doble
+    que en el piso. Dormido, el reloj corre 60 veces más rápido; un zombi cerca o un golpe te despiertan. Si te
+    acostaste comido y tomado y dormiste al menos 3 horas, la barra llega al doble y baja más despacio. Sin sueño
+    ni heridas no te deja acostarte.
+  - **Manos, bolsillos y mochila:** 2 manos (izquierda y derecha). Una cosa de una mano en cada una, o una larga en
+    las dos. El clic izquierdo pega con la mano derecha y el derecho con la izquierda; una mano vacía es un puño, y
+    una con agua no pega. 1 saca la pistola y lo que tenías espera a un lado; 2 lo devuelve. Hay 2 bolsillos para
+    cosas chicas (se empieza con la pistola y las balas). La comida y el agua van en la mochila o un bolso, se ven
+    como "agua para 18 h, comida para 24 h", y sin bolso van a una mano vacía.
+  - **Tirar y el menú de clic derecho:** en el inventario, el clic hace lo primero que se puede y el clic derecho
+    abre todas las opciones según la cosa (el agua: Tomar, Llevar en la mano, Tirar). Lo tirado queda en el piso,
+    se ve, y E lo junta.
+  - **Salud (K: estado):**
+    - los zombis dejan heridas: un corte o un puntazo sangra y se puede infectar, un golpe te frena;
+    - cada herida baja la vida máxima, y sangrar la sigue bajando hasta vendarte;
+    - el kit casero (se fabrica) congela la vida máxima 1 día y el de farmacia 36 horas; la venda o el trapo solos
+      paran el sangrado, pero suben el riesgo de infección;
+    - el alcohol o el sanitizante antes de vendar bajan mucho la infección;
+    - la infección aparece a las 4 horas; sin tratar, a las 24 viene la fiebre. El antibiótico son 4 dosis cada 8
+      horas: la primera la tomás vos y las demás se toman solas, dormido también. Puede curarse antes o resistir;
+    - con defensas altas cuesta más infectarse y te podés curar solo;
+    - el paracetamol saca la lentitud de los golpes;
+    - para recuperar la vida máxima: sin infección, sin sangrar, con paracetamol, comido y tomado, dormís un día;
+    - el botiquín trae 4 kits, 16 antibióticos y 16 paracetamoles;
+    - farmacias: el 15% de los locales, siempre los mismos. Los consultorios y los baños también tienen algo;
+    - el borde de la pantalla late rojo si sangrás y se pone verdoso con la infección.
+  - **Morir:** te despertás donde dormiste por última vez (o en la plaza), entero. Tu cuerpo queda donde caíste con
+    todo menos la pistola, y E sobre el cuerpo te devuelve tus cosas. La partida sigue.
+  - **Estaciones:** de 7 días cada una, empezando por el otoño. Cambian la hora a la que sale y se pone el sol
+    (verano de 5:30 a 19:30, invierno de 7:30 a 17:30) y el clima más probable (en verano no hay frío, en invierno
+    no hay calor). Se ven al lado de la hora.
+  - Arreglado: el aviso viejo "perdiste una vida y la mitad del oro" salía al empezar.
+  - Pruebas: 59 (nuevas: dormir, manos, salud, morir, estaciones), una partida de 4 minutos con el bot y una
+    mirada en el navegador (inventario, menú, estado, cosas en el piso).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

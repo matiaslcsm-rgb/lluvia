@@ -16,6 +16,7 @@
     // my call). Asleep, the clock goes `rate` times faster. A zombie after you within `wake` m, or one within
     // `near` m, or getting hurt wakes you up.
     bed: 14, floor: 7, rate: 60, wake: 14, near: 5, reach: 1.2,
+    minSleep: 3,          // hours you must sleep for the well-fed doubling
     // Low on energy: under `airLow` your air comes back slower and lasts less (down to `airMin` of what it was at
     // 0); under `sightLow` you see less far (down to `sightMin` of how far at 0).
     airLow: 50, airMin: 0.4,

@@ -35,6 +35,8 @@
     var p = g.player;
     if (p.asleep || p.faint > 0) return false;
     if (danger(g)) { L.toast(g, 'No podés dormir con zombis cerca.', '#c26a4a'); return false; }
+    // Not sleepy and nothing to heal: you can't sleep yet.
+    if (p.energy >= D().max - 1 && !(p.capLost > 0)) { L.toast(g, 'No tenés sueño todavía.', '#8d8672'); return false; }
     var bed = L.bedNear(g);
     p.asleep = { bed: !!bed, slept: 0 };
     p.fedSleep = wellFed(p);
@@ -48,7 +50,7 @@
     if (!s) return;
     p.asleep = null;
     // Slept well fed until the bar filled: it doubles (the user's "se duplica y tarda mucho más en agotarse").
-    if (p.fedSleep && p.energy >= D().max - 0.5) { p.energyMax = D().fedMax; p.energy = D().fedMax; }
+    if (p.fedSleep && p.energy >= D().max - 0.5 && s.slept >= D().minSleep) { p.energyMax = D().fedMax; p.energy = D().fedMax; }
     L.toast(g, (why || 'Te despertaste.') + (p.energyMax > D().max ? ' Dormiste bien comido: tenés energía de sobra.' : ''), '#b9ad86');
     L.emit(g, 'wake', p.x, p.y);
   };
@@ -91,7 +93,7 @@
       p.asleep.slept += hours;
       if (p.hurt > 0) L.wake(g, 'Te despertó un golpe.');
       else if (danger(g)) L.wake(g, 'Te despertó un ruido: hay zombis cerca.');
-      else if (p.energy >= cap) L.wake(g, 'Te despertaste descansado.');
+      else if (p.energy >= cap && !p.recovering) L.wake(g, 'Te despertaste descansado.'); // healing, you sleep on (js/health.js)
     } else {
       var drain = R.perHour * (p.running ? R.runMul : 1) * (p.energy > R.max ? R.fedDrain : 1);
       var was = p.energy;

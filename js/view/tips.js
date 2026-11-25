@@ -44,7 +44,7 @@
       if (m.betting && m.betting.byPlayer[me.index]) L.tips.show('bets');
       if (me.inDuel) L.tips.show('myDuel');
       if (g.boss) L.tips.show('boss');
-      if (g.lives < L.data.horde.lives) L.tips.show('life');
+      if (!g.night && g.lives < L.data.horde.lives) L.tips.show('life'); // the night mode has no lives (js/death.js)
       if (g.lastWave) L.tips.show('wave');
       if (m.final) L.tips.show('final');
       if (g.shrines && g.shrines.length) L.tips.show('shrine');

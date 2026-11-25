@@ -170,7 +170,7 @@
     if (D().disinfect.indexOf(id) >= 0 && fresh(p).length) add('Desinfectar la herida', function () { return L.disinfect(g, id); });
     if (D().kits[id]) add('Aplicar', function () { return L.applyKit(g, id); });
     if (id === 'paracetamol') add('Tomar', function () { return L.takeParacetamol(g); });
-    if (id === 'antibiotico') add('Tomar (con agua)', function () { return L.takeAntibiotic(g, false); });
+    if (id === 'antibiotico' && p.infection) add('Tomar (con agua)', function () { return L.takeAntibiotic(g, false); });
     if (id === 'botiquin') add('Abrir', function () { return L.openBotiquin(g); });
   };
 

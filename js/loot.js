@@ -245,7 +245,7 @@
   // ---- Things on the floor ----
   // g.ground: [{ x, y, floor, slot }]. What you throw away stays where you are, a little scattered; E picks it up.
   L.dropToGround = function (g, sl, x, y, floor) {
-    var p = g.player, s = g.city ? g.city.scale : 50, a = g.rng() * Math.PI * 2, d = (0.2 + g.rng() * 0.3) * s;
+    var p = g.player, s = g.city ? g.city.scale : 50, a = g.rng() * Math.PI * 2, d = (0.5 + g.rng() * 0.3) * s; // just past your feet, where you see it
     if (!g.ground) g.ground = [];
     g.ground.push({ x: (x === undefined ? p.x : x) + Math.cos(a) * d, y: (y === undefined ? p.y : y) + Math.sin(a) * d, floor: floor === undefined ? p.floor || 0 : floor, slot: sl });
   };

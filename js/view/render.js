@@ -148,7 +148,7 @@
     // Your two hands (left, right): a long weapon spans both; with the gun out they wait aside (dimmed).
     var h = p.hands || {};
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText(p.hand === 'gun' ? 'Manos (pistola)' : 'Manos', x, y0 - 5);
+    ctx.fillText('Manos', x, y0 - 5);
     if (p.hand === 'gun') ctx.globalAlpha = 0.4;
     box(x, h.l === h.r ? null : h.l); box(x + sz + 3, h.l === h.r ? null : h.r);
     if (h.l && h.l === h.r) { ctx.save(); ctx.translate(x + sz + 1.5, y0 + sz / 2); ctx.rotate(-0.35); ctx.fillStyle = L.mainDef(p).color; ctx.fillRect(-sz * 0.85, -2, sz * 1.7, 4); ctx.restore(); }
@@ -166,7 +166,7 @@
       x += spec.slots * (sz + 3) + 12;
     });
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.font = '600 10px system-ui, sans-serif';
-    ctx.fillText('I inventario · E revisar · H venda · Tab fabricar · G molotov', 18, y0 - 19);
+    ctx.fillText('I inventario · K estado · E revisar/juntar · H venda · Z dormir · Tab fabricar', 18, y0 - 19);
     ctx.globalAlpha = 1;
     if (g.bodyTarget >= 0) {
       ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
@@ -596,10 +596,10 @@
     // Things on the floor (js/loot.js): what you threw away, where you can see it.
     (g.ground || []).forEach(function (it) {
       if ((it.floor || 0) !== (p.floor || 0) || sees && !sees(it.x, it.y, it.floor || 0)) return;
-      var sl = it.slot, wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null;
-      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(it.x + 1.5, it.y + 2, 7, 4, 0, 0, TAU); ctx.fill();
-      if (wd) { ctx.save(); ctx.translate(it.x, it.y); ctx.rotate((it.x * 7 + it.y) % 3); ctx.fillStyle = wd.color; var ln = Math.max(8, (wd.len || 0.15) * 40); ctx.fillRect(-ln / 2, -1.5, ln, 3); ctx.restore(); }
-      else { ctx.fillStyle = sl.id === 'gun' ? '#151515' : L.data.loot.items[sl.id].color; ctx.fillRect(it.x - 4, it.y - 4, 8, 8); ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.strokeRect(it.x - 4, it.y - 4, 8, 8); }
+      var sl = it.slot, wd = sl.id.indexOf('w:') === 0 ? L.meleeDef(sl.id.slice(2)) : null, gs = g.city ? g.city.scale : 50, q = 0.13 * gs;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(it.x + 2, it.y + 3, q * 1.5, q, 0, 0, TAU); ctx.fill();
+      if (wd) { ctx.save(); ctx.translate(it.x, it.y); ctx.rotate((it.x * 7 + it.y) % 3); ctx.fillStyle = wd.color; var ln = Math.max(0.25, wd.len || 0.2) * gs; ctx.fillRect(-ln / 2, -2, ln, 4); ctx.restore(); }
+      else { ctx.fillStyle = L.data.loot.items[sl.id].color; ctx.fillRect(it.x - q, it.y - q, 2 * q, 2 * q); ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(it.x - q, it.y - q, 2 * q, 2 * q); }
     });
     // Molotov fires (flickering) and bottles in the air (js/craft.js).
     (g.fires || []).forEach(function (f) {
