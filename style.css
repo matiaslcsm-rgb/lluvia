@@ -55,6 +55,7 @@ canvas { display: block; }
 #overlay .btn.ghost:hover { border-color: #a8975e; }
 #overlay .hint { color: #7d7563; }
 .btn.small { padding: 4px 10px; font-size: 13px; }
+#overlay .warn { color: #d07a5a; }
 .craft { display: flex; flex-direction: column; gap: 6px; width: min(640px, 92vw); text-align: left; }
 .craft .btn { text-align: left; font-weight: 600; }
 .inv { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: min(980px, 96vw); }

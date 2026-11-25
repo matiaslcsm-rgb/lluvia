@@ -246,8 +246,10 @@
         for (var k = pl.slots.length; k < spec.slots; k++) box.appendChild(el('div', 'invempty', '—'));
         wrap.appendChild(box);
       });
-      show([el('h2', null, 'Inventario'), wrap, button('Cerrar (I)', onClose, 'btn ghost'),
-        el('p', 'hint', 'Clic en algo para usarlo (una venda cura, un arma va a la mano) · ✕ para tirarlo · Las cosas grandes van en un bolso o una mochila')]);
+      var kg = L.packWeight(g), cap = Dl.carry.cap;
+      show([el('h2', null, 'Inventario'), el('p', kg > cap ? 'warn' : null, 'Peso: ' + kg.toFixed(1) + ' de ' + cap + ' kg' + (kg > cap ? ' · vas pesado: caminás más lento y te cansás más' : '')),
+        wrap, button('Cerrar (I)', onClose, 'btn ghost'),
+        el('p', 'hint', 'Clic en algo para usarlo (una venda cura, la comida y el agua se consumen, un arma va a la mano) · ✕ para tirarlo · Las cosas grandes van en un bolso o una mochila')]);
       L.ui.current = 'inventory';
     },
 

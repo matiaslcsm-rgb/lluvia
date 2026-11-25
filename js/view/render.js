@@ -186,6 +186,18 @@
         ctx.fillStyle = C.dim; ctx.fillText('Puntería ' + sk.level, x + 120, y + 38);
         if (need) bar(ctx, x + 182, y + 33, 40, 3, sk.xp / need, C.xp);
       }
+      // Hunger, thirst and how heavy you go (js/needs.js, js/loot.js).
+      if (g.night && p.fed !== undefined) {
+        var Nd = L.data.needs, bits = [];
+        if (p.watered >= Nd.drink.every) bits.push('Sed');
+        if (p.fed >= Nd.eat.every) bits.push('Hambre');
+        if (p.unease > 0) bits.push('Malestar ' + p.unease.toFixed(1));
+        var over = g.pack ? L.packOver(g) : 0;
+        bits.push('Peso ' + L.packWeight(g).toFixed(1) + '/' + L.data.loot.carry.cap + ' kg');
+        ctx.fillStyle = p.unease > 0 || over > 0 ? C.low : C.dim;
+        ctx.fillText(bits.join(' · '), x, y + 68);
+      }
+      if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
       var fl = p.flashlight;
       if (fl && (fl.on || fl.battery < 1 || k.light < 0.5)) {
         ctx.fillStyle = C.dim; ctx.fillText(fl.on ? 'Linterna' : 'Linterna (F)', x, y + 53);

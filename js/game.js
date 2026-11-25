@@ -108,6 +108,8 @@
     if (opts.gun) L.giveGun(g, opts.gun);
     if (opts.night && L.makePack) L.makePack(g); // a backpack, and bullets come from it (js/loot.js)
     if (opts.night && L.makeHands) L.makeHands(g); // fists and hand weapons (js/melee.js)
+    if (opts.night && L.makeNeeds) L.makeNeeds(g); // eating and drinking (js/needs.js)
+    if (opts.night) g.lives = 1;                   // one life, as in Project Zomboid (the user's answer 10)
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
     if (g.city && g.city.start) { var fr = L.cityFree(g.city, g.city.start.x, g.city.start.y); g.player.x = fr.x; g.player.y = fr.y; }
@@ -245,6 +247,7 @@
     if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
+    if (g.night && L.updateNeeds) L.updateNeeds(g, dt);         // eating, drinking, fainting (js/needs.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
@@ -285,13 +288,18 @@
 
   function movePlayer(g, dt, input) {
     var p = g.player, x = input.x || 0, y = input.y || 0;
+    // Fainted (js/needs.js): you can't move.
+    if (p.faint > 0) { x = 0; y = 0; }
+    // Readying a blow with a long weapon (right button): half speed.
+    if (p.readying) { x *= 0.5; y *= 0.5; }
     // Aiming (right button) you stand still; the sight closes (js/skills.js).
     if (g.night && p.gun && L.updateAim && p.hand !== 'melee') { if (input.aiming) { x = 0; y = 0; } L.updateAim(g, dt, input, !!(x || y)); }
     // Running (Shift): faster, but it costs air and makes more noise (js/melee.js, data/melee.js run).
     var run = 1;
     if (g.night && input.run && (x || y) && p.air > L.data.melee.air.low && !input.aiming) {
       run = L.data.melee.run.mul; p.running = true;
-      p.air = Math.max(0, p.air - L.data.melee.run.cost * dt); p.airRest = L.data.melee.air.rest;
+      // Heavy, running costs more air (js/loot.js, weight).
+      p.air = Math.max(0, p.air - L.data.melee.run.cost * (1 + 0.15 * L.packOver(g)) * dt); p.airRest = L.data.melee.air.rest;
     } else p.running = false;
     var len = Math.sqrt(x * x + y * y);
     if (len > 1) { x /= len; y /= len; }
@@ -709,6 +717,8 @@
       var e = g.enemies[i];
       if (!e.dead) { g.enemies[n++] = e; continue; }
       if (e.gone) continue; // walked off (by day, js/game.js spawnByClock): leaves nothing
+      // With the clock of the day experience isn't picked up: killing gives it (the user's answer 9).
+      if (g.night) { g.player.xp += e.xp; continue; }
       if (g.gems.length < h.maxGems) g.gems.push({ x: e.x, y: e.y, v: e.xp, magnet: false });
       else g.gems[g.rng.int(g.gems.length)].v += e.xp; // too many on the floor: merge into an existing one
     }

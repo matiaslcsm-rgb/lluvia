@@ -7,20 +7,20 @@ function lootGame() {
   return g;
 }
 
-test('inventario: bolsillos y riñonera al empezar; lo grande va en bolso o mochila; apila y se llena', function () {
+test('inventario: solo los bolsillos al empezar; lo grande va en bolso o mochila; apila y se llena', function () {
   var L = Lluvia, D = L.data.loot, g = lootGame();
-  assert.deepStrictEqual(g.pack.places.map(function (pl) { return pl.id; }), D.wearing, 'no arranca con bolsillos y riñonera');
+  assert.deepStrictEqual(g.pack.places.map(function (pl) { return pl.id; }), D.wearing, 'no arranca solo con los bolsillos');
   assert.strictEqual(L.packCount(g, 'balas'), D.startAmmo, 'no arranca con las balas de más');
   Object.keys(D.pieces).forEach(function (t) { D.pieces[t].forEach(function (row) {
     var id = row[0];
-    assert.ok(id.indexOf('w:') === 0 || id.indexOf('c:') === 0 && D.containers[id.slice(2)] || D.items[id], t + ' da algo que no existe: ' + id);
+    assert.ok(id === 'i:' || id.indexOf('w:') === 0 || id.indexOf('c:') === 0 && D.containers[id.slice(2)] || D.items[id], t + ' da algo que no existe: ' + id);
   }); });
   assert.strictEqual(L.packAdd(g, 'trapos', 12), 0);
   var trapos = 0;
   g.pack.places.forEach(function (pl) { pl.slots.forEach(function (sl) { if (sl.id === 'trapos') trapos++; }); });
   assert.strictEqual(trapos, 2, '12 trapos no ocupan 2 casilleros');
   assert.strictEqual(L.packAdd(g, 'tablas', 2), 2, 'una tabla entra en un bolsillo');
-  assert.ok(!L.wear(g, 'rinonera'), 'se pone dos riñoneras');
+  assert.ok(L.wear(g, 'rinonera') && !L.wear(g, 'rinonera'), 'se pone dos riñoneras');
   assert.ok(L.wear(g, 'mochila'));
   assert.strictEqual(L.packAdd(g, 'tablas', 2), 0, 'en la mochila no entran tablas');
   var rest = L.packAdd(g, 'clavos', 10000);

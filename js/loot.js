@@ -69,8 +69,27 @@
     g.pack.places.forEach(function (pl) { pl.slots.forEach(function (sl, i) { if (sl.id.indexOf('w:') === 0) out.push({ place: pl, i: i }); }); });
     return out;
   };
-  // How much what you wear slows you down (0 none).
-  L.packSlow = function (g) { return g.pack ? g.pack.places.reduce(function (a, pl) { return a + D().containers[pl.id].slow; }, 0) : 0; };
+  // What everything you carry weighs, in kg: what is in every slot, the bags, the weapon in your hand and the gun.
+  function weaponKg(id) { var w = L.meleeDef(id); return w.kg !== undefined ? w.kg : L.data.melee.kgBySkill[w.skill]; }
+  L.packWeight = function (g) {
+    if (!g.pack) return 0;
+    var p = g.player, kg = 0;
+    g.pack.places.forEach(function (pl) {
+      kg += D().containers[pl.id].kg;
+      pl.slots.forEach(function (sl) { kg += sl.id.indexOf('w:') === 0 ? weaponKg(sl.id.slice(2)) : D().items[sl.id].kg * sl.n; });
+    });
+    if (p.melee && p.melee.id !== 'pinas') kg += weaponKg(p.melee.id);
+    if (p.gun) kg += D().carry.gun;
+    return kg;
+  };
+  // How much past what you carry easily (0 if within it), in kg.
+  L.packOver = function (g) { return Math.max(0, L.packWeight(g) - D().carry.cap); };
+  // How much what you wear and what you carry slow you down (0 none): bags in the way, and above all the weight.
+  L.packSlow = function (g) {
+    if (!g.pack) return 0;
+    var C = D().carry, bags = g.pack.places.reduce(function (a, pl) { return a + D().containers[pl.id].slow; }, 0);
+    return Math.min(C.maxSlow, bags + L.packOver(g) * C.slowPerKg);
+  };
   // Throws away what is in a slot.
   L.packDrop = function (g, pl, i) { pl.slots.splice(i, 1); };
   // Uses what is in a slot (the inventory screen): a bandage heals; a hand weapon goes to your hand.
@@ -83,6 +102,7 @@
       L.toast(g, 'Te vendaste.', '#e8e2d6');
       return true;
     }
+    if (sl.id === 'comida' || sl.id === 'agua') return L.consume(g, sl.id === 'comida' ? 'eat' : 'drink');
     if (sl.id.indexOf('w:') === 0) {
       var was = p.melee;
       p.melee = { id: sl.id.slice(2), dur: sl.dur };
@@ -99,6 +119,7 @@
     return list.map(function (q) {
       if (q[0].indexOf('w:') === 0) return L.meleeDef(q[0].slice(2)).name.toLowerCase(); // a hand weapon
       if (q[0].indexOf('c:') === 0) return 'una ' + D().containers[q[0].slice(2)].name.toLowerCase(); // a bag
+      if (q[0] === 'i:') return 'algo raro'; // a special object (its name shows apart)
       var nm = D().items[q[0]].name; return q[1] + ' ' + (q[1] === 1 ? nm[0] : nm[1]);
     }).join(', ');
   };
@@ -148,7 +169,8 @@
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {
           var rest = q[0].indexOf('w:') === 0 ? (L.giveMelee(g, q[0].slice(2)) ? 0 : 1) :
-            q[0].indexOf('c:') === 0 ? (L.wear(g, q[0].slice(2)) ? 0 : 1) : L.packAdd(g, q[0], q[1]);
+            q[0].indexOf('c:') === 0 ? (L.wear(g, q[0].slice(2)) ? 0 : 1) :
+            q[0] === 'i:' ? (foundItem(g), 0) : L.packAdd(g, q[0], q[1]);
           if (q[1] - rest > 0) got.push([q[0], q[1] - rest]);
           if (rest > 0) left.push([q[0], rest]);
         });
@@ -168,6 +190,13 @@
     }
     g.healHeld = !!(input && input.heal);
   };
+
+  // One of the special objects (data/items.js): it is yours at once and stacks with the ones you have.
+  function foundItem(g) {
+    var it = L.rollItem(g, D().rarity);
+    L.addItem(g, it.id);
+    L.toast(g, 'Encontraste algo raro: ' + it.name + '. ' + it.desc, L.data.rarities[it.rarity].color);
+  }
 
   // ---- Bullets from the backpack ----
   // When a reload ends: fill the magazine from the backpack, as far as there are bullets.

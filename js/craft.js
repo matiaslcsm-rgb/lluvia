@@ -37,6 +37,7 @@
     if (rest) { Object.keys(r.need).forEach(function (k) { L.packAdd(g, k, r.need[k]); }); return false; } // no room: undo
     L.toast(g, 'Hiciste: ' + r.name + '.', '#d9cfa6');
     L.emit(g, 'craft', g.player.x, g.player.y);
+    g.player.xp += 3; // crafting teaches you (the user's answer 9)
     return true;
   };
 

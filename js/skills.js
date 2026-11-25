@@ -15,6 +15,7 @@
   // Adds experience; a level up shows on screen. Returns true if it went up.
   L.gainSkill = function (g, id, xp) {
     var p = g.player, sk = L.skillOf(p, id), K = D(), up = false;
+    if (g.night) p.xp += xp * 0.25; // doing things teaches you (the user's answer 9)
     if (sk.level >= K.levels) return false;
     sk.xp += xp;
     while (sk.level < K.levels && sk.xp >= K.need[sk.level]) {

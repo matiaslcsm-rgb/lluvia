@@ -75,6 +75,8 @@
     var p = g.player, A = D().air, def = L.meleeDef(p.melee.id), n = L.data.skills.levels;
     var t = L.skillLevel(p, def.skill) / n, tc = L.skillLevel(p, 'cuerpo') / n;
     var time = 1 / (def.speed * (1 + 0.4 * t)) * (p.air < A.low ? A.slow : 1);
+    // A readied blow (right button held with a long weapon) hurts more and drops more.
+    var ready = p.ready || 0; p.ready = 0;
     if (hand === 'right') p.swingCdR = time; else p.swingCd = time;
     p.swingT = time; p.swingMax = time; p.punchHand = hand || 'left';
     p.air = Math.max(0, p.air - def.air * (1 - 0.5 * tc)); p.airRest = A.rest;
@@ -82,13 +84,13 @@
     L.emit(g, 'swing', p.x, p.y, { weapon: def.id });
     var e = target(g, def);
     if (!e) return null;
-    var dmg = L.meleeDamage(g, def, e), K = L.data.skills.list;
+    var dmg = L.meleeDamage(g, def, e) * (1 + D().readyDmg * ready), K = L.data.skills.list;
     L.applyHit(g, e, dmg, 0, 0);
     L.emit(g, 'blow', e.x, e.y);
     if (e.dead) { L.gainSkill(g, def.skill, K[def.skill].kill); L.gainSkill(g, 'cuerpo', K.cuerpo.kill); }
     else {
       L.gainSkill(g, def.skill, K[def.skill].hit); L.gainSkill(g, 'cuerpo', K.cuerpo.hit);
-      if (g.rng() < def.knock * (1 + 0.5 * t)) { e.stun = Math.max(e.stun || 0, 2); e.downT = 2; }
+      if (g.rng() < def.knock * (1 + 0.5 * t) * (1 + D().readyKnock * ready)) { e.stun = Math.max(e.stun || 0, 2); e.downT = 2; }
       else e.stun = Math.max(e.stun || 0, 0.35); // it flinches
       if (e.face !== undefined) { e.mind = 'chase'; e.lostT = 0; e.lastX = p.x; e.lastY = p.y; }
     }
@@ -142,14 +144,18 @@
     if (p.pushCd > 0) p.pushCd -= dt;
     if (p.swingT > 0) p.swingT -= dt;
     if (p.airRest > 0) p.airRest -= dt; else p.air = Math.min(A.max, p.air + A.regen * dt);
-    if (p.hand !== 'melee' || g.respawn) return;
+    if (p.hand !== 'melee' || g.respawn || p.faint > 0) return;
     // When each button went down (to tell both-at-once from one after the other).
     if (input.fire && !p.heldL) p.downL = g.time;
     if (input.aiming && !p.heldR) p.downR = g.time;
     p.heldL = !!input.fire; p.heldR = !!input.aiming;
     var both = input.fire && input.aiming && Math.abs((p.downL || 0) - (p.downR || 0)) <= P.both;
     if (both) { if (!(p.pushCd > 0)) L.shove(g); return; }
-    var fists = L.meleeDef(p.melee.id).skill === 'mano';
+    var skill = L.meleeDef(p.melee.id).skill, fists = skill === 'mano';
+    // A long weapon: holding the right button readies the blow (the user's answer 5).
+    if (skill === 'media') { if (input.aiming && !input.fire) p.ready = Math.min(1, (p.ready || 0) + dt / D().ready); }
+    else p.ready = 0;
+    p.readying = skill === 'media' && !!input.aiming && !input.fire;
     if (input.fire && !(p.swingCd > 0) && g.time - (p.downL || 0) > P.both) L.swing(g, 'left');
     if (fists && input.aiming && !(p.swingCdR > 0) && g.time - (p.downR || 0) > P.both) L.swing(g, 'right');
   };

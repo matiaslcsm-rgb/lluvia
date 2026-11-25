@@ -48,7 +48,7 @@
       p.aim = Math.atan2(input.aimY - p.y, input.aimX - p.x);
       p.dirX = Math.cos(p.aim); p.dirY = Math.sin(p.aim);
     }
-    if (p.hand === 'melee') return; // the hand weapon is out (js/melee.js)
+    if (p.hand === 'melee' || p.faint > 0) return; // the hand weapon is out (js/melee.js), or you fainted (js/needs.js)
     if (gun.cd > 0) gun.cd -= dt;
     if (gun.reload > 0) {
       gun.reload -= dt;

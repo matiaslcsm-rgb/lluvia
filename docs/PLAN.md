@@ -48,8 +48,18 @@ comprobar.
   con el juego; el orden propuesto. **Pruebas:** nada de medir todo en cada paso; se prueba todo junto en momentos
   acordados de la producción (el primero, al terminar la etapa 48).
 
+- **2026-11-25 (decisión del usuario):** respuestas sobre inventario y supervivencia: se arranca solo con los
+  bolsillos; bolso y mochila como están; **lugares y peso** (lo que más restringe es ir pesado); correr como está;
+  el clic derecho con armas de fuego y de media distancia apunta o prepara el golpe (cubrirse, más adelante);
+  sonidos: lo que se pueda conseguir; el toque violeta, sí; **el nombre del juego se está pensando**; por ahora hay
+  niveles, pero la experiencia no se junta del piso: llega al matar y al repetir tareas (pelear, fabricar); **una
+  sola vida**; los objetos especiales se encuentran en los muebles; el refugio, todavía no; **hambre y sed**: agua
+  cada 6 horas y comida cada 12, que se consumen solas si las tenés; un día sin comer no hace nada, después crece el
+  malestar, y nervioso te puede bajar la presión y desmayarte, más cuanto más tiempo pase. Al terminar la tanda,
+  elegir las pruebas, hacerlas y subir todo.
+
 ## Decisiones abiertas
-- Ninguna por ahora.
+- El nombre del juego (el usuario lo está pensando).
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -1039,6 +1049,28 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - **El cielo** (`docs/LORE.md`): nubes blancas, el sol amarillo tétrico y violáceo detrás, la lluvia negra (para el
     clima, etapa 50). En la pantalla, un toque violeta en las sombras (`data/look.js`).
   - Pasan las 42 pruebas.
+- **2026-11-25: peso, hambre y sed, una vida, experiencia sin juntar, objetos en los muebles, golpe preparado**
+  (respuestas del usuario de ese día).
+  - **Solo bolsillos al empezar.** La riñonera, el bolso y la mochila se encuentran.
+  - **Peso** (`data/loot.js`, `carry`): cada cosa pesa (una bala 12 g, una tabla 1,5 kg, un bidón 3 kg, una barra de
+    metal 2,5 kg, la Glock 0,8 kg...). Hasta 8 kg vas normal; cada kilo de más te frena un 6% (hasta 60%) y correr
+    te cansa más. El peso se ve abajo de la hora y en el inventario.
+  - **Agua cada 6 horas y comida cada 12** (`data/needs.js`): si tenés botellas de agua (heladeras, mesadas,
+    góndolas) o latas, se consumen solas; también desde el inventario. Tomar deja la botella vacía (sirve para el
+    molotov). Un día sin comer (o 12 horas sin tomar) no hace nada; después el malestar crece. Con malestar y
+    nervioso (un zombi persiguiéndote a menos de 12 m, o recién lastimado) te puede bajar la presión: te desmayás
+    4 s sin poder moverte ni pegar. Más malestar, más chance.
+  - **Una sola vida.**
+  - **La experiencia llega sola:** al matar (los zombis ya no sueltan gemas) y al hacer cosas (cada golpe, cada
+    tiro que suma Puntería, cada cosa fabricada).
+  - **Objetos especiales en los muebles:** a veces un ropero, una mesita, una mesa, un escritorio o un archivero
+    tiene uno (casi siempre común, a veces raro, rara vez legendario). Es tuyo al instante y se apila.
+  - **Golpe preparado:** con un arma de media distancia, mantener el clic derecho carga el golpe en 0,8 s (caminás a
+    mitad de velocidad); el próximo golpe pega hasta 60% más y voltea el doble.
+  - **Sonidos:** siguen hechos por el programa. Bajar sonidos grabados de internet necesita que apruebes cada
+    archivo (nombre, de dónde y cuánto pesa); queda en la lista de puntos.
+  - **Pruebas de la tanda:** las 45 pruebas (nuevas: peso, una vida, experiencia directa, comer y tomar, desmayo,
+    objetos en muebles, golpe preparado) y una partida corta con el bot (4 minutos, sin errores).
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
