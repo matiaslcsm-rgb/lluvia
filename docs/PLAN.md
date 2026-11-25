@@ -30,8 +30,19 @@ comprobar.
   - partida larga que se guarda sola (al dormir y al salir); cada estación dura 3 días del juego y se gana
     sobreviviendo un año entero, con la opción de seguir.
 
+- **2026-11-25 (decisión del usuario):** el juego es una mezcla de Darkwood y *Project Zomboid*
+  (`docs/ZOMBOID.md`): armas de mano con lo que se encuentra en una ciudad argentina (piñas, puños vendados, puño
+  americano, puño con cinturón, palo de escoba, tenedor, cuchillo, palita de barrer, barra de metal...); zombis que
+  no van derecho hacia vos sino que deambulan y te encuentran por el ruido o porque te ven; por ahora zombis
+  normales, que a los tiros solo mueren con un tiro en la cabeza; y una puntería que mejora con cada tiro en la
+  cabeza.
+
 ## Decisiones abiertas
-- Ninguna por ahora.
+- **Dos decisiones de armas y puntería**, explicadas en `docs/ZOMBOID.md` (sección 4):
+  1. ¿las armas de mano matan? (recomendada: sí, los golpes van a la cabeza; las fuertes en uno o dos, las piñas en
+     muchos);
+  2. ¿cómo se apunta a la cabeza? (recomendada: la bala tiene que pasar por la cabeza dibujada; el clic derecho
+     cierra la mira y la Puntería la cierra más y agranda la cabeza para tus balas).
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -172,7 +183,12 @@ al terminarla. El paso 43 ("el agua en lo bajo") pasa a ser parte del clima, en 
 45. **Campo de visión:** el cono hacia donde apuntás, la penumbra, paredes y muebles que tapan la vista.
 46. **El reloj y el día y la noche:** la hora (12 horas en 40 minutos), la luz que cambia, linterna, faroles y luces.
 47. **Los zombis vuelven:** pocos de día, la oleada de noche, cada noche más dura.
-48. **Juntar, mochila y fabricar:** revisar muebles, materiales, banco de trabajo.
+48. **Juntar, mochila y fabricar:** revisar muebles, materiales, banco de trabajo. *(primera parte hecha: revisar
+    muebles y la mochila)* Lo que sigue va en este orden (`docs/ZOMBOID.md`):
+    - 48b. **Zombis que buscan:** deambulan, oyen y ven; investigan ruidos y persiguen.
+    - 48c. **Tiro a la cabeza y Puntería:** la cabeza del zombi, apuntar con clic derecho, la habilidad que sube.
+    - 48d. **Armas de mano:** piñas y lo que se encuentra en los muebles, con lo que aguantan y el aire.
+    - 48e. **Fabricar:** puños vendados, botellas rotas, molotov, vendas, balas, tablas.
 49. **Refugio y barricadas:** tablas, muebles contra las puertas, zombis que rompen; dormir.
 50. **El clima:** lluvia, tormenta, niebla, calor y frío, con su efecto en el juego; el agua inunda lo bajo.
 51. **Guardar y estaciones:** guardado automático; verano, otoño, invierno y primavera, con sus días, clima y árboles.
