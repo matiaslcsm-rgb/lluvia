@@ -21,7 +21,7 @@
       else if (id.indexOf('c:') === 0) left = L.wear(g, id.slice(2)) ? 0 : 1;
       else if (id.indexOf('r:') === 0) { var old = L.putOn(g, L.newCloth(id.slice(2))); if (old) L.dropToGround(g, old); }
       else left = L.packAdd(g, id, n);
-      if (left) L.dropToGround(g, { id: id, n: left });
+      if (left && id.indexOf('c:') !== 0) L.dropToGround(g, { id: id, n: left }); // a bag you already wear: nothing to drop
       got.push(id);
     });
     return got.length;

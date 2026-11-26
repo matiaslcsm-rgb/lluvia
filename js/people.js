@@ -72,7 +72,9 @@
   L.talkTarget = function (g) {
     var p = g.player, s = g.city.scale, best = null, bd = Infinity;
     (g.people || []).forEach(function (q) {
-      if (q.dead || (q.floor || 0) !== (p.floor || 0)) return;
+      if (q.dead || q.mode === 'travel' || (q.floor || 0) !== (p.floor || 0)) return;
+      // The one walking with you is always close: you talk to it only when you look at it (else E would never search).
+      if (q.mode === 'follow') { var da = Math.atan2(q.y - p.y, q.x - p.x) - (p.aim || 0); da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > 0.6) return; }
       var d = Math.hypot(q.x - p.x, q.y - p.y), reach = (q.door && g.barricades[q.door] ? D().door : D().talk) * s + p.r;
       if (d < reach && d < bd) { bd = d; best = q; }
     });
@@ -82,6 +84,10 @@
   // What they say now.
   L.personText = function (g, q) {
     var S = D(), T = S.lines;
+    if (q.say) return q.say; // what they answered to what you just asked
+    if (q.mode === 'refuge') return q.done ? T.refugeDone : T.refugeAsk.replace('{want}', L.lootText([q.want]));
+    if (q.mode === 'follow') return T.following;
+    if (q.mode === 'wait') return T.waiting;
     if (q.done) return q.thanks ? T.thanks.replace('{give}', L.lootText([q.give])) : T.done;
     var first = q.house !== null && q.door && g.barricades[q.door] ? T.house[q.line] : q.street ? T.street[q.line] : T.house[q.line];
     return first + ' ' + T.ask.replace('{want}', L.lootText([q.want])).replace('{give}', L.lootText([q.give]));
@@ -106,6 +112,13 @@
       else if (h.l && h.l.id === id) h.l = null;
       else { var w = L.packWeapons(g).filter(function (x) { return x.place.slots[x.i].id === id; })[0]; w.place.slots.splice(w.i, 1); }
     } else L.packTake(g, id, q.want[1]);
+    if (q.mode === 'refuge') {
+      // The people of the Catedral: nothing back but their trust.
+      q.done = true;
+      L.emit(g, 'loot', g.player.x, g.player.y, { piece: 'persona', got: [] });
+      if (L.repChange) L.repChange(g, 'catedral', D().refuge.rep, 'La gente de ' + g.refuge.name + ' te lo agradece.');
+      return true;
+    }
     var gid = q.give[0], n = q.give[1];
     if (gid.indexOf('w:') === 0) { if (!L.giveMelee(g, gid.slice(2))) L.dropToGround(g, { id: gid, n: 1, dur: L.meleeDef(gid.slice(2)).dur }); }
     else if (gid.indexOf('r:') === 0) { var c = L.newCloth(gid.slice(2)); if (!(L.giveCloth ? L.giveCloth(g, c) : L.packAddSlot(g, c))) L.dropToGround(g, c); }
@@ -115,6 +128,107 @@
     if (L.repChange && g.refuge) L.repChange(g, 'catedral', D().rep, 'Ayudaste a ' + q.name + '.');
     return true;
   };
+
+  // ---- Stage 70: sending them to the Catedral, walking with you, waiting ----
+  // Somebody inside a nailed house comes out next to you (by the back, as it were).
+  function comeOut(g, q) {
+    if (q.house !== null && q.mode !== 'refuge' && q.door) { var at = behind(g); q.x = at.x; q.y = at.y; q.floor = at.floor; q.fh = at.fh; }
+    q.house = null; q.door = null; q.street = false;
+  }
+  function behind(g) {
+    var p = g.player, s = g.city.scale, a = p.aim || 0;
+    var ent = { x: p.x - Math.cos(a) * 1.2 * s, y: p.y - Math.sin(a) * 1.2 * s, floor: p.floor || 0, house: p.floor ? p.house : null };
+    var fr = L.cityLevelFree(g.city, ent, p.r) || { x: p.x, y: p.y };
+    return { x: fr.x, y: fr.y, floor: p.floor || 0, fh: p.floor && p.house ? p.house.index : null };
+  }
+  // A free spot inside the refuge, a few meters around its middle spot.
+  function refugeSpot(g) {
+    var plan = L.refugePlan(g), s = g.city.scale;
+    for (var n = 0; n < 40; n++) {
+      var a = g.rng() * Math.PI * 2, d = g.rng() * 8 * s, fr = L.cityFree(g.city, g.refuge.x + Math.cos(a) * d, g.refuge.y + Math.sin(a) * d);
+      if (L.cityHouseAt(g.city, fr.x, fr.y) === plan) return fr;
+    }
+    return { x: g.refuge.x, y: g.refuge.y };
+  }
+  function refugeWant(g, q) { q.want = D().refuge.wants[Math.floor(g.rng() * D().refuge.wants.length)]; q.done = false; }
+  L.sendToRefuge = function (g, q) {
+    if (!g.refuge || q.mode === 'refuge' || q.mode === 'travel') return false;
+    var s = g.city.scale, d = Math.hypot(q.x - g.refuge.x, q.y - g.refuge.y) / s;
+    comeOut(g, q);
+    q.mode = 'travel'; q.travel = d / D().travel; q.say = D().lines.sent;
+    L.toast(g, q.name + ' va para ' + g.refuge.name + '.', '#9fc3a0');
+    return true;
+  };
+  function arrive(g, q) {
+    var at = refugeSpot(g);
+    q.mode = 'refuge'; q.x = at.x; q.y = at.y; q.floor = 0; q.fh = null; q.house = g.refuge.house; q.travel = 0;
+    q.walk = { t: 0, dx: 0, dy: 0 };
+    refugeWant(g, q);
+    L.toast(g, q.name + ' llegó a ' + g.refuge.name + '.', '#9fc3a0');
+  }
+  L.followMe = function (g, q) {
+    if (q.mode === 'travel' || q.mode === 'follow') return false;
+    comeOut(g, q);
+    q.mode = 'follow'; q.say = D().lines.follow; q.stuckT = 0; q.hitT = 0;
+    return true;
+  };
+  L.waitHere = function (g, q) {
+    if (q.mode !== 'follow') return false;
+    q.mode = 'wait'; q.say = D().lines.wait;
+    return true;
+  };
+  // What you can ask of somebody now (the talk window shows these as buttons).
+  L.personActions = function (g, q) {
+    var out = [], add = function (label, run) { out.push({ label: label, run: run }); };
+    var helped = q.done || q.mode === 'follow' || q.mode === 'wait' || q.mode === 'refuge';
+    if (!helped) return out; // first they want to see you help
+    if (q.mode !== 'follow') add('Que te acompañe', function () { return L.followMe(g, q); });
+    if (q.mode === 'follow') add('Que espere acá', function () { return L.waitHere(g, q); });
+    if (q.mode !== 'refuge' && g.refuge) add('Mandarlo a ' + g.refuge.name, function () { return L.sendToRefuge(g, q); });
+    return out;
+  };
+
+  // Walking with you: keeps close, catches up when far and out of sight, hits zombies next to it.
+  function follow(g, q, dt) {
+    var F = D().follow, p = g.player, city = g.city, s = city.scale;
+    var d = Math.hypot(p.x - q.x, p.y - q.y), sameFloor = (q.floor || 0) === (p.floor || 0);
+    var seen = sameFloor && L.canSee && L.canSee(city, p, p.aim || 0, q.x, q.y, q.floor || 0);
+    if ((!sameFloor || d > F.catch * s || q.stuckT > 4) && !seen) {
+      var at = behind(g); q.x = at.x; q.y = at.y; q.floor = at.floor; q.fh = at.fh; q.fs = null; q.stuckT = 0; q.still = 1;
+      return;
+    }
+    if (d > F.keep * s && sameFloor) {
+      var v = p.stats.speed * F.speed * dt, nx = q.x + (p.x - q.x) / d * v, ny = q.y + (p.y - q.y) / d * v;
+      var plan = q.fh !== null && q.fh !== undefined ? L.cityHouse(city, q.fh) : null;
+      var ent = { x: q.x, y: q.y, floor: q.floor || 0, z: q.z || 0, house: plan, stairOn: plan && q.fs !== null && q.fs !== undefined ? plan.stairs[q.fs] : null };
+      var out = L.cityLevelMove(city, ent, nx, ny, q.r);
+      var moved = Math.hypot(out.x - q.x, out.y - q.y);
+      q.dirX = (p.x - q.x) / d; q.dirY = (p.y - q.y) / d;
+      q.x = out.x; q.y = out.y; q.floor = ent.floor; q.z = ent.z;
+      q.fh = ent.house ? ent.house.index : null; q.fs = ent.stairOn && ent.house ? ent.house.stairs.indexOf(ent.stairOn) : null;
+      q.still = moved > 0.2 * v ? 0 : 1;
+      q.stuckT = moved < 0.2 * v ? (q.stuckT || 0) + dt : 0;
+    } else { q.still = 1; q.stuckT = 0; }
+    // A zombie next to it gets hit.
+    q.hitT = Math.max(0, (q.hitT || 0) - dt);
+    if (q.hitT > 0) return;
+    var best = null, bd = F.reach * s;
+    g.enemies.forEach(function (e) { if (e.dead || (e.floor || 0) !== (q.floor || 0)) return; var de = Math.hypot(e.x - q.x, e.y - q.y) - e.r; if (de < bd) { bd = de; best = e; } });
+    if (best) {
+      var dl = Math.hypot(best.x - q.x, best.y - q.y) || 1;
+      L.applyHit(g, best, F.hit, 0, 0); q.hitT = F.every; q.dirX = (best.x - q.x) / dl; q.dirY = (best.y - q.y) / dl;
+      L.emit(g, 'blow', best.x, best.y);
+    }
+  }
+  // Living in the Catedral: walking around inside.
+  function wanderInside(g, q, dt) {
+    var s = g.city.scale, plan = L.refugePlan(g), w = q.walk || (q.walk = { t: 0, dx: 0, dy: 0 });
+    w.t -= dt;
+    if (w.t <= 0) { w.t = 2 + g.rng() * 4; var a = g.rng() * Math.PI * 2, go = g.rng() < 0.4; w.dx = go ? Math.cos(a) : 0; w.dy = go ? Math.sin(a) : 0; }
+    var nx = q.x + w.dx * 0.6 * s * dt, ny = q.y + w.dy * 0.6 * s * dt;
+    if ((w.dx || w.dy) && L.cityFits(g.city, nx, ny, L.data.city.body) && L.cityHouseAt(g.city, nx, ny) === plan) { q.x = nx; q.y = ny; q.dirX = w.dx; q.dirY = w.dy; q.still = 0; }
+    else { w.t = 0; q.still = 1; }
+  }
 
   // Each frame: houses near you, people on the streets, and E to talk.
   L.updatePeople = function (g, dt, input) {
@@ -129,9 +243,16 @@
     var onStreet = g.people.filter(function (q) { return q.street; }).length;
     g.peopleT = (g.peopleT || 0) + dt;
     if (light && onStreet < St.max && g.peopleT >= St.every) { g.peopleT = 0; spawnStreet(g); }
-    // People on the street wander a little.
+    // Every morning the people of the Catedral need something new.
+    var day = L.clockOf(g).day;
+    if (g.peopleDay !== day) { g.peopleDay = day; g.people.forEach(function (q) { if (q.mode === 'refuge') refugeWant(g, q); }); }
+    // On the way to the Catedral, walking with you, living there; people on the street wander a little.
     g.people.forEach(function (q) {
-      if (!q.street || q === g.talking) { q.still = 1; return; }
+      if (q.mode === 'travel') { q.travel -= dt; if (q.travel <= 0) arrive(g, q); return; }
+      if (q === g.talking) { q.still = 1; return; }
+      if (q.mode === 'follow') { follow(g, q, dt); return; }
+      if (q.mode === 'refuge') { wanderInside(g, q, dt); return; }
+      if (!q.street) { q.still = 1; return; }
       var w = q.walk;
       w.t -= dt;
       if (w.t <= 0) { w.t = 1 + g.rng() * 3; var a = g.rng() * Math.PI * 2, go = g.rng() < 0.5; w.dx = go ? Math.cos(a) : 0; w.dy = go ? Math.sin(a) : 0; }
@@ -145,5 +266,5 @@
     if (tg && input && input.use && !g.talkWas && !g.talking) { g.talking = tg; var dx = p.x - tg.x, dy = p.y - tg.y, l = Math.hypot(dx, dy) || 1; tg.dirX = dx / l; tg.dirY = dy / l; }
     g.talkWas = !!(input && input.use);
   };
-  L.stopTalking = function (g) { if (g.talking) g.talking.thanks = false; g.talking = null; g.talkWas = true; g.useWas = true; };
+  L.stopTalking = function (g) { if (g.talking) { g.talking.thanks = false; g.talking.say = null; } g.talking = null; g.talkWas = true; g.useWas = true; };
 })(this.Lluvia = this.Lluvia || {});

@@ -256,7 +256,8 @@
         ctx.fillText(bits.join(' · '), x, y + 68);
       }
       // How the refuge sees you (js/refuge.js).
-      if (g.refuge && g.rep) { ctx.fillStyle = g.rep.catedral < 45 ? C.low : C.dim; ctx.fillText('En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral), x, y + 113); }
+      if (g.refuge && g.rep) { ctx.fillStyle = g.rep.catedral < 45 ? C.low : C.dim; var live = (g.people || []).filter(function (q) { return q.mode === 'refuge'; }).length, withYou = (g.people || []).filter(function (q) { return q.mode === 'follow'; }).length;
+        ctx.fillText('En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + (live ? ' · viven ' + live : '') + (withYou ? ' · te acompaña' + (withYou > 1 ? 'n ' + withYou : ' 1') : ''), x, y + 113); }
       if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
       else if (p.energy !== undefined && p.energy < L.data.rest.sightLow && !p.asleep) { ctx.fillStyle = C.low; ctx.fillText('Sueño (Z: dormir)', x, y + 83); }
       // What your body has (js/health.js): K opens the status window.

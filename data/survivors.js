@@ -8,6 +8,10 @@
 //   talk: how close (m) to be to talk; through a door from a little farther (`door`)
 //   wants / gives: what they may ask for and give back ([id, how many]); w: weapons, r: clothes
 //   rep: how much helping somebody raises the Catedral's trust (word gets around)
+//   follow (stage 70): one walking with you keeps `keep` meters behind, at `speed` times your walking speed; farther
+//   than `catch` meters and out of sight, it catches up; it hits a zombie within `reach` m for `hit` every `every` s
+//   travel: somebody you send to the Catedral walks there at this many m/s (you don't see the trip)
+//   refuge: the people living in the Catedral ask every morning for one of `wants`; giving it raises trust by `rep`
 //   names, coats: who they are and the color of what they wear
 (function (L) {
   'use strict';
@@ -21,6 +25,9 @@
     gives: [['balas', 12], ['comida', 2], ['agua', 2], ['vendas', 2], ['alcohol', 1], ['antibiotico', 1], ['clavos', 10],
       ['tablas', 2], ['molotov', 1], ['r:camperon', 1], ['r:guantesCuero', 1], ['r:botas', 1], ['w:machete', 1], ['w:barra', 1]],
     rep: 4,
+    follow: { keep: 1.8, speed: 0.95, catch: 30, reach: 1.4, hit: 3, every: 1.2 },
+    travel: 1.2,
+    refuge: { wants: [['comida', 2], ['agua', 2], ['vendas', 1], ['paracetamol', 2], ['tablas', 2], ['clavos', 6], ['trapos', 2]], rep: 5 },
     names: ['Marta', 'Raúl', 'Graciela', 'Héctor', 'Silvia', 'Ezequiel', 'Norma', 'Walter', 'Lorena', 'Claudio', 'Mirta',
       'Darío', 'Susana', 'Gustavo', 'Analía', 'Rubén', 'Viviana', 'Sergio', 'Patricia', 'Matías', 'Celeste', 'Omar',
       'Romina', 'Jorge', 'Estela', 'Facundo', 'Liliana', 'Hugo', 'Daiana', 'Nicolás'],
@@ -32,7 +39,14 @@
         'No te acerques mucho... bueno, ¿qué querés?'],
       ask: 'Necesito {want}. Si me lo traés, te doy {give}.',
       thanks: 'Gracias, en serio. Tomá: {give}.',
-      done: 'Ya me ayudaste. Cuidate allá afuera.'
+      done: 'Ya me ayudaste. Cuidate allá afuera.',
+      sent: 'Dale, voy para la Catedral. Nos vemos allá.',
+      follow: 'Vamos. Yo te cubro la espalda.',
+      wait: 'Te espero acá. No tardes.',
+      following: 'Acá estoy, detrás tuyo.',
+      waiting: 'Sigo esperándote acá.',
+      refugeAsk: 'Acá en la Catedral estamos mejor que afuera. Pero hoy nos falta {want}.',
+      refugeDone: 'Gracias por lo de hoy. Acá aguantamos.'
     }
   };
 })(this.Lluvia = this.Lluvia || {});

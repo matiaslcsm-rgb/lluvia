@@ -1315,8 +1315,16 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     (hasta 2, fuera de tu vista), que camina un poco y se va si te alejás. Cada uno te pide algo (comida, agua,
     vendas, tablas, clavos, remedios, un arma...) y te da otra cosa (balas, comida, ropa, un arma...). Se lo das
     desde la ventana de la charla; ayudar a alguien sube la confianza de la Catedral. En F2: "A un sobreviviente".
-    Todavía no: mandarlos a la Catedral o que te acompañen (etapa 70), pegarles (71), que enloquezcan (72).
+    Todavía no: pegarles (71), que enloquezcan (72).
   - Pruebas: 88.
+  - **Etapa 70, mandarlos a la Catedral o que te acompañen:** después de ayudar a alguien, en la charla aparecen
+    "Que te acompañe" y "Mandarlo a la Catedral". El que mandás camina hasta allá (no lo ves; tarda según la
+    distancia), llega y vive adentro; cada mañana la gente de la Catedral pide algo (comida, agua, vendas, tablas...)
+    y dárselo sube la confianza. El que te acompaña sale de su casa, te sigue de cerca, te alcanza si te alejás o te
+    perdés de vista, y le pega a los zombis que tiene al lado; le podés decir "Que espere acá". Para hablarle tenés
+    que mirarlo (si no, la E sería siempre para él). Abajo a la izquierda: cuántos viven en la Catedral y cuántos te
+    acompañan. Arreglado: el menú F2 tiraba al piso una mochila repetida y eso rompía el dibujo.
+  - Pruebas: 91.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
