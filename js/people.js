@@ -129,6 +129,7 @@
     if (q.mode === 'refuge') {
       // The people of the Catedral: nothing back but their trust.
       q.done = true; trust(q, D().trust.helped);
+      if (L.moraleEvent) L.moraleEvent(g, q.x, q.y, 'help');
       L.emit(g, 'loot', g.player.x, g.player.y, { piece: 'persona', got: [] });
       if (L.repChange) L.repChange(g, 'catedral', D().refuge.rep, 'La gente de ' + g.refuge.name + ' te lo agradece.');
       return true;
@@ -138,6 +139,7 @@
     else if (gid.indexOf('r:') === 0) { var c = L.newCloth(gid.slice(2)); if (!(L.giveCloth ? L.giveCloth(g, c) : L.packAddSlot(g, c))) L.dropToGround(g, c); }
     else { var left = L.packAdd(g, gid, n); if (left) L.dropToGround(g, { id: gid, n: left }); }
     q.done = true; q.thanks = true; // says thanks until the talk ends
+    if (L.moraleEvent) L.moraleEvent(g, q.x, q.y, 'help');
     trust(q, D().trust.helped);
     L.emit(g, 'loot', g.player.x, g.player.y, { piece: 'persona', got: [q.give] });
     if (L.repChange && g.refuge) L.repChange(g, 'catedral', D().rep, 'Ayudaste a ' + q.name + '.');
@@ -240,20 +242,22 @@
     q.flash = 0.15;
     var dying = q.hp <= 0, self = !!q.hostile; // one who turned on you: defending yourself costs nothing
     if (!self) trust(q, S.trust.hit);
-    if (L.changeSanity) L.changeSanity(q, L.data.madness.sawHit);
+    if (L.changeSanity) L.changeSanity(q, L.data.madness.sawHit, g);
     var seen = [];
     g.people.forEach(function (w) {
       if (w === q || w.dead || w.mode === 'travel') return;
       var plan = w.fh !== null && w.fh !== undefined ? L.cityHouse(g.city, w.fh) : null, ent = { x: w.x, y: w.y, floor: w.floor || 0, house: plan };
       if (Math.hypot(w.x - q.x, w.y - q.y) > S.witness * s || !L.canSee(g.city, ent, Math.atan2(q.y - w.y, q.x - w.x), q.x, q.y, q.floor || 0)) return;
       if (!self) trust(w, S.trust.saw - S.trust.tie * ((w.ties || {})[q.id] || 0));
-      if (L.changeSanity) L.changeSanity(w, dying ? L.data.madness.sawDeath : L.data.madness.sawHit);
+      if (L.changeSanity) L.changeSanity(w, dying ? L.data.madness.sawDeath : L.data.madness.sawHit, g);
       seen.push(w);
     });
     // Walking with you: not any more. It goes off on its own.
     if (q.mode === 'follow' || q.mode === 'wait') { q.mode = null; q.street = true; q.walk = { t: 0, dx: 0, dy: 0 }; }
     seen.forEach(function (w) { if (w.mode === 'follow' && L.refuses(w)) { w.mode = null; w.street = true; w.walk = { t: 0, dx: 0, dy: 0 }; } });
     var dead = q.hp <= 0;
+    // The zone feels it (js/morale.js): a death always; you hitting or killing somebody who did nothing to you, more.
+    if (L.moraleEvent) { if (!self) L.moraleEvent(g, q.x, q.y, dead ? 'kill' : 'hit'); else if (dead) L.moraleEvent(g, q.x, q.y, 'death'); }
     if (dead) { q.dead = true; q.deadT = S.turn; q.still = 1; L.emit(g, 'headshot', q.x, q.y); } // blood (the 'kill' effect is for zombies)
     else L.emit(g, 'bodyhit', q.x, q.y);
     // One fight is one story: blows to the same person within `again` seconds count once (killing still counts).
@@ -333,6 +337,7 @@
     var day = L.clockOf(g).day;
     if (g.peopleDay !== day) {
       if (g.peopleDay !== undefined && L.madnessDay) L.madnessDay(g); // how they lived yesterday (js/madness.js)
+      if (g.peopleDay !== undefined && L.moraleDay) L.moraleDay(g);   // zones heal a little; low ones wear people (js/morale.js)
       g.peopleDay = day;
       var home = g.people.filter(function (q) { return q.mode === 'refuge' && !q.dead; });
       home.forEach(function (q) {

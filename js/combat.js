@@ -37,7 +37,7 @@
     e.hp -= dmg;
     e.flash = 0.1;
     var killed = e.hp <= 0;
-    if (killed) { e.dead = true; g.kills++; enemyKilled(g, e); L.emit(g, 'kill', e.x, e.y, e); }
+    if (killed) { e.dead = true; g.kills++; enemyKilled(g, e); L.emit(g, 'kill', e.x, e.y, e); if (g.night && L.moraleEvent) L.moraleEvent(g, e.x, e.y, 'zombie'); }
     if (depth >= L.MAX_PROC_DEPTH) return;
     var p = g.player, i, it;
     if (g.procs === undefined) g.procs = L.PROC_BUDGET;

@@ -1349,6 +1349,17 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     solas con vos y te ataca (nombre en rojo; defenderte no te cuesta confianza); en trance, los zombis cerca de él
     van hacia vos. En F2: "Volver loco al más cercano".
   - Pruebas: 101.
+  - **Etapa 73, conciencia colectiva (la moral de cada zona):** el mapa está partido en zonas de 200 m. Cada una tiene
+    su moral: baja con las muertes, la gente que enloquece o se da vuelta, y si pegás o matás a alguien; sube cuando
+    ayudás o calmás a alguien y un poquito con cada zombi que matás; y con los días vuelve sola. Una zona "inestable"
+    o "maldita" tiene más zombis (hasta 1,5 veces), la gente que vive ahí enloquece más rápido, y de noche se oyen
+    voces y se ven sombras. Abajo a la izquierda dice si la zona donde estás está inestable o maldita, y el mapa
+    grande pinta las zonas (violeta las malas, verde las buenas). En F2: "Bajar la moral de esta zona".
+  - En F2, pedido del usuario: "Correr rápido" (3 veces más rápido) y "Balas infinitas".
+  - Pruebas: 105.
+- **2026-11-26: pedidos del usuario** (anotados): la sombra adentro de los edificios se ve rara y tapa paredes y
+  muebles; el mapa grande se traba al hacer zoom; puertas en todos lados (con llave, que se puedan forzar y romper);
+  electricidad: salas iluminadas si el edificio tiene luz, e interruptores para probar.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

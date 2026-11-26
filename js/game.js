@@ -261,7 +261,8 @@
     }
     movePlayer(g, dt, input);
     if (g.city && L.updateClock) L.updateClock(g, gdt, input); // the flashlight (js/clock.js)
-    if (g.refuge && L.updatePeople) L.updatePeople(g, dt, input, gdt);  // survivors: houses near you, the street, E to talk (js/people.js)
+    if (g.refuge && L.updatePeople) L.updatePeople(g, dt, input, gdt);
+    if (g.refuge && L.updateMorale) L.updateMorale(g, dt);             // voices and shadows in low zones at night (js/morale.js)  // survivors: houses near you, the street, E to talk (js/people.js)
     if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
@@ -273,7 +274,7 @@
     if (g.night && L.updateExplored) L.updateExplored(g, dt);     // what you see is remembered on the map (js/explored.js)
     if (g.night && L.updateBarricades) L.updateBarricades(g, dt); // zombies banging on doors and windows (js/barricade.js)
     if (g.refuge && L.updateRefuge) L.updateRefuge(g);            // a day without being knocked out (js/refuge.js)
-    if (g.god && L.updateDebug) L.updateDebug(g);                  // invincible, from the test menu (js/debug.js)
+    if ((g.god || g.infAmmo) && L.updateDebug) L.updateDebug(g);                  // invincible, from the test menu (js/debug.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
     buildGrid(g);
@@ -364,6 +365,7 @@
     if (g.weather) slow *= 1 - L.floodSlow(g, p.x, p.y);  // wading in flood water (js/weather.js)
     if (p.bluntSlow) slow *= 1 - p.bluntSlow;              // hard blows slow you down until paracetamol (js/health.js)
     var x0 = p.x, y0 = p.y;
+    if (g.fast) slow *= L.data.debugFast || 3; // the test menu's 'Correr rápido' (js/debug.js)
     stepPlayer(g, x * p.stats.speed * slow * dt, y * p.stats.speed * slow * dt);
     // Trying to walk and not moving for a while: if no way at all is open, you are stuck in a wall; out you go.
     if (g.city && len > 0.2 && slow > 0.05 && p.x === x0 && p.y === y0) {
@@ -412,7 +414,7 @@
     var N = L.data.mode.nights, h = L.data.horde, k = L.clockOf(g), dark = 1 - k.light, n = Math.max(1, L.nightOf(k));
     var grow = 1 + N.perNight * (n - 1), rate = (N.day.rate + (N.dark.rate - N.day.rate) * dark) * grow;
     // Near the black barrier there are more, and some come out of it (js/barrier.js).
-    var bm = L.barrierMul ? L.barrierMul(g) : 1, Bd = L.data.barrier;
+    var bm = (L.barrierMul ? L.barrierMul(g) : 1) * (L.moraleMul ? L.moraleMul(g) : 1), Bd = L.data.barrier; // the barrier and the zone's morale (js/morale.js)
     rate *= bm;
     var alive = Math.round((N.day.alive + (N.dark.alive - N.day.alive) * dark) * grow * bm);
     g.spawnAcc += rate * dt;

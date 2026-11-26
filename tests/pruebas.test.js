@@ -30,3 +30,21 @@ test('menú de pruebas: cada atajo anda; la hora, el clima, las cosas, ir a una 
   L.takeWound(g, L.data.health.every * 3, null); L.update(g, 0.1, {});
   assert.strictEqual(g.player.hp, hp, 'invencible perdés vida');
 });
+
+test('pruebas: correr rápido y balas infinitas', function () {
+  var L = Lluvia, city = L.cityHome(1);
+  var g = L.createGame({ seed: 141, city: city, explore: true, noSpawn: true, night: true, gunsOnly: true, gun: 'glock', viewW: 1280, viewH: 720 });
+  g.spawning = false;
+  var act = function (label) { for (var i = 0; i < L.debug.groups.length; i++) for (var j = 0; j < L.debug.groups[i].actions.length; j++) if (L.debug.groups[i].actions[j].label === label) return L.debug.groups[i].actions[j]; };
+  var p = g.player, fr = L.cityFree(city, city.start.x, city.start.y);
+  var walk = function () { p.x = fr.x; p.y = fr.y; var x0 = p.x, y0 = p.y; for (var t = 0; t < 0.5; t += 1 / 30) L.update(g, 1 / 30, { x: 1, y: 0 }); return Math.hypot(p.x - x0, p.y - y0); };
+  var slow = walk();
+  act('Correr rápido sí/no').run(g);
+  assert.ok(walk() > slow * 1.8, 'no corre más rápido');
+  act('Balas infinitas sí/no').run(g);
+  var mag = L.gunMag(p.gun);
+  p.hand = 'gun'; var shots = 0; g.events = [];
+  for (var t = 0; t < 8; t += 1 / 30) { g.events.length = 0; L.update(g, 1 / 30, { fire: true, aimX: p.x + 500, aimY: p.y }); shots += g.events.filter(function (e) { return e.type === 'shot'; }).length; }
+  assert.ok(shots > L.gunMag(p.gun), 'no disparó más que un cargador (' + shots + ')');
+  assert.strictEqual(p.gun.ammo, mag, 'el cargador se vacía');
+});

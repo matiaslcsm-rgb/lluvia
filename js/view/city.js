@@ -786,6 +786,17 @@
       ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
       ctx.font = '600 13px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = color; ctx.fillText(label, X + 10, Y + 4);
     };
+    // The zones whose morale moved (js/morale.js): violet the low ones, green the good ones.
+    if (g.morale) {
+      var Mo = L.data.morale, cz = Mo.cell * city.scale;
+      Object.keys(g.morale).forEach(function (k) {
+        var v = g.morale[k], c = k.split(','), X0 = at.mx(+c[0] * cz), Y0 = at.my(+c[1] * cz), w = at.mx((+c[0] + 1) * cz) - X0, h = at.my((+c[1] + 1) * cz) - Y0;
+        var lowK = Math.max(0, (Mo.base - v) / Mo.base), hiK = Math.max(0, (v - Mo.base) / (100 - Mo.base));
+        if (lowK > 0) { ctx.fillStyle = 'rgba(120,60,170,' + (0.15 + 0.4 * lowK).toFixed(2) + ')'; ctx.fillRect(X0, Y0, w, h); }
+        else if (hiK > 0) { ctx.fillStyle = 'rgba(90,170,100,' + (0.1 + 0.25 * hiK).toFixed(2) + ')'; ctx.fillRect(X0, Y0, w, h); }
+        if (v < Mo.low) { ctx.font = '600 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#d8c8f0'; ctx.fillText(L.moraleWord(v), X0 + w / 2, Y0 + h / 2); }
+      });
+    }
     if (g.refuge) mark(g.refuge.x, g.refuge.y, '#e8c66a', 'Refugio: ' + g.refuge.name);
     if (p.bed) mark(p.bed.x, p.bed.y, '#9fc3e8', 'Dormiste acá');
     (g.bodies || []).forEach(function (b) { mark(b.x, b.y, '#c26a4a', 'Tu cuerpo'); });

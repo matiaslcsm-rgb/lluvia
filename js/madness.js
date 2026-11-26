@@ -7,7 +7,12 @@
 
   function D() { return L.data.madness; }
   L.sanityOf = function (q) { return q.sanity === undefined ? 70 : q.sanity; };
-  L.changeSanity = function (q, dv) { q.sanity = Math.max(0, Math.min(100, L.sanityOf(q) + dv)); };
+  // `g` (optional): somebody going odd weighs on the zone they are in (js/morale.js).
+  L.changeSanity = function (q, dv, g) {
+    var was = L.isOdd(q);
+    q.sanity = Math.max(0, Math.min(100, L.sanityOf(q) + dv));
+    if (g && !was && L.isOdd(q) && L.moraleEvent) L.moraleEvent(g, q.x, q.y, 'odd');
+  };
   L.isOdd = function (q) { return L.sanityOf(q) < D().odd; };
   L.newSanity = function (rng) { var S = D().start; return S[0] + Math.floor(rng() * (S[1] - S[0] + 1)); };
 
@@ -16,9 +21,9 @@
     var M = D().daily;
     (g.people || []).forEach(function (q) {
       if (q.dead || q.hostile) return;
-      if (q.mode === 'refuge') L.changeSanity(q, q.done ? M.refugeFed : M.refugeHungry);
-      else if (q.mode === 'follow') L.changeSanity(q, M.follow);
-      else if (q.mode !== 'travel') L.changeSanity(q, M.alone);
+      if (q.mode === 'refuge') L.changeSanity(q, q.done ? M.refugeFed : M.refugeHungry, g);
+      else if (q.mode === 'follow') L.changeSanity(q, M.follow, g);
+      else if (q.mode !== 'travel') L.changeSanity(q, M.alone, g);
     });
   };
 
@@ -28,7 +33,8 @@
     if (!L.canCalm(g, q)) return false;
     var c = D().calm;
     L.packTake(g, c.item[0], c.item[1]);
-    L.changeSanity(q, c.gain);
+    L.changeSanity(q, c.gain, g);
+    if (L.moraleEvent) L.moraleEvent(g, q.x, q.y, 'calm');
     q.plot = false;
     q.say = D().lines.calm;
     return true;
@@ -50,6 +56,7 @@
   // Turning on you.
   function turn(g, q) {
     q.hostile = true; q.mode = null; q.street = false; q.hitT = 0.5;
+    if (L.moraleEvent) L.moraleEvent(g, q.x, q.y, 'turned');
     L.toast(g, q.name + ': «' + D().lines.betray + '»', '#d05a5a');
   }
   function othersNear(g, q, m) {

@@ -257,7 +257,8 @@
       }
       // How the refuge sees you (js/refuge.js).
       if (g.refuge && g.rep) { ctx.fillStyle = g.rep.catedral < 45 ? C.low : C.dim; var live = (g.people || []).filter(function (q) { return q.mode === 'refuge'; }).length, withYou = (g.people || []).filter(function (q) { return q.mode === 'follow'; }).length;
-        ctx.fillText('En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + (live ? ' · viven ' + live : '') + (withYou ? ' · te acompaña' + (withYou > 1 ? 'n ' + withYou : ' 1') : ''), x, y + 113); }
+        ctx.fillText('En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + (live ? ' · viven ' + live : '') + (withYou ? ' · te acompaña' + (withYou > 1 ? 'n ' + withYou : ' 1') : ''), x, y + 113);
+        if (L.moraleAt) { var mv = L.moraleAt(g, p.x, p.y); if (mv < L.data.morale.low) { ctx.fillStyle = '#b08ad0'; ctx.fillText('Zona ' + L.moraleWord(mv), x, y + 128); } } }
       if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
       else if (p.energy !== undefined && p.energy < L.data.rest.sightLow && !p.asleep) { ctx.fillStyle = C.low; ctx.fillText('Sueño (Z: dormir)', x, y + 83); }
       // What your body has (js/health.js): K opens the status window.
@@ -632,6 +633,14 @@
       if (e.hp < e.maxHp && (e.r >= 20 || e.elite) && !e.type.boss) bar(ctx, e.x - e.r, e.y - e.r - 8, e.r * 2, 4, e.hp / e.maxHp, '#e05060');
     });
 
+    // Omens in a zone with low morale (js/morale.js): a tall shadow that fades.
+    (g.omens || []).forEach(function (o) {
+      var k = o.t / o.max, gs = g.city ? g.city.scale : 50;
+      ctx.save(); ctx.globalAlpha = 0.55 * Math.sin(k * Math.PI);
+      ctx.fillStyle = '#0a0610'; ctx.beginPath(); ctx.ellipse(o.x, o.y, 0.35 * gs, 0.9 * gs, o.a, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#d8c8f0'; ctx.beginPath(); ctx.arc(o.x + Math.cos(o.a) * 0.5 * gs, o.y + Math.sin(o.a) * 0.5 * gs, 0.05 * gs, 0, TAU); ctx.fill();
+      ctx.restore();
+    });
     // Survivors (js/people.js), where you see them; the name over the ones close by.
     (g.people || []).forEach(function (q) {
       if (q.dead || (q.floor || 0) !== (p.floor || 0) || !visible(q.x, q.y, 30)) return;

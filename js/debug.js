@@ -90,12 +90,19 @@
       }) },
       { name: 'Vos', actions: [
         { label: 'Invencible sí/no', run: function (g) { g.god = !g.god; return g.god ? 'Invencible: no te pasa nada.' : 'Ya no sos invencible.'; } },
+        { label: 'Correr rápido sí/no', run: function (g) { g.fast = !g.fast; return g.fast ? 'Ahora te movés 3 veces más rápido.' : 'Volviste a tu velocidad.'; } },
+        { label: 'Balas infinitas sí/no', run: function (g) { g.infAmmo = !g.infAmmo; return g.infAmmo ? 'Balas infinitas: el cargador nunca se vacía.' : 'Las balas vuelven a gastarse.'; } },
         { label: 'Curarme todo', run: function (g) {
           var p = g.player;
           if (L.makeHealth) L.makeHealth(g);
           p.hp = p.stats.maxHp; p.fed = 0; p.watered = 0; p.unease = 0; p.air = L.data.melee.air.max; p.faint = 0;
           if (p.energy !== undefined) p.energy = p.energyMax = L.data.rest.max;
           return 'Vida, heridas, hambre, sed, aire y sueño, todo bien.';
+        } },
+        { label: 'Bajar la moral de esta zona', run: function (g) {
+          if (!L.moraleChange || !g.refuge) return 'Esta partida no tiene zonas.';
+          L.moraleChange(g, g.player.x, g.player.y, -50);
+          return 'La zona ahora está ' + L.moraleWord(L.moraleAt(g, g.player.x, g.player.y)) + '.';
         } },
         { label: 'Volver loco al más cercano', run: function (g) {
           var p = g.player, q = (g.people || []).filter(function (x) { return !x.dead && !x.hostile; }).sort(function (a, b) { return Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y); })[0];
@@ -124,10 +131,11 @@
     }
   };
 
-  // Every frame: invincible keeps you whole.
+  // Every frame: invincible keeps you whole; infinite bullets keep the magazine full.
   L.updateDebug = function (g) {
-    if (!g.god) return;
     var p = g.player;
+    if (g.infAmmo && p.gun) { p.gun.ammo = L.gunMag(p.gun); p.gun.reload = 0; } // 'Balas infinitas'
+    if (!g.god) return;
     p.invuln = Math.max(p.invuln || 0, 0.5); p.hp = p.stats.maxHp;
     if (p.wounds) { p.wounds.length = 0; p.capLost = 0; p.infection = null; } // no wounds, nothing taken off your life (js/health.js)
     p.fed = 0; p.watered = 0; p.unease = 0; p.faint = 0; // hours since you ate and drank (js/needs.js)
