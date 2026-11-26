@@ -1341,6 +1341,14 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     vio o si el golpeado sobrevive (una pelea cuenta una vez). Las armas y las balas les pegan (ojo: también si se
     cruzan cuando le tirás a un zombi). Si muere queda en el piso y a los 10 segundos se levanta como uno de ellos.
   - Pruebas: 96.
+  - **Etapa 72, la locura de los sobrevivientes:** cada uno tiene su cordura. Baja si ve que le pegás a alguien, mucho
+    si ve morir a alguien, cada día solo afuera, un poco cada día que te acompaña, y en la Catedral los días que le
+    falta lo que pidió (los días que se lo diste, sube). Cuando está rara/o, alucina (su nombre se ve violeta y
+    habla de voces y de la barrera); con 2 paracetamol se calma. Más abajo, hace cosas según dónde esté: en la
+    Catedral saca tablas de las ventanas; afuera, de noche, grita y atrae zombis; si te acompaña, espera a quedar a
+    solas con vos y te ataca (nombre en rojo; defenderte no te cuesta confianza); en trance, los zombis cerca de él
+    van hacia vos. En F2: "Volver loco al más cercano".
+  - Pruebas: 101.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

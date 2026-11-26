@@ -40,7 +40,7 @@ for (const [name, fn] of tests) {
     console.log('ok    ' + name);
   } catch (e) {
     failed++;
-    console.log('FALLA ' + name + '\n      ' + (e && e.message));
+    console.log('FALLA ' + name + '\n      ' + (e && e.message) + (process.env.STACK && e && e.stack ? String.fromCharCode(10) + e.stack : ''));
   }
 }
 console.log(`\n${ran - failed} de ${ran} pruebas pasaron`);

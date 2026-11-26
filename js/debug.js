@@ -97,6 +97,11 @@
           if (p.energy !== undefined) p.energy = p.energyMax = L.data.rest.max;
           return 'Vida, heridas, hambre, sed, aire y sueño, todo bien.';
         } },
+        { label: 'Volver loco al más cercano', run: function (g) {
+          var p = g.player, q = (g.people || []).filter(function (x) { return !x.dead && !x.hostile; }).sort(function (a, b) { return Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y); })[0];
+          if (!q) return 'No hay nadie cerca.';
+          q.sanity = 5; return q.name + ' perdió la cabeza.';
+        } },
         { label: 'Sacar los zombis de cerca', run: function (g) {
           var p = g.player, n = 0;
           g.enemies.forEach(function (e) { if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 40 * g.city.scale) { e.dead = true; e.gone = true; n++; } });

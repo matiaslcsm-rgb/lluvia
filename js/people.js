@@ -16,7 +16,7 @@
     g.peopleN = (g.peopleN || 0) + 1;
     return { id: g.peopleN, name: pick(S.names, rng()), coat: pick(S.coats, rng()), x: x, y: y, floor: 0, house: null, door: null,
       street: false, want: want, give: give, done: false, line: Math.floor(rng() * 3), dirX: 1, dirY: 0, still: 1, r: g.player.r,
-      hp: S.hp, trust: S.trust.start, ties: {} };
+      hp: S.hp, trust: S.trust.start, ties: {}, sanity: L.newSanity ? L.newSanity(rng) : 70 };
   }
 
   // Is there somebody in this house (always the same houses)?
@@ -82,7 +82,7 @@
   L.talkTarget = function (g) {
     var p = g.player, s = g.city.scale, best = null, bd = Infinity;
     (g.people || []).forEach(function (q) {
-      if (q.dead || q.mode === 'travel' || (q.floor || 0) !== (p.floor || 0)) return;
+      if (q.dead || q.hostile || q.mode === 'travel' || (q.floor || 0) !== (p.floor || 0)) return;
       // You talk to somebody you look at (else anyone walking by, or the one following you, would take E from the
       // furniture and the doors); through a nailed door, just standing there.
       var door = q.door && g.barricades[q.door];
@@ -98,6 +98,7 @@
     var S = D(), T = S.lines;
     if (q.say) return q.say; // what they answered to what you just asked
     if (L.refuses(q)) return T.refuse[q.line % T.refuse.length];
+    if (L.isOdd && L.isOdd(q)) { var Mo = L.data.madness.lines.odd; return Mo[q.line % Mo.length] + (q.done ? '' : ' ' + T.ask.replace('{want}', L.lootText([q.want])).replace('{give}', L.lootText([q.give]))); }
     if (q.mode === 'refuge') return q.done ? T.refugeDone : T.refugeAsk.replace('{want}', L.lootText([q.want]));
     if (q.mode === 'follow') return T.following;
     if (q.mode === 'wait') return T.waiting;
@@ -195,6 +196,7 @@
   L.personActions = function (g, q) {
     var out = [], add = function (label, run) { out.push({ label: label, run: run }); };
     var helped = q.done || q.mode === 'follow' || q.mode === 'wait' || q.mode === 'refuge';
+    if (L.canCalm && L.canCalm(g, q)) add('Calmarlo (' + L.lootText([L.data.madness.calm.item]) + ')', function () { return L.calm(g, q); });
     if (!helped || L.refuses(q)) return out; // first they want to see you help
     if (q.mode !== 'follow') add('Que te acompañe', function () { return L.followMe(g, q); });
     if (q.mode === 'follow') add('Que espere acá', function () { return L.waitHere(g, q); });
@@ -236,13 +238,16 @@
     var S = D(), p = g.player, s = g.city.scale;
     q.hp = (q.hp === undefined ? S.hp : q.hp) - dmg;
     q.flash = 0.15;
-    trust(q, S.trust.hit);
+    var dying = q.hp <= 0, self = !!q.hostile; // one who turned on you: defending yourself costs nothing
+    if (!self) trust(q, S.trust.hit);
+    if (L.changeSanity) L.changeSanity(q, L.data.madness.sawHit);
     var seen = [];
     g.people.forEach(function (w) {
       if (w === q || w.dead || w.mode === 'travel') return;
       var plan = w.fh !== null && w.fh !== undefined ? L.cityHouse(g.city, w.fh) : null, ent = { x: w.x, y: w.y, floor: w.floor || 0, house: plan };
       if (Math.hypot(w.x - q.x, w.y - q.y) > S.witness * s || !L.canSee(g.city, ent, Math.atan2(q.y - w.y, q.x - w.x), q.x, q.y, q.floor || 0)) return;
-      trust(w, S.trust.saw - S.trust.tie * ((w.ties || {})[q.id] || 0));
+      if (!self) trust(w, S.trust.saw - S.trust.tie * ((w.ties || {})[q.id] || 0));
+      if (L.changeSanity) L.changeSanity(w, dying ? L.data.madness.sawDeath : L.data.madness.sawHit);
       seen.push(w);
     });
     // Walking with you: not any more. It goes off on its own.
@@ -253,7 +258,8 @@
     else L.emit(g, 'bodyhit', q.x, q.y);
     // One fight is one story: blows to the same person within `again` seconds count once (killing still counts).
     var fresh = dead || !(q.hitAt > g.time - S.again); q.hitAt = g.time;
-    var told = (seen.length > 0 || !dead) && fresh;
+    var told = (seen.length > 0 || !dead) && fresh && !self;
+    if (self) { L.toast(g, dead ? 'Te defendiste: ' + q.name + ' cayó.' : 'Te defendés de ' + q.name + '.', '#c26a4a'); return; }
     if (told && L.repChange && g.refuge) L.repChange(g, 'catedral', -(dead ? S.harm.kill : S.harm.hit), dead ? 'Mataste a ' + q.name + ' y alguien lo vio.' : 'Le pegaste a ' + q.name + '.');
     else if (fresh) L.toast(g, dead ? 'Mataste a ' + q.name + '. Nadie lo vio.' : 'Le pegaste a ' + q.name + '.', '#c26a4a');
     if (seen.length) L.toast(g, seen.map(function (w) { return w.name; }).join(', ') + (seen.length === 1 ? ' lo vio.' : ' lo vieron.'), '#c26a4a');
@@ -326,6 +332,7 @@
     // Every morning the people of the Catedral need something new, and the ones living together get closer.
     var day = L.clockOf(g).day;
     if (g.peopleDay !== day) {
+      if (g.peopleDay !== undefined && L.madnessDay) L.madnessDay(g); // how they lived yesterday (js/madness.js)
       g.peopleDay = day;
       var home = g.people.filter(function (q) { return q.mode === 'refuge' && !q.dead; });
       home.forEach(function (q) {
@@ -339,8 +346,8 @@
     g.people = g.people.filter(function (q) { return !q.gone; });
     // On the way to the Catedral, walking with you, living there; people on the street wander a little.
     g.people.forEach(function (q) {
-      if (q.dead) return;
       if (q.flash > 0) q.flash -= dt;
+      if (q.dead || q.hostile) return;
       if (q.mode === 'travel') { q.travel -= gdt || dt; if (q.travel <= 0) arrive(g, q); return; }
       if (q === g.talking) { q.still = 1; return; }
       if (q.mode === 'follow') { follow(g, q, dt); return; }
@@ -353,6 +360,7 @@
       if ((w.dx || w.dy) && L.cityFits(g.city, nx, ny, L.data.city.body) && !L.cityHouseAt(g.city, nx, ny)) { q.x = nx; q.y = ny; q.dirX = w.dx; q.dirY = w.dy; q.still = 0; }
       else { w.t = 0; q.still = 1; }
     });
+    if (L.updateMadness) L.updateMadness(g, dt); // screams, plots, trances, the ones who turned on you (js/madness.js)
     // E: talk (a press).
     var tg = g.barWork || g.search ? null : L.talkTarget(g); // nailing or searching: E stays on that
     g.talkTarget = tg;

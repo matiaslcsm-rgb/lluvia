@@ -292,7 +292,7 @@
       if (!q) return;
       var again = function () { L.ui.talk(g, onClose); }, nodes = [el('h2', null, q.name), el('p', 'talkline', '«' + L.personText(g, q) + '»')];
       var row = el('div', 'talkbtns');
-      if (!q.done && !q.say && q.mode !== 'follow' && q.mode !== 'wait') {
+      if (!q.done && !q.say && q.mode !== 'follow' && q.mode !== 'wait' && !L.refuses(q)) {
         var can = L.canGive(g, q);
         var give = button(can ? 'Darle ' + L.lootText([q.want]) : 'No tenés ' + L.lootText([q.want]), function () { if (L.giveTo(g, q)) again(); }, can ? 'btn' : 'btn ghost');
         give.disabled = !can;
@@ -301,7 +301,7 @@
       L.personActions(g, q).forEach(function (a) { row.appendChild(button(a.label, function () { a.run(); again(); }, 'btn')); });
       row.appendChild(button('Chau (E)', onClose, 'btn ghost'));
       nodes.push(row);
-      nodes.push(el('p', 'hint', q.name + ' ' + L.trustWord(q) + '.' + (g.refuge && g.rep ? ' En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + '. Lo que hacés se sabe.' : '')));
+      nodes.push(el('p', 'hint', q.name + ' ' + L.trustWord(q) + (L.isOdd && L.isOdd(q) ? ', y está rara/o: habla sola/o (se calmaría con ' + L.lootText([L.data.madness.calm.item]) + ')' : '') + '.' + (g.refuge && g.rep ? ' En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + '. Lo que hacés se sabe.' : '')));
       show(nodes);
       L.ui.current = 'talk';
     },

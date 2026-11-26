@@ -646,7 +646,7 @@
         return;
       }
       L.drawPerson(ctx, q, t, q.flash > 0);
-      if (close) { ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = q.done ? '#9fc3a0' : '#e8dcb8'; ctx.fillText(q.name, q.x, q.y - q.r - 10); }
+      if (close) { ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = q.hostile ? '#e05a5a' : L.isOdd && L.isOdd(q) ? '#b08ad0' : q.done ? '#9fc3a0' : '#e8dcb8'; ctx.fillText(q.name, q.x, q.y - q.r - 10); }
     });
 
     // Mud, projectiles and spinning blades.
