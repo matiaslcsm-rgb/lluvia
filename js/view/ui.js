@@ -354,7 +354,8 @@
       var cv = el('canvas', 'bigmap');
       cv.width = Math.max(320, Math.floor(window.innerWidth * 0.86)); cv.height = Math.max(240, Math.floor(window.innerHeight * 0.62));
       var view = { cx: p.x, cy: p.y, k: cv.height / (700 * city.scale) }; // 700 m from top to bottom
-      var draw = function () { L.drawBigMap(cv, g, view); };
+      // One draw per frame at most, however fast the wheel turns or the mouse drags.
+      var queued = false, draw = function () { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; L.drawBigMap(cv, g, view); }); };
       cv.addEventListener('wheel', function (ev) {
         ev.preventDefault();
         view.k = Math.max(cv.height / city.size / 1.2, Math.min(cv.height / (60 * city.scale), view.k * (ev.deltaY < 0 ? 1.25 : 0.8)));

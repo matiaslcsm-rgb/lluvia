@@ -11,6 +11,7 @@
     rays: 240,         // rays around the whole circle to find the edge of what you see (more in the cone)
     shade: 0.62,       // how dark the half-light outside what you see is (0 none, 1 black)
     soft: 5,           // px of blur on the edge of what you see
+    pad: 0.4,          // m past where a ray hits: the wall or piece it hit shows lit (the user: the shade hid walls)
     // Furniture that hides what is behind it (the rest is low: you see over it, like over a car).
     tall: ['ropero', 'estante', 'heladera', 'gondola', 'maquina', 'archivero', 'motor', 'tanque']
   };

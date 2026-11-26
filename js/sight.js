@@ -116,7 +116,9 @@
   L.sightPolygon = function (city, ent, aim) {
     var D = S(), s = city.scale * (ent.sightMul || 1), half = D.cone * Math.PI / 360, far = D.range * s, near = D.near * s, out = []; // sleepy: less (js/rest.js)
     var n = D.rays, inCone = Math.max(24, Math.round(n * 0.75)), rest = n - inCone;
-    var add = function (a, len) { var d = ray(city, ent, ent.x, ent.y, a, len); out.push([ent.x + Math.cos(a) * d, ent.y + Math.sin(a) * d]); };
+    // A ray that hits something goes `pad` further, so the wall or the piece it hit is seen, not left in the shade.
+    var pad = (D.pad || 0) * city.scale;
+    var add = function (a, len) { var d = ray(city, ent, ent.x, ent.y, a, len); if (d < len - 1) d = Math.min(len, d + pad); out.push([ent.x + Math.cos(a) * d, ent.y + Math.sin(a) * d]); };
     for (var i = 0; i <= inCone; i++) add(aim - half + 2 * half * i / inCone, far);
     for (i = 1; i < rest; i++) add(aim + half + (2 * Math.PI - 2 * half) * i / rest, near);
     return out;

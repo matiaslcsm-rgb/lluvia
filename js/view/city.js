@@ -201,14 +201,15 @@
       if (st.from === fl) drawStair(ctx, st, false);
       else if (st.from + 1 === fl) drawStair(ctx, st, true);
     });
+    // The fog of war inside: what you haven't seen of this floor is dark (js/explored.js), cell by cell (a blurred
+    // fog made blobs that covered walls and furniture, the user said). The walls go on top: you know the rooms are there.
+    var fog = insideFog(city._explored, plan, fl);
+    if (fog) { var sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(fog, -1, -1, W + 2, plan.D + 2); ctx.imageSmoothingEnabled = sm; }
     ctx.lineCap = 'square';
     ctx.beginPath();
     level.walls.forEach(function (w) { ctx.moveTo(w[0], w[1]); ctx.lineTo(w[2], w[3]); });
     ctx.strokeStyle = Hd.wallEdge; ctx.lineWidth = 0.45; ctx.stroke();
     ctx.strokeStyle = Hd.wall; ctx.lineWidth = 0.28; ctx.stroke();
-    // The fog of war inside: what you haven't seen of this floor is dark (js/explored.js), with soft edges.
-    var fog = insideFog(city._explored, plan, fl);
-    if (fog) { ctx.imageSmoothingEnabled = true; ctx.drawImage(fog, -1, -1, W + 2, plan.D + 2); }
     ctx.restore();
     // The outer wall, then (on the ground floor) the front and back doorways cut into it.
     ctx.lineJoin = 'miter';
@@ -690,6 +691,8 @@
         if (!f) { var raw = M.buildings[i][0], u = M.unit * s; f = []; for (var j = 0; j + 1 < raw.length; j += 2) f.push(raw[j] * u, raw[j + 1] * u); fp.set(i, f); }
         for (var q = 0; q + 1 < f.length; q += 2) { var X = ox + f[q] * k, Y = oy + f[q + 1] * k; if (q) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }
         ctx.closePath();
+        // Filled in batches: one path with thousands of buildings takes the browser seconds to fill.
+        if (done.size % 300 === 0) { ctx.fill(); ctx.beginPath(); }
       });
     }
     ctx.fill();
@@ -770,11 +773,33 @@
 
   // The big map (M): everything you have seen of the city, zoomable with the wheel and draggable, with you, where you
   // last slept and your body. `cv`: a canvas on the map screen; `view`: { cx, cy, k } (kept between draws).
+  // The whole city drawn once into a picture (streets, plazas, buildings), for the big map seen from far: drawing
+  // 85 thousand buildings again on every turn of the wheel froze the game (the user, 2026-11-26).
+  function overview(city) {
+    if (city._overview) return city._overview;
+    var px = 4096 / city.size, cv = document.createElement('canvas');
+    cv.width = Math.ceil(city.w * px); cv.height = Math.ceil(city.h * px);
+    var c = cv.getContext('2d'), fake = { player: { x: -1e9, y: -1e9, floor: 0 } }; // nobody inside any house
+    drawStreets(c, city, city.w / 2, city.h / 2, px, 0, 0, cv.width, cv.height);
+    fake.city = city; fake.explored = null;
+    drawBuildings(c, fake, city.w / 2, city.h / 2, px, 0, 0, cv.width, cv.height);
+    return (city._overview = { cv: cv, k: px });
+  }
   L.drawBigMap = function (cv, g, view) {
     var ctx = cv.getContext('2d'), city = g.city, p = g.player, W = cv.width, H = cv.height;
     ctx.clearRect(0, 0, W, H);
-    var at = drawStreets(ctx, city, view.cx, view.cy, view.k, 0, 0, W, H);
-    drawBuildings(ctx, g, view.cx, view.cy, view.k, 0, 0, W, H);
+    // Far enough that the picture is as sharp as drawing it (up to 2x enlarged): use the picture.
+    var at, far = city.map && view.k <= 2 * 4096 / city.size, ov = far ? overview(city) : null;
+    if (ov) {
+      // One pixel of the picture is 1/ov.k world px.
+      var sx = view.cx * ov.k - W / 2 * ov.k / view.k, sy = view.cy * ov.k - H / 2 * ov.k / view.k;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(ov.cv, sx, sy, W * ov.k / view.k, H * ov.k / view.k, 0, 0, W, H);
+      at = { mx: function (x) { return W / 2 + (x - view.cx) * view.k; }, my: function (y) { return H / 2 + (y - view.cy) * view.k; } };
+    } else {
+      at = drawStreets(ctx, city, view.cx, view.cy, view.k, 0, 0, W, H);
+      drawBuildings(ctx, g, view.cx, view.cy, view.k, 0, 0, W, H);
+    }
     keepExplored(ctx, g, view.cx, view.cy, view.k, 0, 0, W, H);
     ctx.save();
     ctx.globalCompositeOperation = 'destination-over';
