@@ -258,7 +258,7 @@
         if (p.fed >= Nd.eat.every) bits.push('Hambre');
         if (p.unease > 0) bits.push('Malestar ' + p.unease.toFixed(1));
         var over = g.pack ? L.packOver(g) : 0;
-        bits.push('Peso ' + L.packWeight(g).toFixed(1) + '/' + L.data.loot.carry.cap + ' kg');
+        bits.push((g.refuge ? 'J: diario · ' : '') + 'Peso ' + L.packWeight(g).toFixed(1) + '/' + L.data.loot.carry.cap + ' kg');
         ctx.fillStyle = p.unease > 0 || over > 0 ? C.low : C.dim;
         ctx.fillText(bits.join(' · '), x, y + 68);
       }

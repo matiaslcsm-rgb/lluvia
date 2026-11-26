@@ -100,6 +100,7 @@
     if (L.refuses(q)) return T.refuse[q.line % T.refuse.length];
     if (L.isOdd && L.isOdd(q)) { var Mo = L.data.madness.lines.odd; return Mo[q.line % Mo.length] + (q.done ? '' : ' ' + T.ask.replace('{want}', L.lootText([q.want])).replace('{give}', L.lootText([q.give]))); }
     if (q.mode === 'refuge') return q.done ? T.refugeDone : T.refugeAsk.replace('{want}', L.lootText([q.want]));
+    if (q.mode === 'leader') { var R = L.data.story.refuges[q.refuge]; return q.done ? (q.thanks ? T.thanks.replace('{give}', L.lootText([q.give])) : 'Gracias por lo de hoy. Volvé mañana.') : R.line + ' ' + T.ask.replace('{want}', L.lootText([q.want])).replace('{give}', L.lootText([q.give])); }
     if (q.mode === 'follow') return T.following;
     if (q.mode === 'wait') return T.waiting;
     if (q.done) return q.thanks ? T.thanks.replace('{give}', L.lootText([q.give])) : T.done;
@@ -126,6 +127,16 @@
       else if (h.l && h.l.id === id) h.l = null;
       else { var w = L.packWeapons(g).filter(function (x) { return x.place.slots[x.i].id === id; })[0]; w.place.slots.splice(w.i, 1); }
     } else L.packTake(g, id, q.want[1]);
+    if (q.mode === 'leader') {
+      // Another refuge (js/story.js): what was promised, and that refuge trusts you more.
+      var R = L.data.story.refuges[q.refuge], left2 = q.give[0].indexOf('w:') === 0 || q.give[0].indexOf('r:') === 0 ? 0 : L.packAdd(g, q.give[0], q.give[1]);
+      if (left2) L.dropToGround(g, { id: q.give[0], n: left2 });
+      q.done = true; q.thanks = true;
+      L.emit(g, 'loot', g.player.x, g.player.y, { piece: 'persona', got: [q.give] });
+      if (L.moraleEvent) L.moraleEvent(g, q.x, q.y, 'help');
+      if (L.repChange) L.repChange(g, q.refuge, R.rep, 'Ayudaste a ' + R.name + '.');
+      return true;
+    }
     if (q.mode === 'refuge') {
       // The people of the Catedral: nothing back but their trust.
       q.done = true; trust(q, D().trust.helped);
@@ -199,7 +210,7 @@
     var out = [], add = function (label, run) { out.push({ label: label, run: run }); };
     var helped = q.done || q.mode === 'follow' || q.mode === 'wait' || q.mode === 'refuge';
     if (L.canCalm && L.canCalm(g, q)) add('Calmarlo (' + L.lootText([L.data.madness.calm.item]) + ')', function () { return L.calm(g, q); });
-    if (!helped || L.refuses(q)) return out; // first they want to see you help
+    if (!helped || L.refuses(q) || q.mode === 'leader') return out; // first they want to see you help; a leader stays with their people
     if (q.mode !== 'follow') add('Que te acompañe', function () { return L.followMe(g, q); });
     if (q.mode === 'follow') add('Que espere acá', function () { return L.waitHere(g, q); });
     if (q.mode !== 'refuge' && g.refuge) add('Mandarlo a ' + g.refuge.name, function () { return L.sendToRefuge(g, q); });
@@ -340,6 +351,7 @@
       if (g.peopleDay !== undefined && L.moraleDay) L.moraleDay(g);   // zones heal a little; low ones wear people (js/morale.js)
       g.peopleDay = day;
       var home = g.people.filter(function (q) { return q.mode === 'refuge' && !q.dead; });
+      g.people.forEach(function (q) { if (q.mode === 'leader') q.done = false; }); // leaders ask again each morning
       home.forEach(function (q) {
         refugeWant(g, q);
         q.ties = q.ties || {};

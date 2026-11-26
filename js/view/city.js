@@ -862,6 +862,7 @@
       });
     }
     if (g.refuge) mark(g.refuge.x, g.refuge.y, '#e8c66a', 'Refugio: ' + g.refuge.name);
+    if (g.story) Object.keys(g.story.known).forEach(function (id) { var kn = g.story.known[id]; mark(kn.x, kn.y, '#d8b860', 'Refugio: ' + kn.name); });
     if (p.bed) mark(p.bed.x, p.bed.y, '#9fc3e8', 'Dormiste acá');
     (g.bodies || []).forEach(function (b) { mark(b.x, b.y, '#c26a4a', 'Tu cuerpo'); });
     mark(p.x, p.y, '#ffffff', 'Vos');

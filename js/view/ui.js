@@ -286,6 +286,22 @@
       L.ui.current = 'inventory';
     },
 
+    // The journal (J, js/story.js): goals, the refuges you know and how they see you, the clues you found.
+    journal: function (g, onClose) {
+      var J = L.journal(g), wrap = el('div', 'inv');
+      var box = function (title, lines, empty) {
+        var b = el('div', 'invbox wide'); b.appendChild(el('div', 'invtitle', title));
+        if (!lines.length) b.appendChild(el('div', 'invempty', empty));
+        lines.forEach(function (t) { b.appendChild(el('div', 'invline', t)); });
+        wrap.appendChild(b);
+      };
+      box('Qué hacer', J.goals.map(function (t, i) { return (i ? '· ' : '→ ') + t; }), 'Nada por ahora.');
+      box('Refugios', J.refuges.map(function (r) { return r.name.charAt(0).toUpperCase() + r.name.slice(1) + ': ' + r.word; }), 'Ninguno.');
+      box('Pistas (' + J.clues.length + ')', J.clues, 'Todavía nada. Revisá muebles: a veces hay notas.');
+      show([el('h2', null, 'Diario'), wrap, button('Cerrar (J)', onClose, 'btn ghost')]);
+      L.ui.current = 'journal';
+    },
+
     // Talking to a survivor (js/people.js): what they say, and giving them what they asked for.
     talk: function (g, onClose) {
       var q = g.talking;

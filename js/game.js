@@ -262,7 +262,8 @@
     movePlayer(g, dt, input);
     if (g.city && L.updateClock) L.updateClock(g, gdt, input); // the flashlight (js/clock.js)
     if (g.refuge && L.updatePeople) L.updatePeople(g, dt, input, gdt);
-    if (g.refuge && L.updateMorale) L.updateMorale(g, dt);             // voices and shadows in low zones at night (js/morale.js)  // survivors: houses near you, the street, E to talk (js/people.js)
+    if (g.refuge && L.updateMorale) L.updateMorale(g, dt);
+    if (g.refuge && L.updateStory) L.updateStory(g);                   // triggers: goals, refuges, the horde night (js/story.js)             // voices and shadows in low zones at night (js/morale.js)  // survivors: houses near you, the street, E to talk (js/people.js)
     if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)
@@ -414,7 +415,7 @@
     var N = L.data.mode.nights, h = L.data.horde, k = L.clockOf(g), dark = 1 - k.light, n = Math.max(1, L.nightOf(k));
     var grow = 1 + N.perNight * (n - 1), rate = (N.day.rate + (N.dark.rate - N.day.rate) * dark) * grow;
     // Near the black barrier there are more, and some come out of it (js/barrier.js).
-    var bm = (L.barrierMul ? L.barrierMul(g) : 1) * (L.moraleMul ? L.moraleMul(g) : 1), Bd = L.data.barrier; // the barrier and the zone's morale (js/morale.js)
+    var bm = (L.barrierMul ? L.barrierMul(g) : 1) * (L.moraleMul ? L.moraleMul(g) : 1) * (L.storyMul ? L.storyMul(g) : 1), Bd = L.data.barrier; // the barrier, the zone's morale (js/morale.js), the horde night (js/story.js)
     rate *= bm;
     var alive = Math.round((N.day.alive + (N.dark.alive - N.day.alive) * dark) * grow * bm);
     g.spawnAcc += rate * dt;

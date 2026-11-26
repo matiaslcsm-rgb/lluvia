@@ -453,7 +453,9 @@
   }
   L.pieceName = function (t) { return D().pieceNames[t] || t.charAt(0).toUpperCase() + t.slice(1); };
   L.openPiece = function (g, tg) {
+    var first = !g.searched.has(tg.key);
     g.openPiece = { key: tg.key, t: tg.t, name: L.pieceName(tg.t), slots: L.pieceSlots(g, tg) };
+    if (first && L.rollClue) L.rollClue(g); // sometimes a note about what happened (js/story.js)
     savePiece(g);
     L.emit(g, 'rummage', g.player.x, g.player.y);
   };

@@ -61,7 +61,8 @@
     var before = L.repWord(g.rep[id]);
     g.rep[id] = Math.max(0, Math.min(100, g.rep[id] + dv));
     var now = L.repWord(g.rep[id]);
-    if (why) L.toast(g, why + (now !== before ? ' En ' + g.refuge.name + ' ahora ' + now + '.' : ''), dv < 0 ? '#c26a4a' : '#9fc3a0');
+    var name = L.refugeName ? L.refugeName(g, id) : g.refuge.name; // the Catedral or another refuge (js/story.js)
+    if (why) L.toast(g, why + (now !== before ? ' En ' + name + ' ahora ' + now + '.' : ''), dv < 0 ? '#c26a4a' : '#9fc3a0');
   };
 
   // Knocked out (js/death.js calls this where you fell, before waking up): the refuge trusts you less, and more if

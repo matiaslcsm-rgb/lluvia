@@ -1376,6 +1376,18 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
       interruptor al lado de una puerta; mirándolo, E lo prende o lo apaga. Con luz, la sala queda iluminada de
       noche; sin luz, "Clic. Nada". Las casas que se ven con la luz prendida de noche son solo las que tienen luz.
     - Pruebas: 112.
+  - **Etapa 74, disparadores (la historia de la partida):** cosas que pasan una sola vez cuando se dan.
+    - Arranca con un objetivo: conseguir comida y agua para la Catedral.
+    - A la mañana después de la primera noche, la radio de la Catedral avisa que hay gente en la **Escuela Nº 1**:
+      aparece en el mapa, con su encargada (Graciela, maestra) adentro y las puertas abiertas.
+    - Revisando muebles a veces encontrás **pistas** (notas, diarios, un grabador) que cuentan de a poco qué pasó;
+      con tres aparece el **Sanatorio** (el Doctor Ibáñez).
+    - Cada refugio tiene su confianza en vos. Sus encargados piden algo cada mañana (4 comidas, 3 alcoholes) y dan
+      algo grande (30 balas, 4 antibióticos).
+    - El día 5 es la **noche del latido**: la barrera late y vienen 2,5 veces más zombis.
+    - Si la Catedral deja de confiar en vos, te avisan.
+    - **J abre el diario:** qué hacer, los refugios y cómo te ven, y las pistas que encontraste.
+  - Pruebas: 115.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

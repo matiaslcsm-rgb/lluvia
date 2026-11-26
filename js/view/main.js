@@ -112,6 +112,15 @@
     paused = false; L.ui.hide();
   }
 
+  // J: the journal (js/story.js). The game waits while it is open.
+  function toggleJournal() {
+    if (!match || match.over || !game().refuge || !L.ui.journal) return;
+    if (L.ui.current === 'journal') { paused = false; L.ui.hide(); return; }
+    if (paused) return;
+    paused = true;
+    L.ui.journal(game(), toggleJournal);
+  }
+
   // Tab: what you can make (js/craft.js). The game waits while the list is open.
   function toggleCraft() {
     if (!match || match.over || game().choice || !game().pack) return;
@@ -149,6 +158,7 @@
   }
 
   function togglePause() {
+    if (L.ui.current === 'journal') { toggleJournal(); return; }
     if (L.ui.current === 'piece') { closePiece(); return; }
     if (L.ui.current === 'talk') { closeTalk(); return; }
     if (L.ui.current === 'debug') { toggleDebug(); return; }
@@ -204,6 +214,7 @@
     else if (e.code === 'KeyK' && L.ui.current !== 'craft' && L.ui.current !== 'inventory') toggleStatus();
     else if (L.ui.current === 'craft' && n !== undefined) L.ui.craftPick(n);
     else if (e.code === 'F2') { e.preventDefault(); toggleDebug(); }
+    else if (e.code === 'KeyJ' && (!L.ui.current || L.ui.current === 'journal')) toggleJournal();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
     else if (e.code === 'KeyR' && match && !paused && !match.solo) send();
