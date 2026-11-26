@@ -358,6 +358,8 @@
   L.updateLoot = function (g, dt, input) {
     if (!g.pack) return;
     var p = g.player;
+    // Somebody to talk to comes first (js/people.js).
+    if (g.talkTarget) { g.lootTarget = null; g.search = null; g.groundTarget = -1; g.bodyTarget = -1; g.barTarget = null; g.barWork = null; g.useHeld = g.useWas = !!(input && input.use); useBandageKey(g, input); return; }
     // Your body within reach comes first (js/death.js), then something on the floor: E (a press, not held).
     var bi = L.bodyTarget ? L.bodyTarget(g) : -1;
     g.bodyTarget = bi;

@@ -261,6 +261,7 @@
     }
     movePlayer(g, dt, input);
     if (g.city && L.updateClock) L.updateClock(g, gdt, input); // the flashlight (js/clock.js)
+    if (g.refuge && L.updatePeople) L.updatePeople(g, dt, input);  // survivors: houses near you, the street, E to talk (js/people.js)
     if (g.pack) L.updateLoot(g, dt, input);                    // searching furniture, bandages (js/loot.js)
     if (g.night && L.updateMelee) L.updateMelee(g, dt, input);  // hand weapons, air (js/melee.js)
     if (g.night && L.updateFire) L.updateFire(g, dt, input);    // molotovs and their fire (js/craft.js)

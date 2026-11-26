@@ -1310,6 +1310,13 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     clic en lo tuyo: lo dejás guardado en el mueble (la pistola no). Un mueble ya revisado se abre al toque con E.
     E o Esc cierra; el juego espera mientras está abierta. Los muebles no tienen límite de lugar por ahora.
   - Pruebas: 84.
+  - **Etapa 69, sobrevivientes:** en algunas casas (1 de cada 20, siempre las mismas) hay alguien encerrado, con la
+    puerta trabada desde adentro: te acercás a la puerta y con E golpeás y hablás. De día aparece gente en la calle
+    (hasta 2, fuera de tu vista), que camina un poco y se va si te alejás. Cada uno te pide algo (comida, agua,
+    vendas, tablas, clavos, remedios, un arma...) y te da otra cosa (balas, comida, ropa, un arma...). Se lo das
+    desde la ventana de la charla; ayudar a alguien sube la confianza de la Catedral. En F2: "A un sobreviviente".
+    Todavía no: mandarlos a la Catedral o que te acompañen (etapa 70), pegarles (71), que enloquezcan (72).
+  - Pruebas: 88.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

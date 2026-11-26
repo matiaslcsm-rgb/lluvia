@@ -33,7 +33,7 @@
   // gun held in both hands, and the feet stepping when you walk.
   L.drawPerson = function (ctx, f, t, flash) {
     var x = f.x, y = f.y, r = f.r, ang = Math.atan2(f.dirY || 0, f.dirX || 1), moving = 1 - (f.still || 0);
-    var coat = flash ? '#ffffff' : '#4d5646', dark = flash ? '#dddddd' : '#2f352b', skin = '#c99b7a', hair = '#2b211a';
+    var coat = flash ? '#ffffff' : f.coat || '#4d5646', dark = flash ? '#dddddd' : '#2f352b', skin = '#c99b7a', hair = '#2b211a';
     ctx.save();
     ctx.translate(x, y); ctx.rotate(ang); // +x: where you face
     // Shadow.

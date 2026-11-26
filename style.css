@@ -142,3 +142,5 @@ body.bigtext .card .name { font-size: 21px; }
 .debug { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 900px; margin: 8px auto; }
 .debuggroup { display: flex; flex-direction: column; gap: 4px; min-width: 160px; background: rgba(20,18,14,0.6); padding: 8px; border: 1px solid #3a3424; }
 .debugmsg { color: #e6dcbc; min-height: 1.3em; }
+.talkline { font-size: 17px; max-width: 560px; margin: 10px auto 18px; color: #e8dcb8; font-style: italic; }
+.talkbtns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }

@@ -106,6 +106,12 @@
     paused = false; L.ui.hide();
   }
 
+  // Talking to a survivor (js/people.js): E or Esc ends it.
+  function closeTalk() {
+    if (match) L.stopTalking(game());
+    paused = false; L.ui.hide();
+  }
+
   // Tab: what you can make (js/craft.js). The game waits while the list is open.
   function toggleCraft() {
     if (!match || match.over || game().choice || !game().pack) return;
@@ -144,6 +150,7 @@
 
   function togglePause() {
     if (L.ui.current === 'piece') { closePiece(); return; }
+    if (L.ui.current === 'talk') { closeTalk(); return; }
     if (L.ui.current === 'debug') { toggleDebug(); return; }
     if (L.ui.current === 'map') { toggleMap(); return; }
     if (L.ui.current === 'status') { toggleStatus(); return; }
@@ -190,6 +197,7 @@
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
+    else if (L.ui.current === 'talk') { if ((e.code === 'KeyE' && !e.repeat) || e.code === 'Escape') closeTalk(); }
     else if (L.ui.current === 'piece') { if ((e.code === 'KeyE' && !e.repeat) || e.code === 'Escape') closePiece(); } // held E (it opened the window) repeats: ignore
     else if (e.code === 'Tab') { e.preventDefault(); if (L.ui.current !== 'inventory') toggleCraft(); }
     else if (e.code === 'KeyI' && L.ui.current !== 'craft' && L.ui.current !== 'status') toggleInventory();
@@ -277,6 +285,7 @@
       var g = game();
       if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick, g);
       if (g.openPiece && L.ui.current !== 'piece') { paused = true; L.ui.piece(g, closePiece); }
+      if (g.talking && L.ui.current !== 'talk') { paused = true; L.ui.talk(g, closeTalk); }
       if (match.over && L.ui.current !== 'over') {
         if (!reward) {
           reward = L.settleMatch(L.profile, match);

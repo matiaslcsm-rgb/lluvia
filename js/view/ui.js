@@ -286,6 +286,25 @@
       L.ui.current = 'inventory';
     },
 
+    // Talking to a survivor (js/people.js): what they say, and giving them what they asked for.
+    talk: function (g, onClose) {
+      var q = g.talking;
+      if (!q) return;
+      var again = function () { L.ui.talk(g, onClose); }, nodes = [el('h2', null, q.name), el('p', 'talkline', '«' + L.personText(g, q) + '»')];
+      var row = el('div', 'talkbtns');
+      if (!q.done) {
+        var can = L.canGive(g, q);
+        var give = button(can ? 'Darle ' + L.lootText([q.want]) : 'No tenés ' + L.lootText([q.want]), function () { if (L.giveTo(g, q)) again(); }, can ? 'btn' : 'btn ghost');
+        give.disabled = !can;
+        row.appendChild(give);
+      }
+      row.appendChild(button('Chau (E)', onClose, 'btn ghost'));
+      nodes.push(row);
+      if (g.refuge && g.rep) nodes.push(el('p', 'hint', 'En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + '. Ayudar a la gente se sabe.'));
+      show(nodes);
+      L.ui.current = 'talk';
+    },
+
     // A piece of furniture you searched (js/loot.js; the user: "como Project Zomboid"): on the left what it holds,
     // on the right what you carry. A click on its things takes them; a click on yours leaves them in the piece.
     piece: function (g, onClose) {

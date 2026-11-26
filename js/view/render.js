@@ -177,6 +177,11 @@
       ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
       ctx.fillText('E: juntar ' + L.slotName(g.ground[g.groundTarget].slot), p.x - camX, p.y - camY - p.r - 14);
     }
+    if (g.talkTarget) {
+      var tq = g.talkTarget;
+      ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
+      ctx.fillText((tq.door && g.barricades[tq.door] ? 'E: golpear y hablar con ' : 'E: hablar con ') + tq.name, p.x - camX, p.y - camY - p.r - 14);
+    }
     var tg = g.lootTarget;
     if (tg) {
       var sx = p.x - camX, sy = p.y - camY - p.r - 14;
@@ -624,6 +629,15 @@
         ctx.lineCap = 'butt';
       }
       if (e.hp < e.maxHp && (e.r >= 20 || e.elite) && !e.type.boss) bar(ctx, e.x - e.r, e.y - e.r - 8, e.r * 2, 4, e.hp / e.maxHp, '#e05060');
+    });
+
+    // Survivors (js/people.js), where you see them; the name over the ones close by.
+    (g.people || []).forEach(function (q) {
+      if (q.dead || (q.floor || 0) !== (p.floor || 0) || !visible(q.x, q.y, 30)) return;
+      var close = Math.hypot(q.x - p.x, q.y - p.y) < 8 * (g.city ? g.city.scale : 50);
+      if (sees && !sees(q.x, q.y, q.floor || 0) && !(close && q.door)) return; // the one behind a door: you hear them
+      L.drawPerson(ctx, q, t, false);
+      if (close) { ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = q.done ? '#9fc3a0' : '#e8dcb8'; ctx.fillText(q.name, q.x, q.y - q.r - 10); }
     });
 
     // Mud, projectiles and spinning blades.

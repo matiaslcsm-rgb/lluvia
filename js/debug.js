@@ -54,6 +54,15 @@
       { name: 'Moverte', actions: [
         { label: 'Destrabarme', run: function (g) { return L.unstick(g) ? 'Listo, te saqué de la pared.' : 'No encontré un lugar libre cerca.'; } },
         { label: 'Al refugio', run: function (g) { if (!g.refuge) return 'Esta partida no tiene refugio.'; go(g, g.refuge.x, g.refuge.y); return 'Estás en ' + g.refuge.name + '.'; } },
+        { label: 'A un sobreviviente', run: function (g) {
+          if (!g.refuge || !L.peopleScan) return 'Esta partida no tiene sobrevivientes.';
+          L.peopleScan(g, 600);
+          var p = g.player, q = (g.people || []).filter(function (x) { return x.house !== null && !x.done; }).sort(function (a, b) { return Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y); })[0];
+          if (!q) return 'No encontré a nadie cerca.';
+          var plan = L.cityHouse(g.city, q.house), e = plan.exitsPx[0];
+          go(g, e.x + e.nx * 1.3 * g.city.scale, e.y + e.ny * 1.3 * g.city.scale);
+          return 'Estás en la puerta de la casa de ' + q.name + '.';
+        } },
         { label: 'A la plaza', run: function (g) { go(g, g.city.start.x, g.city.start.y); return 'Estás en la plaza.'; } },
         { label: 'A una casa cerca', run: function (g) { var h = house(g); if (!h) return 'No hay casas cerca.'; inside(g, h); return 'Estás adentro de una casa.'; } },
         { label: 'A una casa de dos pisos', run: function (g) { var h = house(g, true); if (!h) return 'No hay casas de dos pisos cerca.'; inside(g, h); return 'Estás en una casa con escalera.'; } },
