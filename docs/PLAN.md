@@ -1360,6 +1360,22 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
 - **2026-11-26: pedidos del usuario** (anotados): la sombra adentro de los edificios se ve rara y tapa paredes y
   muebles; el mapa grande se traba al hacer zoom; puertas en todos lados (con llave, que se puedan forzar y romper);
   electricidad: salas iluminadas si el edificio tiene luz, e interruptores para probar.
+  - Hecho el mismo día:
+    - **El mapa grande** ya no se traba: de lejos usa una foto de toda la ciudad hecha una vez (la primera vez tarda
+      un instante), las casas se pintan de a tandas (pintarlas todas juntas tardaba más de 30 segundos) y se dibuja
+      una vez por cuadro aunque la rueda gire rápido.
+    - **La sombra adentro:** lo que no viste de una casa se oscurece cuadro por cuadro, sin bordes borrosos, y las
+      paredes se ven encima; la vista llega a la pared o al mueble con el que choca, así no quedan en sombra.
+    - **Puertas** en todas las entradas y entre las salas de la planta baja. En la partida de verdad casi todas las
+      de la calle están cerradas y casi la mitad con llave (siempre las mismas); las de la Catedral, abiertas. E
+      abre y cierra (apretar y soltar); desde adentro, X la traba o la destraba. Cerrada con llave: manteniendo X
+      se fuerza con una barra, un destornillador, un fierro, una llave inglesa o un machete (hace ruido), o se
+      rompe a golpes. Los zombis que te buscan también la golpean hasta romperla. Mantener E sigue clavando tablas.
+      (Simplificado: no hay llaves que se encuentran; desde adentro se traba sola.)
+    - **Electricidad:** 1 de cada 3 edificios todavía tiene luz (siempre los mismos). Cada sala tiene un
+      interruptor al lado de una puerta; mirándolo, E lo prende o lo apaga. Con luz, la sala queda iluminada de
+      noche; sin luz, "Clic. Nada". Las casas que se ven con la luz prendida de noche son solo las que tienen luz.
+    - Pruebas: 112.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

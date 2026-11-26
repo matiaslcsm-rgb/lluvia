@@ -25,6 +25,9 @@
     }
     if (!at) return false;
     g.refuge = { id: 'catedral', name: H.name, house: plan.index, x: at.x, y: at.y };
+    // The real game has doors (js/doors.js); the Catedral's are open: you go out and come back through them.
+    city._doors = true;
+    if (g.barricades && L.planOpenings && L.setDoor) L.planOpenings(plan).forEach(function (o) { if (L.isDoor(o)) { var b = g.barricades[o.key] || (g.barricades[o.key] = { planks: 0, hp: 0, furn: -1, fhp: 0, broken: false, glass: L.data.barricade.glassHp }); b.door = 'open'; b.locked = false; b.dhp = L.data.doors.hp; } });
     g.rep = g.rep || {}; g.rep.catedral = D().rep.start;
     // The windows, nailed shut (the door stays open: it is your way out).
     var B = L.data.barricade;

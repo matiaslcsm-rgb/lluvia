@@ -76,6 +76,20 @@
         x.fillStyle = grad; x.fillRect(wx - wr, wy - wr, wr * 2, wr * 2);
       });
     });
+    // Rooms you lit, with power (js/power.js): their cells, without darkness.
+    if (g.lights && city._houses) Object.keys(g.lights).forEach(function (k) {
+      var parts = k.split(':'), plan = city._houses.get(+parts[0]), fl = +parts[1], room = +parts[2];
+      if (!plan || fl !== (p.floor || 0) || !L.hasPower(plan)) return;
+      var level = L.planLevel(plan, fl), f = plan.frame, cs = plan.cell, W = plan.W;
+      if (!level || !level.lab) return;
+      x.save();
+      x.translate(-camX, -camY); x.scale(s, s);
+      x.transform(f.ux * cs, f.uy * cs, f.vx * cs, f.vy * cs, f.ox, f.oy);
+      x.beginPath();
+      for (var cy = 0; cy < plan.D; cy++) for (var cx = 0; cx < W; cx++) if (level.lab[cy * W + cx] === room) x.rect(cx - 0.05, cy - 0.05, 1.1, 1.1);
+      x.fillStyle = 'rgba(0,0,0,0.92)'; x.fill();
+      x.restore();
+    });
     ctx.drawImage(cv, 0, 0);
     // A warm tint under the lamps.
     if (lamps.length) {

@@ -250,9 +250,10 @@
     });
     // Barricades (js/barricade.js): planks close a doorway or a window (you see between them), a piece of furniture
     // closes a doorway; a broken window lets bodies through.
-    if (bar && L.planOpenings) houses.forEach(function (h) {
+    if ((bar || city._doors) && L.planOpenings) houses.forEach(function (h) {
       L.planOpenings(h).forEach(function (o) {
-        var b = bar[o.key], q = o.seg;
+        var b = bar && bar[o.key], q = o.seg, door = L.doorStateOf ? L.doorStateOf(b, o, city._doors) : null;
+        if (door && door.closed && !(b && (b.furn >= 0 || b.planks > 0))) { stampWall(city, a, x0, y0, q[0], q[1], q[2], q[3], null, 0); return; } // a closed door (js/doors.js)
         if (!b) return;
         if (b.furn >= 0) stampWall(city, a, x0, y0, q[0], q[1], q[2], q[3], null, 0);
         else if (b.planks > 0) stampWall(city, a, x0, y0, q[0], q[1], q[2], q[3], null, 2);

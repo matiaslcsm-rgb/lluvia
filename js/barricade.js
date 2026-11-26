@@ -21,6 +21,7 @@
       out.push({ key: plan.index + ':' + key, kind: kind, seg: q, x: x, y: y, nx: nx, ny: ny, plan: plan });
     };
     (plan.exitSegsPx || []).forEach(function (q, i) { add('x:' + i, 'door', q); });
+    (plan.doorsPx || []).forEach(function (q, i) { add('d:' + i, 'inner', q); }); // doors between rooms (js/doors.js)
     (plan.windows || []).forEach(function (w, i) { add('w:' + i, 'window', [w[0] * s, w[1] * s, w[2] * s, w[3] * s]); });
     plan._openings = out;
     return out;
@@ -42,7 +43,7 @@
   // it has no planks.
   L.openingShut = function (g, o) {
     var b = g.barricades[o.key];
-    if (o.kind === 'door') return !!b && (b.planks > 0 || b.furn >= 0);
+    if (L.isDoor && L.isDoor(o)) { var st = L.doorState(g, o); return !!b && (b.planks > 0 || b.furn >= 0) || !!(st && st.closed); }
     return !b || !b.broken || b.planks > 0;
   };
 
@@ -56,6 +57,7 @@
     Object.keys(old).concat(Object.keys(g.barricades)).forEach(function (k) { redo[k.split(':')[0]] = true; });
     Object.keys(redo).forEach(function (i) { forget(g, +i); });
   };
+  L.forgetHouse = function (g, i) { forget(g, i); };
   function forget(g, i) {
     var plan = L.cityHouse(g.city, i);
     if (!plan) return;
@@ -77,7 +79,7 @@
   // Drops an entry that no longer changes anything (an intact window with no planks, a bare doorway).
   function tidy(g, o) {
     var b = g.barricades[o.key];
-    if (b && b.planks <= 0 && b.furn < 0 && !b.broken && b.glass >= D().glassHp) delete g.barricades[o.key];
+    if (b && b.planks <= 0 && b.furn < 0 && !b.broken && b.glass >= D().glassHp && !b.door) delete g.barricades[o.key];
   }
 
   function hasHammer(g) { return L.packCount(g, 'w:martillo') > 0; }
@@ -111,7 +113,7 @@
       });
     });
     if (!best) return null;
-    var o = best, b = g.barricades[o.key] || { planks: 0, furn: -1 }, max = D().planks[o.kind], T = { o: o, add: null, rem: null };
+    var o = best, b = g.barricades[o.key] || { planks: 0, furn: -1 }, max = D().planks[o.kind] || 0, T = { o: o, add: null, rem: null };
     var inside = L.cityHouseAt(city, p.x, p.y) === o.plan; // furniture is dragged from inside the house only
     var mats = L.packCount(g, 'tablas') >= 1 && L.packCount(g, 'clavos') >= D().nails && hasHammer(g);
     if (b.furn < 0 && b.planks < max && mats) { T.add = 'nail'; T.addLabel = 'clavar una tabla (' + (b.planks + 1) + '/' + max + ')'; }
@@ -122,25 +124,40 @@
     if (b.furn >= 0 && inside) { T.rem = 'back'; T.remLabel = 'correr ' + D().heavy[o.plan.furniture[b.furn].t].name; }
     else if (b.planks > 0 && hasHammer(g)) { T.rem = 'pry'; T.remLabel = 'sacar una tabla'; }
     if (!T.add && b.furn < 0 && b.planks < max) T.need = 'Para trabarla: tablas, ' + D().nails + ' clavos y un martillo';
+    // The door itself (js/doors.js): a press opens, closes, locks; holding X forces a lock.
+    if (L.doorActions) {
+      var A = L.doorActions(g, o, inside);
+      T.tapE = A.tapE || null; T.tapX = A.tapX || null;
+      if (A.holdX && !T.rem) { T.rem = 'force'; T.remLabel = A.holdX.label; }
+      if (A.need) T.need = A.need;
+    }
     return T;
   };
 
   // Each frame, from js/loot.js: holding E works on the opening (nail a plank, drag furniture), holding X undoes.
   // Returns true while you are doing something with an opening, so nothing else takes the key.
   L.updateBarricadeWork = function (g, dt, input) {
-    var T = L.barricadeTarget(g), p = g.player;
+    var T = L.barricadeTarget(g), p = g.player, tap = L.data.doors ? L.data.doors.tap : 0;
     g.barTarget = T;
-    var act = T && input && (input.use && T.add || input.pry && T.rem);
-    if (!act) { g.barWork = null; return false; }
-    var key = T.o.key + ':' + act, need = act === 'nail' ? D().nail : act === 'pry' ? D().pry : D().move;
+    // A door: a short press of E or X does its thing on release (js/doors.js); holding goes on to the long work.
+    var useNow = !!(input && input.use), pryNow = !!(input && input.pry), eT = g.eHeldT || 0, xT = g.xHeldT || 0;
+    g.eHeldT = useNow ? eT + dt : 0; g.xHeldT = pryNow ? xT + dt : 0;
+    if (T && !useNow && eT > 0 && eT < tap && T.tapE && !g.barWork) { L.doDoor(g, T.o, T.tapE.act); return true; }
+    if (T && !pryNow && xT > 0 && xT < tap && T.tapX && !g.barWork) { L.doDoor(g, T.o, T.tapX.act); return true; }
+    var useHold = useNow && T && T.add && (!T.tapE || g.eHeldT >= tap), pryHold = pryNow && T && T.rem && (!T.tapX || g.xHeldT >= tap);
+    var act = useHold ? T.add : pryHold ? T.rem : null;
+    if (!act) { g.barWork = null; return !!(T && (useNow && T.tapE || pryNow && T.tapX)); }
+    var key = T.o.key + ':' + act, need = act === 'nail' ? D().nail : act === 'pry' ? D().pry : act === 'force' ? L.data.doors.force : D().move;
     if (!g.barWork || g.barWork.key !== key) g.barWork = { key: key, t: 0, need: need };
     g.barWork.t += dt;
     if (act === 'nail' && Math.floor(g.barWork.t * 2) !== Math.floor((g.barWork.t - dt) * 2)) {
       if (L.makeNoise) L.makeNoise(g, p.x, p.y, D().noise.nail, 0, p);
       L.emit(g, 'hammer', p.x, p.y);
     }
+    if (act === 'force' && Math.floor(g.barWork.t) !== Math.floor(g.barWork.t - dt)) { if (L.makeNoise) L.makeNoise(g, p.x, p.y, L.data.doors.noise, 0, p); L.emit(g, 'bang', T.o.x, T.o.y); }
     if (g.barWork.t < need) return true;
     g.barWork = null;
+    if (act === 'force') { L.doDoor(g, T.o, 'force'); return true; }
     var o = T.o, b = entry(g, o);
     if (act === 'nail') {
       L.packTake(g, 'tablas', 1); L.packTake(g, 'clavos', D().nails);
@@ -215,6 +232,8 @@
       b.hp -= dmg;
       var left = Math.max(0, Math.ceil(b.hp / D().plankHp - 1e-9));
       if (left < b.planks) { b.planks = left; gone = true; L.emit(g, 'break', o.x, o.y); }
+    } else if (L.isDoor && L.isDoor(o) && L.doorState(g, o).closed) {
+      if (L.hitDoor(g, o, dmg, e)) return; // it broke (js/doors.js rebuilds the walls)
     } else if (o.kind === 'window' && !b.broken) {
       b.glass -= dmg;
       if (b.glass <= 0) { b.broken = true; b.glass = 0; gone = true; L.emit(g, 'glass', o.x, o.y); }

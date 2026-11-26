@@ -100,6 +100,11 @@
       L.emit(g, 'blow', who.q.x, who.q.y);
       return null;
     }
+    // No zombie in reach: a closed door in front takes the blow (js/doors.js).
+    if (!e && L.doorInFront) {
+      var dr = L.doorInFront(g, def.reach);
+      if (dr) { L.emit(g, 'blow', dr.x, dr.y); L.hitDoor(g, dr, def.dmg * (1 + 0.8 * t) * (1 + D().readyDmg * ready)); return null; }
+    }
     if (!e) return null;
     var dmg = L.meleeDamage(g, def, e) * (1 + D().readyDmg * ready), K = L.data.skills.list;
     L.applyHit(g, e, dmg, 0, 0);

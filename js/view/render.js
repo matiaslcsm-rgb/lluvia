@@ -193,13 +193,20 @@
       }
     }
     // At a doorway or a window (js/barricade.js): E nails a plank or drags furniture, X undoes; or what is missing.
+    if (g.switchTarget) {
+      var sT = g.switchTarget, lit = g.lights && g.lights[sT.plan.index + ':' + sT.fl + ':' + sT.sw.room];
+      ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
+      ctx.fillText('E: interruptor (' + (lit ? 'apagar' : 'prender') + ' la luz)', p.x - camX, p.y - camY - p.r - 14);
+    }
     var bt = g.barTarget;
     if (bt && g.bodyTarget < 0 && g.groundTarget < 0) {
       var by = p.y - camY - p.r - (tg ? 28 : 14), parts = [];
-      if (bt.add) parts.push('E: ' + bt.addLabel);
-      if (bt.rem) parts.push('X: ' + bt.remLabel);
+      if (bt.tapE) parts.push('E: ' + bt.tapE.label);
+      if (bt.add) parts.push((bt.tapE ? 'mantené E: ' : 'E: ') + bt.addLabel);
+      if (bt.tapX) parts.push('X: ' + bt.tapX.label);
+      if (bt.rem) parts.push((bt.tapX ? 'mantené X: ' : 'X: ') + bt.remLabel);
       ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif';
-      if (g.barWork) { ctx.fillStyle = C.text; ctx.fillText(/pry|back/.test(g.barWork.key) ? 'Sacando...' : 'Trabando...', p.x - camX, by); }
+      if (g.barWork) { ctx.fillStyle = C.text; ctx.fillText(/force/.test(g.barWork.key) ? 'Forzando...' : /pry|back/.test(g.barWork.key) ? 'Sacando...' : 'Trabando...', p.x - camX, by); }
       else if (parts.length) { ctx.fillStyle = C.text; ctx.fillText(parts.join(' · '), p.x - camX, by); }
       else if (bt.need) { ctx.fillStyle = C.dim; ctx.fillText(bt.need, p.x - camX, by); }
       if (g.barWork) {

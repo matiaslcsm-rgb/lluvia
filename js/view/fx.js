@@ -52,6 +52,8 @@
           case 'hammer': S.play('blow'); break;            // nailing a plank (js/barricade.js)
           case 'bang': S.play('blow'); L.fx.shake(1); break; // a zombie banging on a door or a window
           case 'glass': S.play('glass'); burst(ev.x, ev.y, '#bfe3f0', 12, 140, 0.4); break;
+          case 'click': S.play('click'); break; // a light switch (js/power.js)
+          case 'door': S.play('shove'); break; // a door opens or closes (js/doors.js)
           case 'groan': S.play('groan'); break; // a mad survivor screaming at night (js/madness.js)
           case 'barrier': S.play('groan'); burst(ev.x, ev.y, '#2a1840', 22, 160, 0.8); break; // one comes out of the black barrier
           case 'blow': S.play('blow'); break;

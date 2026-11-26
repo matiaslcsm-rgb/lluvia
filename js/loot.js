@@ -383,6 +383,10 @@
       return;
     }
     g.useHeld = !!(input && input.use);
+    // A light switch you look at (js/power.js): E flips it.
+    var sw = L.switchTarget ? L.switchTarget(g) : null;
+    g.switchTarget = sw;
+    if (sw) { g.lootTarget = null; g.search = null; g.barTarget = null; if (pressed) L.flipSwitch(g, sw); useBandageKey(g, input); return; }
     // At a doorway or a window: E nails a plank or drags furniture against it, X undoes it (js/barricade.js).
     if (L.updateBarricadeWork && L.updateBarricadeWork(g, dt, input)) { g.lootTarget = null; g.search = null; useBandageKey(g, input); return; }
     var tg = L.searchTarget(g);

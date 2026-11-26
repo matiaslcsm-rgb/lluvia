@@ -107,7 +107,7 @@
   // Does a house still have the lights on? Seeded by the building: always the same ones.
   L.houseLit = function (plan) {
     var h = Math.abs(Math.sin((plan.index + 1) * 91.17) * 24634.6345) % 1;
-    return h < C().houses.lit;
+    return h < C().houses.lit && (!L.hasPower || L.hasPower(plan)); // only where there is power (js/power.js)
   };
 
   // How lit a spot is by something other than the sun: 1 under a lamp or inside a lit house, 0 in the dark.
@@ -116,6 +116,7 @@
     if (!floor) L.lampsIn(city, x - r, y - r, x + r, y + r).forEach(function (l) { best = Math.max(best, 1 - Math.hypot(l.x - x, l.y - y) / r); });
     var plan = L.cityHouseAt && L.cityHouseAt(city, x, y);
     if (plan && L.houseLit(plan)) best = Math.max(best, 0.8);
+    if (L.litRoomAt && L.litRoomAt(g, x, y, floor)) best = 1; // a room you lit (js/power.js)
     return L.clamp(best * 1.6, 0, 1);
   };
 })(this.Lluvia = this.Lluvia || {});

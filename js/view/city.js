@@ -195,8 +195,28 @@
       drawPiece(ctx, q, cs);
       if (done) ctx.globalAlpha /= 0.55;
     });
-    (level.doors || []).forEach(function (g) { drawDoor(ctx, plan, level, g, null); });
-    if (!upper) plan.exits.forEach(function (e) { drawDoor(ctx, plan, level, e.seg, e.dir); });
+    // Doors (js/doors.js): open (the leaf and its swing), closed (a slab across) or broken (splinters).
+    var doorAt = function (kind, i) {
+      if (upper || !L.doorStateOf) return null;
+      var key = plan.index + ':' + (kind === 'door' ? 'x:' : 'd:') + i;
+      return L.doorStateOf(bar && bar[key], { kind: kind, key: key }, city._doors);
+    };
+    var anyDoor = function (seg, st, out) {
+      if (st && st.closed) drawShut(ctx, seg, st.locked);
+      else if (st && st.broken) drawBroken(ctx, seg);
+      else drawDoor(ctx, plan, level, seg, out);
+    };
+    (level.doors || []).forEach(function (g, i) { anyDoor(g, doorAt('inner', i), null); });
+    // Light switches (js/power.js): a small plate by a door of each room; warm when that room is lit.
+    if (L.planSwitches && city._doors) {
+      var gm = L.currentGame && L.currentGame();
+      L.planSwitches(plan, fl).forEach(function (sw) {
+        var on = gm && L.roomLit(gm, plan, fl, sw.room);
+        ctx.fillStyle = on ? '#f2d98a' : '#d8d2c4'; ctx.fillRect(sw.cx - 0.09, sw.cy - 0.09, 0.18, 0.18);
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.03; ctx.strokeRect(sw.cx - 0.09, sw.cy - 0.09, 0.18, 0.18);
+      });
+    }
+    if (!upper) plan.exits.forEach(function (e, i) { anyDoor(e.seg, doorAt('door', i), e.dir); });
     (plan.stairs || []).forEach(function (st) {
       if (st.from === fl) drawStair(ctx, st, false);
       else if (st.from + 1 === fl) drawStair(ctx, st, true);
@@ -290,6 +310,25 @@
     c.putImageData(img, 0, 0);
     fogs.set(key, { ver: ver, X: X, cv: cv, any: any });
     return any ? cv : null;
+  }
+
+  // A closed door: a wooden slab across the doorway (a little darker if locked). In cells of the house's frame.
+  function drawShut(ctx, g, locked) {
+    ctx.save(); ctx.lineCap = 'butt';
+    ctx.beginPath(); ctx.moveTo(g[0], g[1]); ctx.lineTo(g[2], g[3]);
+    ctx.strokeStyle = '#2a1d12'; ctx.lineWidth = 0.32; ctx.stroke();
+    ctx.strokeStyle = locked ? '#6e4e30' : '#8a6440'; ctx.lineWidth = 0.22; ctx.stroke();
+    var mx = (g[0] + g[2]) / 2, my = (g[1] + g[3]) / 2; // the handle
+    ctx.fillStyle = locked ? '#c9a46a' : '#d8c8a8'; ctx.beginPath(); ctx.arc(mx + (g[2] - g[0]) * 0.3, my + (g[3] - g[1]) * 0.3, 0.07, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  // A broken door: two splinters hanging at the sides.
+  function drawBroken(ctx, g) {
+    ctx.save(); ctx.lineCap = 'butt'; ctx.strokeStyle = '#6e4e30'; ctx.lineWidth = 0.16;
+    ctx.beginPath();
+    ctx.moveTo(g[0], g[1]); ctx.lineTo(g[0] + (g[2] - g[0]) * 0.25, g[1] + (g[3] - g[1]) * 0.25);
+    ctx.moveTo(g[2], g[3]); ctx.lineTo(g[2] - (g[2] - g[0]) * 0.2, g[3] - (g[3] - g[1]) * 0.2);
+    ctx.stroke(); ctx.restore();
   }
 
   // A door between rooms (or, with `out`, a doorway to the street: it opens inward), seen from above: the leaf open
