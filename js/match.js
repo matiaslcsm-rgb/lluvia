@@ -39,7 +39,8 @@
           seed: (seed + i * 7919) >>> 0, characterId: charId, listen: isHuman && !opts.humanBot,
           viewW: isHuman ? opts.viewW : 1280, viewH: isHuman ? opts.viewH : 720, storm: m.storm, pacts: m.pacts, forecast: m.forecast,
           city: isHuman ? opts.city : null, explore: isHuman && m.explore, noSpawn: isHuman && m.explore, night: isHuman && !!opts.night && !!opts.city,
-          gunsOnly: isHuman && !!opts.gunsOnly, gun: isHuman ? opts.gun : null
+          gunsOnly: isHuman && !!opts.gunsOnly, gun: isHuman ? opts.gun : null,
+          refuge: isHuman && !!opts.night && !!opts.city
         }),
         // Rivals get a spread of skills so some fall early and some go far.
         bot: (!isHuman || opts.humanBot) ? L.makeBot((seed * 31 + i) >>> 0, isHuman ? 0.7 : Math.min(1, 0.35 + 0.6 * ((i - 1) / 6) + (m.storm ? L.data.meta.storm.botSkill : 0))) : null,

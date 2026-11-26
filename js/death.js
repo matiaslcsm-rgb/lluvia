@@ -7,6 +7,7 @@
 
   L.dieAndWake = function (g) {
     var p = g.player, h = L.data.horde;
+    if (L.repKnocked) L.repKnocked(g, p.x, p.y); // the refuge trusts you less (js/refuge.js)
     // The body, with what you carried (all but the pistol).
     var places = g.pack.places.map(function (pl) { return { id: pl.id, slots: pl.slots.filter(function (sl) { return sl.id !== 'gun'; }) }; });
     var hands = L.handSlots(g).slice();
@@ -18,8 +19,8 @@
     g.pack.places = [{ id: 'bolsillos', slots: p.gun ? [{ id: 'gun', n: 1 }] : [] }];
     p.hands = { l: null, r: null };
     p.hand = p.gun ? 'gun' : 'melee';
-    // Where you last slept, or where the game started.
-    var bed = p.bed, at = bed || (g.city && g.city.start ? L.cityFree(g.city, g.city.start.x, g.city.start.y) : { x: p.x, y: p.y });
+    // Where you last slept, else the refuge, else where the game started.
+    var bed = p.bed, at = bed || g.refuge || (g.city && g.city.start ? L.cityFree(g.city, g.city.start.x, g.city.start.y) : { x: p.x, y: p.y });
     p.x = at.x; p.y = at.y; p.floor = bed ? bed.floor : 0; p.house = bed ? bed.house : null;
     // Whole again: life, wounds, energy, hunger and thirst.
     if (L.makeHealth) L.makeHealth(g);
@@ -31,8 +32,8 @@
     var r2 = Math.pow(h.respawnClear, 2);
     g.enemies = g.enemies.filter(function (e) { return e.type.boss || Math.pow(e.x - p.x, 2) + Math.pow(e.y - p.y, 2) > r2; });
     g.projectiles.length = 0; g.enemyShots.length = 0;
-    L.toast(g, any ? 'Moriste. Te despertaste ' + (bed ? 'donde dormiste por última vez' : 'donde empezaste') + '. Tu cuerpo quedó donde caíste, con tus cosas.' :
-      'Moriste. Te despertaste ' + (bed ? 'donde dormiste por última vez.' : 'donde empezaste.'), '#c26a4a');
+    L.toast(g, any ? 'Te noquearon. Te despertaste ' + (bed ? 'donde dormiste por última vez' : g.refuge ? 'en ' + g.refuge.name : 'donde empezaste') + '. Tu cuerpo quedó donde caíste, con tus cosas.' :
+      'Te noquearon. Te despertaste ' + (bed ? 'donde dormiste por última vez.' : g.refuge ? 'en ' + g.refuge.name + '.' : 'donde empezaste.'), '#c26a4a');
   };
 
   // The nearest body of yours within reach, on your floor: its index or -1.

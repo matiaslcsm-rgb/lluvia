@@ -120,6 +120,8 @@
     g.player.hp = g.player.stats.maxHp;
     // In a city you start at its starting spot (the plaza), so the first chests land around you, not in a corner.
     if (g.city && g.city.start) { var fr = L.cityFree(g.city, g.city.start.x, g.city.start.y); g.player.x = fr.x; g.player.y = fr.y; }
+    // The real game starts inside the refuge, the Catedral (js/refuge.js).
+    if (opts.night && opts.refuge && L.makeRefuge) L.makeRefuge(g);
     if (g.spawning && !g.explore) L.fillChests(g); // no chests while exploring the map (they come back with "juntar", stage 48)
     return g;
   };
@@ -269,6 +271,7 @@
     if (g.night && L.updateBarrier) L.updateBarrier(g, dt);       // how far the black barrier is (js/barrier.js)
     if (g.night && L.updateExplored) L.updateExplored(g, dt);     // what you see is remembered on the map (js/explored.js)
     if (g.night && L.updateBarricades) L.updateBarricades(g, dt); // zombies banging on doors and windows (js/barricade.js)
+    if (g.refuge && L.updateRefuge) L.updateRefuge(g);            // a day without being knocked out (js/refuge.js)
     if (g.god && L.updateDebug) L.updateDebug(g);                  // invincible, from the test menu (js/debug.js)
     if (g.night) spawnByClock(g, dt);
     else if (g.spawning) { spawn(g, dt); spawnBoss(g); spawnMini(g); spawnWave(g); }
@@ -429,6 +432,7 @@
       for (var tries = 0; tries < 6; tries++) {
         var a = g.rng() * TAU, r0 = (N.near + g.rng() * (N.far - N.near)) * s;
         var pt = L.cityFree(g.city, p0.x + Math.cos(a) * r0, p0.y + Math.sin(a) * r0);
+        if (g.refuge && L.inRefuge(g, pt.x, pt.y)) continue; // never inside the refuge
         if (Math.hypot(pt.x - p0.x, pt.y - p0.y) < N.near * 0.8 * s) continue;
         if (L.canSee && L.canSee(g.city, p0, p0.aim || 0, pt.x, pt.y, 0)) continue;
         var z = L.spawnEnemy(g, N.type || pickType(g, g.time / 60), pt.x, pt.y);

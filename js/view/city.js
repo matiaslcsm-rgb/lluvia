@@ -748,6 +748,11 @@
     m.fillStyle = '#ffd27a';
     g.chests.forEach(function (c) { var cx = at.mx(c.x), cy = at.my(c.y); m.fillRect(cx - 2.5, cy - 2.5, 5, 5); });
     keepExplored(m, g, p.x, p.y, k, 0, 0, size, size);
+    // The refuge: a gold cross, kept on the edge when it is off the map so you know which way home is.
+    if (g.refuge) {
+      var rx = Math.max(6, Math.min(size - 6, at.mx(g.refuge.x))), ry = Math.max(6, Math.min(size - 6, at.my(g.refuge.y)));
+      m.fillStyle = '#e8c66a'; m.fillRect(rx - 1.5, ry - 5, 3, 10); m.fillRect(rx - 4, ry - 2.5, 8, 3);
+    }
     ctx.save();
     ctx.globalAlpha = 0.88;
     ctx.fillStyle = '#1b1f17'; ctx.fillRect(x0, y0, size, size);
@@ -781,6 +786,7 @@
       ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
       ctx.font = '600 13px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = color; ctx.fillText(label, X + 10, Y + 4);
     };
+    if (g.refuge) mark(g.refuge.x, g.refuge.y, '#e8c66a', 'Refugio: ' + g.refuge.name);
     if (p.bed) mark(p.bed.x, p.bed.y, '#9fc3e8', 'Dormiste acá');
     (g.bodies || []).forEach(function (b) { mark(b.x, b.y, '#c26a4a', 'Tu cuerpo'); });
     mark(p.x, p.y, '#ffffff', 'Vos');

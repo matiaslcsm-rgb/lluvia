@@ -14,7 +14,8 @@
     gun: 1, asleep: 1, hurt: 1, invuln: 1, aiming: 1, running: 1, blocking: 1, wasHurt: 1, stairOn: 1 };
   // Game fields copied as they are.
   var GAME = ['seed', 'time', 'slept', 'kills', 'deaths', 'gold', 'pendingLevels', 'nextBoss', 'nextMini', 'nextWave',
-    'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies', 'barrierSeen', 'barricades'];
+    'spawnAcc', 'seasonId', 'weather', 'ground', 'bodies', 'barrierSeen', 'barricades',
+    'refuge', 'rep', 'repDay', 'repKnockedDay'];
 
   function copy(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v, noPlans)); }
   // A building's plan (the house you, your bed or your body are in) is saved as its number and found again on load:

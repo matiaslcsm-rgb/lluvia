@@ -95,10 +95,27 @@ comprobar.
   - las facciones, después de los NPC, empezando por una o dos;
   - el Ente se queda, pero misterioso: solo señales, nunca se dice qué es;
   - la niebla de guerra de la calle, más adelante, cuando el mapa pese.
+- **2026-11-25 (tercera tanda): cómo se juega una partida y los sobrevivientes.**
+  - **El arranque (por ahora uno solo):** sos un policía de la provincia que se quedó cuidando la Catedral de San
+    Miguel durante la tormenta. Arrancás ahí adentro; la catedral es un refugio seguro y trabado, y tenés buena
+    relación con su gente.
+  - **El objetivo:** conseguir suministros y proteger el refugio, averiguar qué pasa, tratar con los otros refugios,
+    ayudar gente y matar criaturas. La partida tiene disparadores (cosas que pasan cuando hacés algo o pasa tiempo).
+  - **Noqueado:** si te noquean o te atacan, te despertás en el último lugar donde dormiste, pero baja tu reputación;
+    si alguien te ve caer, baja más. La reputación se recupera no haciendo cosas profanas.
+  - **Sobrevivientes:** encerrados en casas y también en la calle. Si encontrás uno, lo podés mandar a la catedral,
+    o se suma y te acompaña. Te piden comida, remedios, tablas, armas.
+  - **Se convierten solo si mueren.** Pero pueden enloquecer y alucinar: sabotear el campamento, pedirte compañía y
+    tratar de matarte en el camino, atraer zombis, controlar criaturas.
+  - **Les podés pegar.** Cada NPC y el jugador tienen reputación y relaciones con otros NPC.
+  - **Conciencia colectiva:** zonas con la moral baja y más locura, más inestables y peligrosas. Esto crece después.
+  - Las pruebas en el navegador las hace Claude.
 
 ## Decisiones abiertas
 - Las facciones y los finales (`docs/FACCIONES.md`): cuáles primero (van después de los NPC, de a una o dos).
-- Cómo se juega y se desarrolla una partida (el usuario lo está pensando); recién después, la cordura.
+- Qué es "profano" (lo que baja la reputación además de caer): por ahora solo caer la baja, y cada día sin caer
+  sube un poco.
+- La cordura: ahora la locura es de los NPC; falta ver si el jugador también tiene.
 
 ## Etapas
 0. **Base:** página con el lienzo, el bucle del juego y el personaje que se mueve. *Se comprueba:* abrís
@@ -275,7 +292,17 @@ Segunda tanda (2026-11-25):
     salen de ella.
 66. **Refugio y barricadas:** tablas y clavos en puertas y ventanas, correr muebles para trabar, zombis que golpean
     y rompen.
-67. **Vecinos:** gente encerrada en su casa que te pide algo y te da algo a cambio; si la muerden, se convierte.
+67. **Vecinos:** reemplazada por las etapas 68 a 74 (tercera tanda).
+Tercera tanda (2026-11-25), cómo se juega una partida:
+68. **El refugio de la Catedral:** arrancás adentro, como el policía que la cuidaba; ventanas trabadas, la puerta
+    libre, y la reputación con el refugio (caer la baja, más si te ven; un día sin caer la sube).
+69. **Sobrevivientes:** en casas trabadas y en la calle; hablarles, qué te piden y qué te dan.
+70. **Mandarlos a la Catedral o que te acompañen;** la gente del refugio vive ahí y pide cosas.
+71. **Reputación y relaciones:** cada NPC con la suya y con los otros; pegarles tiene consecuencias.
+72. **La locura de los NPC:** alucinan, sabotean el refugio, te traicionan en el camino, atraen zombis; al morir se
+    convierten.
+73. **Conciencia colectiva:** la moral de cada zona; donde hay más locura es más peligroso.
+74. **Disparadores:** averiguar qué pasa, los otros refugios.
 Más adelante: facciones (de a una o dos, propuesta en `docs/FACCIONES.md`); la cordura y la lluvia negra que hace
 mal (cuando el usuario defina cómo se juega una partida); niebla de guerra en la calle.
 
@@ -1269,6 +1296,15 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   - Revisión del código de hoy: los zombis que oían un ruido adentro no llegaban a golpear la puerta; un zombi parado
     en la puerta quedaba metido en la tabla; se podía trabar con un mueble desde afuera. Los tres arreglados.
   - Pruebas: 77.
+- **2026-11-25 (tercera tanda):**
+  - Prueba en el navegador de lo de ayer (la hace Claude): clavar tablas, el zombi que oye, golpea y rompe la puerta
+    (dos tablas en unos 30 s), la barrera y destrabarse. Todo anduvo.
+  - **Etapa 68, el refugio de la Catedral:** arrancás adentro, con las 13 ventanas trabadas y la puerta libre;
+    traés mochila, martillo, 3 tablas y 8 clavos. Los zombis nunca aparecen adentro. Si te noquean sin haber dormido
+    en otro lado, te despertás ahí. La reputación con el refugio se ve abajo a la izquierda ("En la Catedral confían
+    en vos"); caer la baja 8, y 7 más si fue cerca (te vieron); cada día sin caer sube 3. La Catedral está marcada
+    en el mapa (cruz dorada en el minimapa, y en el mapa grande). En el menú F2: "Al refugio".
+  - Pruebas: 81.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

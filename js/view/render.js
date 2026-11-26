@@ -250,6 +250,8 @@
         ctx.fillStyle = p.unease > 0 || over > 0 ? C.low : C.dim;
         ctx.fillText(bits.join(' · '), x, y + 68);
       }
+      // How the refuge sees you (js/refuge.js).
+      if (g.refuge && g.rep) { ctx.fillStyle = g.rep.catedral < 45 ? C.low : C.dim; ctx.fillText('En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral), x, y + 113); }
       if (p.faint > 0) { ctx.fillStyle = C.low; ctx.fillText('Desmayado...', x, y + 83); }
       else if (p.energy !== undefined && p.energy < L.data.rest.sightLow && !p.asleep) { ctx.fillStyle = C.low; ctx.fillText('Sueño (Z: dormir)', x, y + 83); }
       // What your body has (js/health.js): K opens the status window.

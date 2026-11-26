@@ -53,6 +53,7 @@
     groups: [
       { name: 'Moverte', actions: [
         { label: 'Destrabarme', run: function (g) { return L.unstick(g) ? 'Listo, te saqué de la pared.' : 'No encontré un lugar libre cerca.'; } },
+        { label: 'Al refugio', run: function (g) { if (!g.refuge) return 'Esta partida no tiene refugio.'; go(g, g.refuge.x, g.refuge.y); return 'Estás en ' + g.refuge.name + '.'; } },
         { label: 'A la plaza', run: function (g) { go(g, g.city.start.x, g.city.start.y); return 'Estás en la plaza.'; } },
         { label: 'A una casa cerca', run: function (g) { var h = house(g); if (!h) return 'No hay casas cerca.'; inside(g, h); return 'Estás adentro de una casa.'; } },
         { label: 'A una casa de dos pisos', run: function (g) { var h = house(g, true); if (!h) return 'No hay casas de dos pisos cerca.'; inside(g, h); return 'Estás en una casa con escalera.'; } },
