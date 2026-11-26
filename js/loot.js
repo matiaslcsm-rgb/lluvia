@@ -346,10 +346,10 @@
       if (!f && g.barricades && g.barricades[plan.index + ':f:' + k]) return; // dragged to a door, or broken
       // A sink already searched: with empty bottles, E fills them (the user: refill at a tap).
       var fill = empties && D().sinks.indexOf(t) >= 0 && g.searched.has(key) && !g.leftover.has(key);
-      if (!fill && (!D().pieces[t] || g.searched.has(key) && !g.leftover.has(key))) return;
+      if (!fill && (!D().pieces[t] || g.searched.has(key) && !g.leftover.has(key) && !g.lootMenu)) return;
       var dx = p.x - o.x, dy = p.y - o.y, a = dx * o.ax + dy * o.ay, b = dx * o.fx + dy * o.fy;
       var d = Math.hypot(a - L.clamp(a, -o.hw, o.hw), b - L.clamp(b, -o.hd, o.hd));
-      if (d < reach && d < bd) { bd = d; best = { plan: plan, f: f, k: k, t: t, key: key, fill: fill }; }
+      if (d < reach && d < bd) { bd = d; best = { plan: plan, f: f, k: k, t: t, key: key, fill: fill, seen: g.searched.has(key) }; }
     });
     return best;
   };
@@ -382,7 +382,10 @@
     if (L.updateBarricadeWork && L.updateBarricadeWork(g, dt, input)) { g.lootTarget = null; g.search = null; useBandageKey(g, input); return; }
     var tg = L.searchTarget(g);
     g.lootTarget = tg;
-    if (input && input.use && tg && !g.respawn) {
+    // With the window (the real game, g.lootMenu): a piece you already searched opens at once with a press of E.
+    if (g.lootMenu && tg && tg.seen && !tg.fill && input && input.use && !g.useWas) { g.useWas = true; L.openPiece(g, tg); g.search = null; useBandageKey(g, input); return; }
+    g.useWas = !!(input && input.use);
+    if (input && input.use && tg && !g.respawn && !(g.lootMenu && tg.seen && !tg.fill)) {
       if (!g.search || g.search.key !== tg.key) { g.search = { key: tg.key, t: 0 }; L.emit(g, 'rummage', p.x, p.y); }
       g.search.t += dt;
       if (L.makeNoise && Math.floor(g.search.t * 2) !== Math.floor((g.search.t - dt) * 2)) L.makeNoise(g, p.x, p.y, L.data.senses.noise.search, p.floor, p);
@@ -392,6 +395,10 @@
         L.toast(g, n - left2 ? 'Llenaste ' + (n - left2) + (n - left2 === 1 ? ' botella' : ' botellas') + ' de agua.' : 'No te entra más agua.', '#7fb3c9');
         L.emit(g, 'craft', p.x, p.y);
         g.search = null;
+      } else if (g.search.t >= D().search && g.lootMenu) {
+        L.openPiece(g, tg);
+        g.search = null;
+        g.useWas = true;
       } else if (g.search.t >= D().search) {
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {
@@ -413,6 +420,83 @@
     } else g.search = null;
     useBandageKey(g, input);
   };
+  // ---- The window of a piece (the user, 2026-11-25: "que se abra un submenú cuando se revisan los muebles, así
+  // puedo mover lo que me interese, algo similar al Project Zomboid") ----
+  // g.openPiece: { key, name, slots } while it is open; g.leftover keeps what each searched piece holds, as slots.
+  function toSlot(q) {
+    if (q && !Array.isArray(q)) return q; // already a slot
+    var id = q[0], n = q[1];
+    if (isWeapon(id)) { var wd = L.meleeDef(id.slice(2)); return { id: id, n: 1, dur: wd.dur }; }
+    if (isCloth(id)) return L.newCloth(id.slice(2));
+    return { id: id, n: n };
+  }
+  L.pieceSlots = function (g, tg) {
+    var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : g.searched.has(tg.key) ? [] : L.lootOf(tg.plan, tg.f, tg.k, tg.t), out = [];
+    list.forEach(function (q) {
+      var sl = toSlot(q);
+      if (isCloth(sl.id) || isWeapon(sl.id) || sl.id.indexOf('c:') === 0 || sl.id === 'i:') { for (var i = 0; i < (Array.isArray(q) ? q[1] : 1); i++) out.push(i ? toSlot([sl.id, 1]) : sl); }
+      else out.push(sl);
+    });
+    return out;
+  };
+  function savePiece(g) {
+    var o = g.openPiece;
+    g.searched.add(o.key);
+    if (o.slots.length) g.leftover.set(o.key, o.slots); else g.leftover.delete(o.key);
+  }
+  L.pieceName = function (t) { return D().pieceNames[t] || t.charAt(0).toUpperCase() + t.slice(1); };
+  L.openPiece = function (g, tg) {
+    g.openPiece = { key: tg.key, t: tg.t, name: L.pieceName(tg.t), slots: L.pieceSlots(g, tg) };
+    savePiece(g);
+    L.emit(g, 'rummage', g.player.x, g.player.y);
+  };
+  // Closing with E: that same E is still down next frame, so it must not open the piece again until released.
+  L.closePiece = function (g) { if (g.openPiece) savePiece(g); g.openPiece = null; g.useWas = true; };
+  // Name of a thing in the piece.
+  L.pieceSlotName = function (sl) {
+    if (sl.id.indexOf('c:') === 0) return D().containers[sl.id.slice(2)].name;
+    if (sl.id === 'i:') return 'Algo raro';
+    return slotName(sl);
+  };
+  // Takes thing i of the open piece: what does not fit stays. True if you took something.
+  L.takeFromPiece = function (g, i) {
+    var o = g.openPiece, sl = o && o.slots[i], p = g.player;
+    if (!sl) return false;
+    var took = false;
+    if (isWeapon(sl.id)) {
+      var h = hands(g);
+      if (!h.l && !h.r) { putInHands(g, sl, 'r'); if (p.hand !== 'gun') p.hand = 'melee'; took = true; }
+      else took = L.packAddWeapon(g, sl.id.slice(2), sl.dur);
+    } else if (isCloth(sl.id)) took = L.giveCloth ? L.giveCloth(g, sl) : L.packAddSlot(g, sl);
+    else if (sl.id.indexOf('c:') === 0) took = L.wear(g, sl.id.slice(2));
+    else if (sl.id === 'i:') { foundItem(g); took = true; }
+    else {
+      var rest = L.packAdd(g, sl.id, sl.n);
+      if (rest < sl.n) { if (rest) { sl.n = rest; savePiece(g); L.emit(g, 'loot', p.x, p.y, { piece: o.t, got: [[sl.id, 1]] }); return true; } took = true; }
+    }
+    if (!took) { L.toast(g, 'No te entra: ' + L.pieceSlotName(sl) + '.', '#8d8672'); return false; }
+    o.slots.splice(i, 1);
+    savePiece(g);
+    L.emit(g, 'loot', p.x, p.y, { piece: o.t, got: [[sl.id, 1]] });
+    return true;
+  };
+  // Everything that fits.
+  L.takeAllFromPiece = function (g) {
+    var o = g.openPiece, any = false;
+    if (!o) return false;
+    for (var i = o.slots.length - 1; i >= 0; i--) if (L.takeFromPiece(g, i)) any = true;
+    return any;
+  };
+  // Leaves one of your things in the open piece (ref: { pl, i } or { hand }); the pistol stays with you.
+  L.putInPiece = function (g, ref) {
+    var o = g.openPiece, sl = o && slotOf(g, ref);
+    if (!sl || sl.id === 'gun') return false;
+    var out = takeOut(g, ref), top = o.slots.filter(function (q) { return q.id === out.id && !isWeapon(q.id) && !isCloth(q.id) && D().items[q.id]; })[0];
+    if (top) top.n += out.n; else o.slots.push(out);
+    savePiece(g);
+    return true;
+  };
+
   // H: a bandage (js/health.js decides what it does with the wounds).
   function useBandageKey(g, input) {
     if (input && input.heal && !g.healHeld) (L.quickBandage || L.useBandage)(g);

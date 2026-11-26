@@ -1305,6 +1305,11 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     en vos"); caer la baja 8, y 7 más si fue cerca (te vieron); cada día sin caer sube 3. La Catedral está marcada
     en el mapa (cruz dorada en el minimapa, y en el mapa grande). En el menú F2: "Al refugio".
   - Pruebas: 81.
+  - **Pedido del usuario: la ventana del mueble, como Project Zomboid.** Al revisar un mueble se abre una ventana:
+    a la izquierda lo que tiene, a la derecha lo que llevás. Clic en lo del mueble: te lo llevás; "Tomar todo";
+    clic en lo tuyo: lo dejás guardado en el mueble (la pistola no). Un mueble ya revisado se abre al toque con E.
+    E o Esc cierra; el juego espera mientras está abierta. Los muebles no tienen límite de lugar por ahora.
+  - Pruebas: 84.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

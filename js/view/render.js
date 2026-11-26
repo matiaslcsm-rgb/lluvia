@@ -181,7 +181,7 @@
     if (tg) {
       var sx = p.x - camX, sy = p.y - camY - p.r - 14;
       ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = C.text;
-      ctx.fillText(g.search ? 'Revisando...' : 'E: revisar', sx, sy);
+      ctx.fillText(g.search ? 'Revisando...' : tg.seen && g.lootMenu && !tg.fill ? 'E: abrir ' + L.pieceName(tg.t).toLowerCase() : 'E: revisar', sx, sy);
       if (g.search) {
         ctx.strokeStyle = C.ammo; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, g.search.t / Dl.search)); ctx.stroke();

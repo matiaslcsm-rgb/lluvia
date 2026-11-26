@@ -72,7 +72,9 @@
     match = L.createMatch({ seed: seed, characterId: characterId, viewW: canvas.width, viewH: canvas.height, profile: L.profile, storm: !daily && !!L.ui.storm && L.isUnlocked(L.profile, 'tormenta'),
       pacts: daily ? [] : (L.ui.pacts || []).filter(function (id) { return L.isUnlocked(L.profile, id); }), city: city,
       solo: mode.solo, gunsOnly: mode.gunsOnly, gun: mode.startGun, explore: mode.explore, night: mode.night });
-    var g = game(), sp = city.start || { x: city.size / 2, y: city.size / 2 }, fr = L.cityFree(city, sp.x, sp.y);
+    var g = game();
+    g.lootMenu = !!g.night; // searching a piece opens its window (js/loot.js)
+    var sp = city.start || { x: city.size / 2, y: city.size / 2 }, fr = L.cityFree(city, sp.x, sp.y);
     if (!g.refuge) { g.player.x = fr.x; g.player.y = fr.y; } // the real game starts in the refuge (js/refuge.js)
     if (msg) L.toast(g, msg, '#ff9a7a');
     // Continuar: back where you lay down in a bed (js/save.js).
@@ -96,6 +98,12 @@
     if (paused) return;
     paused = true;
     L.ui.inventory(game(), toggleInventory);
+  }
+
+  // The window of a searched piece (js/loot.js): E or Esc closes it. The game waits while it is open.
+  function closePiece() {
+    if (match) L.closePiece(game());
+    paused = false; L.ui.hide();
   }
 
   // Tab: what you can make (js/craft.js). The game waits while the list is open.
@@ -135,6 +143,7 @@
   }
 
   function togglePause() {
+    if (L.ui.current === 'piece') { closePiece(); return; }
     if (L.ui.current === 'debug') { toggleDebug(); return; }
     if (L.ui.current === 'map') { toggleMap(); return; }
     if (L.ui.current === 'status') { toggleStatus(); return; }
@@ -181,6 +190,7 @@
     else if (L.ui.current === 'daily' && n !== undefined && L.data.characters[n]) start(L.data.characters[n].id, true);
     else if (L.ui.current === 'choice' && n !== undefined) pick(n);
     else if (L.ui.current === 'over' && e.code === 'Enter') menu();
+    else if (L.ui.current === 'piece') { if ((e.code === 'KeyE' && !e.repeat) || e.code === 'Escape') closePiece(); } // held E (it opened the window) repeats: ignore
     else if (e.code === 'Tab') { e.preventDefault(); if (L.ui.current !== 'inventory') toggleCraft(); }
     else if (e.code === 'KeyI' && L.ui.current !== 'craft' && L.ui.current !== 'status') toggleInventory();
     else if (e.code === 'KeyK' && L.ui.current !== 'craft' && L.ui.current !== 'inventory') toggleStatus();
@@ -266,6 +276,7 @@
       L.tips.check(match);
       var g = game();
       if (!match.over && g.choice && L.ui.current !== 'choice') L.ui.choice(g.choice, pick, g);
+      if (g.openPiece && L.ui.current !== 'piece') { paused = true; L.ui.piece(g, closePiece); }
       if (match.over && L.ui.current !== 'over') {
         if (!reward) {
           reward = L.settleMatch(L.profile, match);

@@ -286,6 +286,48 @@
       L.ui.current = 'inventory';
     },
 
+    // A piece of furniture you searched (js/loot.js; the user: "como Project Zomboid"): on the left what it holds,
+    // on the right what you carry. A click on its things takes them; a click on yours leaves them in the piece.
+    piece: function (g, onClose) {
+      var o = g.openPiece, p = g.player, Dl = L.data.loot, wrap = el('div', 'inv'), h = p.hands || {};
+      if (!o) return;
+      var again = function () { L.ui.piece(g, onClose); };
+      var pb = el('div', 'invbox piecebox');
+      pb.appendChild(el('div', 'invtitle', o.name + (o.slots.length ? ' · ' + o.slots.length + (o.slots.length === 1 ? ' cosa' : ' cosas') : '')));
+      if (!o.slots.length) pb.appendChild(el('div', 'invempty', 'No hay nada.'));
+      o.slots.forEach(function (sl, i) {
+        var b = button(L.pieceSlotName(sl), function () { L.takeFromPiece(g, i); again(); }, 'btn slot');
+        b.title = 'Clic: llevártelo';
+        pb.appendChild(b);
+      });
+      if (o.slots.length > 1) pb.appendChild(button('Tomar todo', function () { L.takeAllFromPiece(g); again(); }, 'btn small'));
+      wrap.appendChild(pb);
+      var mine = function (box, ref, sl) {
+        if (sl.id === 'gun') { box.appendChild(el('div', 'invline', 'Pistola (no se deja)')); return; }
+        var b = button(L.slotName(sl), function () { L.putInPiece(g, ref); again(); }, 'btn slot ghost');
+        b.title = 'Clic: dejarlo en ' + o.name.toLowerCase();
+        box.appendChild(b);
+      };
+      var hb = el('div', 'invbox');
+      hb.appendChild(el('div', 'invtitle', 'Manos'));
+      if (h.r) mine(hb, { hand: 'r' }, h.r);
+      if (h.l && h.l !== h.r) mine(hb, { hand: 'l' }, h.l);
+      if (!h.r && !h.l) hb.appendChild(el('div', 'invempty', 'Vacías'));
+      wrap.appendChild(hb);
+      g.pack.places.forEach(function (pl) {
+        var spec = Dl.containers[pl.id], box = el('div', 'invbox');
+        box.appendChild(el('div', 'invtitle', spec.name + ' · ' + pl.slots.length + '/' + spec.slots));
+        pl.slots.forEach(function (sl, i) { mine(box, { pl: pl, i: i }, sl); });
+        for (var k = pl.slots.length; k < spec.slots; k++) box.appendChild(el('div', 'invempty', '—'));
+        wrap.appendChild(box);
+      });
+      var kg = L.packWeight(g), cap = Dl.carry.cap;
+      show([el('h2', null, o.name), el('p', kg > cap ? 'warn' : null, 'Peso: ' + kg.toFixed(1) + ' de ' + cap + ' kg'),
+        wrap, button('Cerrar (E)', onClose, 'btn ghost'),
+        el('p', 'hint', 'Clic en lo del mueble: te lo llevás · Clic en lo tuyo: lo dejás en el mueble · Lo que dejás queda guardado ahí')]);
+      L.ui.current = 'piece';
+    },
+
     // The big map (M, js/explored.js): everything you have seen of the city. The wheel zooms, dragging moves it.
     bigMap: function (g, onClose) {
       var X = g.explored, p = g.player, city = g.city;

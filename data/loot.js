@@ -66,6 +66,11 @@
       estante: [['vendas', 0.4, 1, 3], ['antibiotico', 0.2, 4, 4], ['kitFarmacia', 0.15, 1, 1], ['botiquin', 0.05, 1, 1]],
       cajas: [['curitas', 0.4, 4, 10], ['alcohol', 0.3, 1, 2], ['botiquin', 0.08, 1, 1], ['r:guantesTrabajo', 0.08, 1, 1]]
     },
+    // The names of the pieces, for the window that opens when you search one (the user: "como Project Zomboid").
+    pieceNames: { ropero: 'Ropero', mesa: 'Mesa', mesita: 'Mesita de luz', mesada: 'Mesada', heladera: 'Heladera',
+      estante: 'Estante', cajas: 'Cajas', escritorio: 'Escritorio', archivero: 'Archivero', gondola: 'Góndola',
+      mostrador: 'Mostrador', maquina: 'Máquina', motor: 'Motor', auto: 'Auto', lavatorio: 'Lavatorio', camilla: 'Camilla',
+      lavarropas: 'Lavarropas', pileta: 'Pileta', tanque: 'Tanque', taller: 'Banco de taller' },
     pieces: {
       ropero: [['i:', 0.04, 1, 1], ['c:mochila', 0.08, 1, 1], ['c:bolso', 0.1, 1, 1], ['c:rinonera', 0.06, 1, 1], ['trapos', 0.6, 1, 3], ['vendas', 0.2, 1, 1], ['balas', 0.12, 3, 8], ['w:cinturon', 0.25, 1, 1], ['w:hockey', 0.04, 1, 1], ['r:remera', 0.5, 1, 1], ['r:camisa', 0.3, 1, 1], ['r:termica', 0.08, 1, 1], ['r:buzo', 0.35, 1, 1], ['r:camperaJean', 0.12, 1, 1], ['r:camperaCuero', 0.05, 1, 1], ['r:piloto', 0.08, 1, 1], ['r:camperon', 0.1, 1, 1], ['r:gorro', 0.2, 1, 1], ['r:gorra', 0.2, 1, 1], ['r:guantesLana', 0.15, 1, 1], ['r:guantesCuero', 0.04, 1, 1], ['r:jean', 0.3, 1, 1], ['r:jogging', 0.3, 1, 1], ['r:short', 0.2, 1, 1], ['r:medias', 0.4, 1, 1], ['r:mediasLana', 0.15, 1, 1], ['r:zapatillas', 0.15, 1, 1], ['r:zapatos', 0.1, 1, 1], ['r:botas', 0.05, 1, 1], ['r:ojotas', 0.1, 1, 1]],
       mesa: [['i:', 0.03, 1, 1], ['comida', 0.1, 1, 1]],
