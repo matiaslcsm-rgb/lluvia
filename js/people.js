@@ -26,12 +26,21 @@
     var city = g.city, p = g.player, s = city.scale, k = city.k, r2 = Math.pow((R || D().scan) * s, 2), nail = false;
     g.peopleHouses = g.peopleHouses || {};
     if (!g.people) g.people = [];
-    var B = city.map.buildings;
-    for (var i = 0; i < B.length; i++) {
+    var B = city.map.buildings, cell = 50 * s, grid = city._bgrid;
+    if (!grid) { // building numbers by 50 m cell, made once
+      grid = city._bgrid = new Map();
+      for (var j = 0; j < B.length; j++) { var key0 = Math.floor(B[j][0][0] * k / cell) + ',' + Math.floor(B[j][0][1] * k / cell); (grid.get(key0) || grid.set(key0, []).get(key0)).push(j); }
+    }
+    var near = [], R0 = Math.ceil((R || D().scan) * s / cell), cx = Math.floor(p.x / cell), cy = Math.floor(p.y / cell);
+    for (var gx = cx - R0; gx <= cx + R0; gx++) for (var gy = cy - R0; gy <= cy + R0; gy++) { var list = grid.get(gx + ',' + gy); if (list) near = near.concat(list); }
+    near.sort(function (a, b) { return a - b; });
+    for (var n = 0; n < near.length; n++) {
+      var i = near[n];
       if (g.peopleHouses[i]) continue;
       var x = B[i][0][0] * k, y = B[i][0][1] * k;
       if ((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y) > r2) continue;
       g.peopleHouses[i] = true;
+      if ((hash(i) % 1000) / 1000 >= D().house) continue; // the draw first: only those get their plan made
       var plan = L.cityHouse(city, i);
       if (!L.houseHasSurvivor(plan) || !plan.exitsPx.length || (g.refuge && plan.index === g.refuge.house)) continue;
       var e = plan.exitsPx[0], at = L.cityFree(city, e.x - e.nx * 1.2 * s, e.y - e.ny * 1.2 * s);
@@ -73,8 +82,10 @@
     var p = g.player, s = g.city.scale, best = null, bd = Infinity;
     (g.people || []).forEach(function (q) {
       if (q.dead || q.mode === 'travel' || (q.floor || 0) !== (p.floor || 0)) return;
-      // The one walking with you is always close: you talk to it only when you look at it (else E would never search).
-      if (q.mode === 'follow') { var da = Math.atan2(q.y - p.y, q.x - p.x) - (p.aim || 0); da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > 0.6) return; }
+      // You talk to somebody you look at (else anyone walking by, or the one following you, would take E from the
+      // furniture and the doors); through a nailed door, just standing there.
+      var door = q.door && g.barricades[q.door];
+      if (!door) { var da = Math.atan2(q.y - p.y, q.x - p.x) - (p.aim || 0); da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > D().face) return; }
       var d = Math.hypot(q.x - p.x, q.y - p.y), reach = (q.door && g.barricades[q.door] ? D().door : D().talk) * s + p.r;
       if (d < reach && d < bd) { bd = d; best = q; }
     });
@@ -137,7 +148,7 @@
   }
   function behind(g) {
     var p = g.player, s = g.city.scale, a = p.aim || 0;
-    var ent = { x: p.x - Math.cos(a) * 1.2 * s, y: p.y - Math.sin(a) * 1.2 * s, floor: p.floor || 0, house: p.floor ? p.house : null };
+    var ent = { x: p.x - Math.cos(a) * D().behind * s, y: p.y - Math.sin(a) * D().behind * s, floor: p.floor || 0, house: p.floor ? p.house : null };
     var fr = L.cityLevelFree(g.city, ent, p.r) || { x: p.x, y: p.y };
     return { x: fr.x, y: fr.y, floor: p.floor || 0, fh: p.floor && p.house ? p.house.index : null };
   }
@@ -145,7 +156,7 @@
   function refugeSpot(g) {
     var plan = L.refugePlan(g), s = g.city.scale;
     for (var n = 0; n < 40; n++) {
-      var a = g.rng() * Math.PI * 2, d = g.rng() * 8 * s, fr = L.cityFree(g.city, g.refuge.x + Math.cos(a) * d, g.refuge.y + Math.sin(a) * d);
+      var a = g.rng() * Math.PI * 2, d = g.rng() * D().inside.spread * s, fr = L.cityFree(g.city, g.refuge.x + Math.cos(a) * d, g.refuge.y + Math.sin(a) * d);
       if (L.cityHouseAt(g.city, fr.x, fr.y) === plan) return fr;
     }
     return { x: g.refuge.x, y: g.refuge.y };
@@ -225,18 +236,19 @@
     var s = g.city.scale, plan = L.refugePlan(g), w = q.walk || (q.walk = { t: 0, dx: 0, dy: 0 });
     w.t -= dt;
     if (w.t <= 0) { w.t = 2 + g.rng() * 4; var a = g.rng() * Math.PI * 2, go = g.rng() < 0.4; w.dx = go ? Math.cos(a) : 0; w.dy = go ? Math.sin(a) : 0; }
-    var nx = q.x + w.dx * 0.6 * s * dt, ny = q.y + w.dy * 0.6 * s * dt;
+    var nx = q.x + w.dx * D().inside.speed * s * dt, ny = q.y + w.dy * D().inside.speed * s * dt;
     if ((w.dx || w.dy) && L.cityFits(g.city, nx, ny, L.data.city.body) && L.cityHouseAt(g.city, nx, ny) === plan) { q.x = nx; q.y = ny; q.dirX = w.dx; q.dirY = w.dy; q.still = 0; }
     else { w.t = 0; q.still = 1; }
   }
 
   // Each frame: houses near you, people on the streets, and E to talk.
-  L.updatePeople = function (g, dt, input) {
+  // `gdt`: seconds of the game's clock (faster while you sleep), for the trip to the Catedral.
+  L.updatePeople = function (g, dt, input, gdt) {
     if (!g.city || !g.people && !g.refuge) return;
     var S = D(), St = S.street, p = g.player, s = g.city.scale;
     g.peopleScanT = (g.peopleScanT || 0) - dt;
     var ls = g.peopleScanAt;
-    if (g.peopleScanT <= 0 && (!ls || Math.hypot(p.x - ls.x, p.y - ls.y) > 10 * s)) { g.peopleScanT = 0.5; g.peopleScanAt = { x: p.x, y: p.y }; L.peopleScan(g); }
+    if (g.peopleScanT <= 0 && (!ls || Math.hypot(p.x - ls.x, p.y - ls.y) > S.rescan * s)) { g.peopleScanT = 0.5; g.peopleScanAt = { x: p.x, y: p.y }; L.peopleScan(g); }
     var light = L.clockOf(g).light > 0.5;
     // The streets: one more by day now and then, the far ones go away.
     g.people = g.people.filter(function (q) { return !q.street || q === g.talking || Math.hypot(q.x - p.x, q.y - p.y) < St.leave * s; });
@@ -248,7 +260,7 @@
     if (g.peopleDay !== day) { g.peopleDay = day; g.people.forEach(function (q) { if (q.mode === 'refuge') refugeWant(g, q); }); }
     // On the way to the Catedral, walking with you, living there; people on the street wander a little.
     g.people.forEach(function (q) {
-      if (q.mode === 'travel') { q.travel -= dt; if (q.travel <= 0) arrive(g, q); return; }
+      if (q.mode === 'travel') { q.travel -= gdt || dt; if (q.travel <= 0) arrive(g, q); return; }
       if (q === g.talking) { q.still = 1; return; }
       if (q.mode === 'follow') { follow(g, q, dt); return; }
       if (q.mode === 'refuge') { wanderInside(g, q, dt); return; }
@@ -261,7 +273,7 @@
       else { w.t = 0; q.still = 1; }
     });
     // E: talk (a press).
-    var tg = L.talkTarget(g);
+    var tg = g.barWork || g.search ? null : L.talkTarget(g); // nailing or searching: E stays on that
     g.talkTarget = tg;
     if (tg && input && input.use && !g.talkWas && !g.talking) { g.talking = tg; var dx = p.x - tg.x, dy = p.y - tg.y, l = Math.hypot(dx, dy) || 1; tg.dirX = dx / l; tg.dirY = dy / l; }
     g.talkWas = !!(input && input.use);

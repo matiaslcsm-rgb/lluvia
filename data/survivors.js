@@ -5,7 +5,10 @@
 //   get decided as you walk
 //   street: people on the streets: at most `max` at once, one every `every` seconds of daylight at most, between
 //   `near` and `far` meters from you, out of sight; they leave when you are `leave` meters away; `speed` m/s
-//   talk: how close (m) to be to talk; through a door from a little farther (`door`)
+//   talk: how close (m) to be to talk; through a door from a little farther (`door`); face: you talk to somebody
+//   you look at, within this angle (radians); rescan: meters you walk before houses near you are checked again
+//   behind: how far behind you somebody comes out or catches up; inside: how the people of the Catedral walk around
+//   in it (m/s) and how far (m) from its middle spot they settle
 //   wants / gives: what they may ask for and give back ([id, how many]); w: weapons, r: clothes
 //   rep: how much helping somebody raises the Catedral's trust (word gets around)
 //   follow (stage 70): one walking with you keeps `keep` meters behind, at `speed` times your walking speed; farther
@@ -19,7 +22,8 @@
   L.data.survivors = {
     house: 0.05, scan: 90,
     street: { max: 2, every: 150, near: 22, far: 40, leave: 120, speed: 0.9 },
-    talk: 1.8, door: 3.2,
+    talk: 1.8, door: 3.2, face: 0.6, rescan: 10, behind: 1.2,
+    inside: { speed: 0.6, spread: 8 },
     wants: [['comida', 2], ['agua', 2], ['vendas', 2], ['tablas', 2], ['clavos', 6], ['antibiotico', 1], ['paracetamol', 2],
       ['alcohol', 1], ['trapos', 3], ['w:cuchillo', 1], ['w:martillo', 1], ['balas', 10]],
     gives: [['balas', 12], ['comida', 2], ['agua', 2], ['vendas', 2], ['alcohol', 1], ['antibiotico', 1], ['clavos', 10],

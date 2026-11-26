@@ -92,3 +92,23 @@ test('acompañar: guardar y seguir mantiene a los que viven en la Catedral y a l
   for (var t = 0; t < 1; t += 1 / 30) L.update(h, 1 / 30, {});
   assert.ok(Math.hypot(q2.x - h.player.x, q2.y - h.player.y) < L.data.survivors.follow.catch * h.city.scale);
 });
+
+test('acompañar (revisión): la gente que no mirás no te saca la E; el viaje a la Catedral sigue mientras dormís', function () {
+  var L = Lluvia, g = peopleGame(104), q = helped(g), p = g.player, s = g.city.scale;
+  // Somebody right next to you, behind your back: E stays for the furniture and the doors.
+  L.waitHere(g, q) || (q.mode = 'wait');
+  q.house = null; q.door = null; q.x = p.x + 1 * s; q.y = p.y;
+  p.aim = Math.PI;
+  L.update(g, 1 / 30, {});
+  assert.ok(g.talkTarget !== q, 'alguien a tu espalda te tapa la E');
+  p.aim = 0;
+  L.update(g, 1 / 30, {});
+  assert.strictEqual(g.talkTarget, q, 'mirándolo no le hablás');
+  // Sent off, then you sleep: the hours you sleep count for the trip.
+  L.sendToRefuge(g, q); L.stopTalking(g);
+  var trip = q.travel;
+  p.energy = 10; L.sleep(g);
+  var real = 0;
+  while (q.mode === 'travel' && real < trip / 4) { L.update(g, 0.25, {}); real += 0.25; }
+  assert.strictEqual(q.mode, 'refuge', 'durmiendo no llega: tardó lo mismo que despierto');
+});

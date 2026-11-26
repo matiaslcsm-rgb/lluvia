@@ -359,7 +359,10 @@
     if (!g.pack) return;
     var p = g.player;
     // Somebody to talk to comes first (js/people.js).
-    if (g.talkTarget) { g.lootTarget = null; g.search = null; g.groundTarget = -1; g.bodyTarget = -1; g.barTarget = null; g.barWork = null; g.useHeld = g.useWas = !!(input && input.use); useBandageKey(g, input); return; }
+    // E pressed this frame (not held): opens a piece already searched. Kept here, before any early return.
+    var useNow = !!(input && input.use), pressed = useNow && !g.useWas;
+    g.useWas = useNow;
+    if (g.talkTarget) { g.lootTarget = null; g.search = null; g.groundTarget = -1; g.bodyTarget = -1; g.barTarget = null; g.useHeld = useNow; useBandageKey(g, input); return; }
     // Your body within reach comes first (js/death.js), then something on the floor: E (a press, not held).
     var bi = L.bodyTarget ? L.bodyTarget(g) : -1;
     g.bodyTarget = bi;
@@ -385,8 +388,7 @@
     var tg = L.searchTarget(g);
     g.lootTarget = tg;
     // With the window (the real game, g.lootMenu): a piece you already searched opens at once with a press of E.
-    if (g.lootMenu && tg && tg.seen && !tg.fill && input && input.use && !g.useWas) { g.useWas = true; L.openPiece(g, tg); g.search = null; useBandageKey(g, input); return; }
-    g.useWas = !!(input && input.use);
+    if (g.lootMenu && tg && tg.seen && !tg.fill && pressed) { L.openPiece(g, tg); g.search = null; useBandageKey(g, input); return; }
     if (input && input.use && tg && !g.respawn && !(g.lootMenu && tg.seen && !tg.fill)) {
       if (!g.search || g.search.key !== tg.key) { g.search = { key: tg.key, t: 0 }; L.emit(g, 'rummage', p.x, p.y); }
       g.search.t += dt;
@@ -400,7 +402,6 @@
       } else if (g.search.t >= D().search && g.lootMenu) {
         L.openPiece(g, tg);
         g.search = null;
-        g.useWas = true;
       } else if (g.search.t >= D().search) {
         var list = g.leftover.has(tg.key) ? g.leftover.get(tg.key) : L.lootOf(tg.plan, tg.f, tg.k, tg.t), got = [], left = [];
         list.forEach(function (q) {
@@ -469,7 +470,7 @@
       var h = hands(g);
       if (!h.l && !h.r) { putInHands(g, sl, 'r'); if (p.hand !== 'gun') p.hand = 'melee'; took = true; }
       else took = L.packAddWeapon(g, sl.id.slice(2), sl.dur);
-    } else if (isCloth(sl.id)) took = L.giveCloth ? L.giveCloth(g, sl) : L.packAddSlot(g, sl);
+    } else if (isCloth(sl.id)) took = L.packAddSlot(g, sl); // to your bags, as in Project Zomboid; 'Ponerte' from the inventory
     else if (sl.id.indexOf('c:') === 0) took = L.wear(g, sl.id.slice(2));
     else if (sl.id === 'i:') { foundItem(g); took = true; }
     else {

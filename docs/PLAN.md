@@ -1325,6 +1325,15 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     que mirarlo (si no, la E sería siempre para él). Abajo a la izquierda: cuántos viven en la Catedral y cuántos te
     acompañan. Arreglado: el menú F2 tiraba al piso una mochila repetida y eso rompía el dibujo.
   - Pruebas: 91.
+  - Revisión del código de las etapas 68 a 70 y la ventana del mueble. Arreglado:
+    - la gente cerca te sacaba la E de los muebles y las puertas: ahora le hablás a quien mirás (al de la puerta
+      trabada, solo con estar ahí), y nunca mientras clavás o revisás;
+    - el que mandás a la Catedral no avanzaba mientras dormías;
+    - buscar vecinos recorría las 85 mil casas del mapa cada medio segundo (ahora se mira solo lo cercano y se sortea
+      antes de armar la casa);
+    - la ropa que sacás de un mueble va a la mochila, no puesta;
+    - a veces había que apretar E dos veces para volver a abrir un mueble.
+  - Pruebas: 92.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

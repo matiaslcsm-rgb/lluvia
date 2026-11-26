@@ -72,6 +72,12 @@ test('mueble: sacás una cosa, dejás una tuya, y al volver a abrirlo sigue ahí
   assert.strictEqual(L.packCount(g, 'agua'), 2, 'tomar todo no trae el agua');
   var pockets = g.pack.places.filter(function (pl) { return pl.id === 'bolsillos'; })[0], gi = pockets.slots.map(function (sl) { return sl.id; }).indexOf('gun');
   if (gi >= 0) assert.ok(!L.putInPiece(g, { pl: pockets, i: gi }), 'la pistola se puede dejar');
+  // A garment from the piece goes to your bags, not onto you.
+  var worn = JSON.stringify(g.player.clothes);
+  g.openPiece.slots.push(L.newCloth('camperon'));
+  assert.ok(L.takeFromPiece(g, g.openPiece.slots.length - 1), 'la ropa no se puede sacar');
+  assert.strictEqual(JSON.stringify(g.player.clothes), worn, 'te pusiste la ropa en vez de guardarla');
+  assert.ok(g.pack.places.some(function (pl) { return pl.slots.some(function (sl) { return sl.id === 'r:camperon'; }); }), 'la ropa no está en la mochila');
   // Saved and loaded, the piece keeps what it holds.
   L.closePiece(g);
   var data = JSON.parse(JSON.stringify(L.saveGame(g)));
