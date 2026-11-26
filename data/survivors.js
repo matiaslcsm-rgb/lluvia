@@ -15,6 +15,14 @@
 //   than `catch` meters and out of sight, it catches up; it hits a zombie within `reach` m for `hit` every `every` s
 //   travel: somebody you send to the Catedral walks there at this many m/s (you don't see the trip)
 //   refuge: the people living in the Catedral ask every morning for one of `wants`; giving it raises trust by `rep`
+//   stage 71, trust and hitting them (the user's answer 5: "cada NPC y jugador tiene una reputación y relaciones con
+//   otros NPC"): hp: how much they take; trust: how much each one trusts you (0 to 100): start, helped (you gave
+//   them what they asked), hit (you hit them), saw (they saw you hit somebody, plus `tie` times how close they were to
+//   the one hit), refuse (below this they don't talk to you), together (how much closer two people living in the
+//   Catedral get each day); words: how they see you; witness: how far (m) they see you hit somebody; harm: what hitting
+//   somebody (harm.hit) or killing them (harm.kill) takes off the Catedral's trust, when somebody saw it or lived to tell;
+//   again: blows to the same person within this many seconds are one fight (counted once)
+//   turn: seconds before somebody dead gets up as one of them
 //   names, coats: who they are and the color of what they wear
 (function (L) {
   'use strict';
@@ -32,6 +40,12 @@
     follow: { keep: 1.8, speed: 0.95, catch: 30, reach: 1.4, hit: 3, every: 1.2 },
     travel: 1.2,
     refuge: { wants: [['comida', 2], ['agua', 2], ['vendas', 1], ['paracetamol', 2], ['tablas', 2], ['clavos', 6], ['trapos', 2]], rep: 5 },
+    hp: 30,
+    trust: { start: 50, helped: 25, hit: -40, saw: -20, tie: 0.4, refuse: 25, together: 5 },
+    words: [[75, 'confía mucho en vos'], [50, 'confía en vos'], [25, 'desconfía de vos'], [0, 'te tiene miedo']],
+    witness: 18,
+    harm: { hit: 6, kill: 15 }, again: 30,
+    turn: 10,
     names: ['Marta', 'Raúl', 'Graciela', 'Héctor', 'Silvia', 'Ezequiel', 'Norma', 'Walter', 'Lorena', 'Claudio', 'Mirta',
       'Darío', 'Susana', 'Gustavo', 'Analía', 'Rubén', 'Viviana', 'Sergio', 'Patricia', 'Matías', 'Celeste', 'Omar',
       'Romina', 'Jorge', 'Estela', 'Facundo', 'Liliana', 'Hugo', 'Daiana', 'Nicolás'],
@@ -50,7 +64,8 @@
       following: 'Acá estoy, detrás tuyo.',
       waiting: 'Sigo esperándote acá.',
       refugeAsk: 'Acá en la Catedral estamos mejor que afuera. Pero hoy nos falta {want}.',
-      refugeDone: 'Gracias por lo de hoy. Acá aguantamos.'
+      refugeDone: 'Gracias por lo de hoy. Acá aguantamos.',
+      refuse: ['No me hables. Alejate.', 'Ya sé lo que hiciste. Andate.', 'No te me acerques.']
     }
   };
 })(this.Lluvia = this.Lluvia || {});

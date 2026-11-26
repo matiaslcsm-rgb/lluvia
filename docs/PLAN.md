@@ -1334,6 +1334,13 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     - la ropa que sacás de un mueble va a la mochila, no puesta;
     - a veces había que apretar E dos veces para volver a abrir un mueble.
   - Pruebas: 92.
+  - **Etapa 71, confianza y pegarles:** cada sobreviviente confía en vos a su manera (en la charla dice, por ejemplo,
+    "Marta confía en vos"). Ayudarlo la sube; pegarle la baja mucho. Los que lo ven también te tienen menos confianza,
+    y más si eran cercanos: los que viven juntos en la Catedral se encariñan día a día. Con poca confianza no te
+    hablan, no aceptan cosas ni te siguen; el que te acompaña se va si le pegás. La Catedral se entera si alguien lo
+    vio o si el golpeado sobrevive (una pelea cuenta una vez). Las armas y las balas les pegan (ojo: también si se
+    cruzan cuando le tirás a un zombi). Si muere queda en el piso y a los 10 segundos se levanta como uno de ellos.
+  - Pruebas: 96.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

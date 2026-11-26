@@ -41,7 +41,7 @@ test('acompañar: lo mandás a la Catedral, llega después de un rato y vive ah�
   L.packAdd(g, q.want[0], q.want[1]);
   var rep = g.rep.catedral;
   assert.ok(L.giveTo(g, q));
-  assert.ok(g.rep.catedral > rep);
+  assert.ok(g.rep.catedral > rep, 'rep ' + rep + ' -> ' + g.rep.catedral + ' trust ' + q.trust);
   // Next morning, a new need.
   g.time += 24 * L.data.clock.hour; L.update(g, 1 / 30, {});
   assert.ok(!q.done, 'a la mañana no pide de nuevo');

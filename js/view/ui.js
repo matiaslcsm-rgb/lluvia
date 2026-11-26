@@ -301,7 +301,7 @@
       L.personActions(g, q).forEach(function (a) { row.appendChild(button(a.label, function () { a.run(); again(); }, 'btn')); });
       row.appendChild(button('Chau (E)', onClose, 'btn ghost'));
       nodes.push(row);
-      if (g.refuge && g.rep) nodes.push(el('p', 'hint', 'En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + '. Ayudar a la gente se sabe.'));
+      nodes.push(el('p', 'hint', q.name + ' ' + L.trustWord(q) + '.' + (g.refuge && g.rep ? ' En ' + g.refuge.name + ' ' + L.repWord(g.rep.catedral) + '. Lo que hacés se sabe.' : '')));
       show(nodes);
       L.ui.current = 'talk';
     },

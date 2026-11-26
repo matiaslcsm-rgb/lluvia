@@ -637,7 +637,15 @@
       if (q.dead || (q.floor || 0) !== (p.floor || 0) || !visible(q.x, q.y, 30)) return;
       var close = Math.hypot(q.x - p.x, q.y - p.y) < 8 * (g.city ? g.city.scale : 50);
       if (sees && !sees(q.x, q.y, q.floor || 0) && !(close && q.door)) return; // the one behind a door: you hear them
-      L.drawPerson(ctx, q, t, false);
+      if (q.dead) {
+        ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(1.1);
+        ctx.fillStyle = q.coat || '#4d5646'; ctx.beginPath(); ctx.ellipse(0, 0, q.r * 1.4, q.r * 0.6, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#5a1a14'; ctx.beginPath(); ctx.ellipse(-q.r * 0.3, q.r * 0.4, q.r * 0.9, q.r * 0.4, 0.3, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#c99b7a'; ctx.beginPath(); ctx.arc(q.r * 1.4, 0, q.r * 0.45, 0, TAU); ctx.fill();
+        ctx.restore();
+        return;
+      }
+      L.drawPerson(ctx, q, t, q.flash > 0);
       if (close) { ctx.textAlign = 'center'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = q.done ? '#9fc3a0' : '#e8dcb8'; ctx.fillText(q.name, q.x, q.y - q.r - 10); }
     });
 

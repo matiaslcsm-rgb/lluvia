@@ -15,7 +15,8 @@
     while (give[0] === want[0]) give = pick(S.gives, rng());
     g.peopleN = (g.peopleN || 0) + 1;
     return { id: g.peopleN, name: pick(S.names, rng()), coat: pick(S.coats, rng()), x: x, y: y, floor: 0, house: null, door: null,
-      street: false, want: want, give: give, done: false, line: Math.floor(rng() * 3), dirX: 1, dirY: 0, still: 1, r: g.player.r };
+      street: false, want: want, give: give, done: false, line: Math.floor(rng() * 3), dirX: 1, dirY: 0, still: 1, r: g.player.r,
+      hp: S.hp, trust: S.trust.start, ties: {} };
   }
 
   // Is there somebody in this house (always the same houses)?
@@ -96,6 +97,7 @@
   L.personText = function (g, q) {
     var S = D(), T = S.lines;
     if (q.say) return q.say; // what they answered to what you just asked
+    if (L.refuses(q)) return T.refuse[q.line % T.refuse.length];
     if (q.mode === 'refuge') return q.done ? T.refugeDone : T.refugeAsk.replace('{want}', L.lootText([q.want]));
     if (q.mode === 'follow') return T.following;
     if (q.mode === 'wait') return T.waiting;
@@ -112,7 +114,7 @@
     }
     return L.packCount(g, id);
   }
-  L.canGive = function (g, q) { return !q.done && count(g, q.want[0]) >= q.want[1]; };
+  L.canGive = function (g, q) { return !q.done && !L.refuses(q) && count(g, q.want[0]) >= q.want[1]; };
   // Hands over what they asked for and gets what they promised (what doesn't fit lands at your feet).
   L.giveTo = function (g, q) {
     if (!L.canGive(g, q)) return false;
@@ -125,7 +127,7 @@
     } else L.packTake(g, id, q.want[1]);
     if (q.mode === 'refuge') {
       // The people of the Catedral: nothing back but their trust.
-      q.done = true;
+      q.done = true; trust(q, D().trust.helped);
       L.emit(g, 'loot', g.player.x, g.player.y, { piece: 'persona', got: [] });
       if (L.repChange) L.repChange(g, 'catedral', D().refuge.rep, 'La gente de ' + g.refuge.name + ' te lo agradece.');
       return true;
@@ -135,6 +137,7 @@
     else if (gid.indexOf('r:') === 0) { var c = L.newCloth(gid.slice(2)); if (!(L.giveCloth ? L.giveCloth(g, c) : L.packAddSlot(g, c))) L.dropToGround(g, c); }
     else { var left = L.packAdd(g, gid, n); if (left) L.dropToGround(g, { id: gid, n: left }); }
     q.done = true; q.thanks = true; // says thanks until the talk ends
+    trust(q, D().trust.helped);
     L.emit(g, 'loot', g.player.x, g.player.y, { piece: 'persona', got: [q.give] });
     if (L.repChange && g.refuge) L.repChange(g, 'catedral', D().rep, 'Ayudaste a ' + q.name + '.');
     return true;
@@ -192,12 +195,77 @@
   L.personActions = function (g, q) {
     var out = [], add = function (label, run) { out.push({ label: label, run: run }); };
     var helped = q.done || q.mode === 'follow' || q.mode === 'wait' || q.mode === 'refuge';
-    if (!helped) return out; // first they want to see you help
+    if (!helped || L.refuses(q)) return out; // first they want to see you help
     if (q.mode !== 'follow') add('Que te acompañe', function () { return L.followMe(g, q); });
     if (q.mode === 'follow') add('Que espere acá', function () { return L.waitHere(g, q); });
     if (q.mode !== 'refuge' && g.refuge) add('Mandarlo a ' + g.refuge.name, function () { return L.sendToRefuge(g, q); });
     return out;
   };
+
+  // ---- Stage 71: trust, ties between them, hitting them ----
+  function trust(q, dv) { q.trust = Math.max(0, Math.min(100, (q.trust === undefined ? D().trust.start : q.trust) + dv)); }
+  L.refuses = function (q) { return (q.trust === undefined ? D().trust.start : q.trust) < D().trust.refuse; };
+  L.trustWord = function (q) {
+    var w = D().words, v = q.trust === undefined ? D().trust.start : q.trust;
+    for (var i = 0; i < w.length; i++) if (v >= w[i][0]) return w[i][1];
+    return w[w.length - 1][1];
+  };
+  // Who is standing in front of you within `reach` meters, on your floor (for a blow): { q, d } or null.
+  L.personInFront = function (g, reach, half) {
+    var p = g.player, s = g.city.scale, aim = p.aim || 0, best = null, bd = Infinity;
+    (g.people || []).forEach(function (q) {
+      if (q.dead || q.mode === 'travel' || (q.floor || 0) !== (p.floor || 0)) return;
+      var dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
+      if (d > reach * s + q.r + p.r) return;
+      var diff = Math.abs(((Math.atan2(dy, dx) - aim) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI);
+      if (diff > half && d > q.r + p.r) return;
+      if (d < bd) { bd = d; best = q; }
+    });
+    return best ? { q: best, d: bd } : null;
+  };
+  // Who a bullet at (x, y) hits, or null.
+  L.personAt = function (g, x, y, r, floor) {
+    var hit = null;
+    (g.people || []).forEach(function (q) { if (!hit && !q.dead && q.mode !== 'travel' && (q.floor || 0) === (floor || 0) && Math.hypot(q.x - x, q.y - y) < q.r + r) hit = q; });
+    return hit;
+  };
+  // You hurt somebody: they trust you much less, the ones who see it too (more if they were close to them), and the
+  // Catedral finds out if anybody lived to tell. Dead, they get up as one of them after a while.
+  L.hurtPerson = function (g, q, dmg) {
+    if (q.dead) return;
+    var S = D(), p = g.player, s = g.city.scale;
+    q.hp = (q.hp === undefined ? S.hp : q.hp) - dmg;
+    q.flash = 0.15;
+    trust(q, S.trust.hit);
+    var seen = [];
+    g.people.forEach(function (w) {
+      if (w === q || w.dead || w.mode === 'travel') return;
+      var plan = w.fh !== null && w.fh !== undefined ? L.cityHouse(g.city, w.fh) : null, ent = { x: w.x, y: w.y, floor: w.floor || 0, house: plan };
+      if (Math.hypot(w.x - q.x, w.y - q.y) > S.witness * s || !L.canSee(g.city, ent, Math.atan2(q.y - w.y, q.x - w.x), q.x, q.y, q.floor || 0)) return;
+      trust(w, S.trust.saw - S.trust.tie * ((w.ties || {})[q.id] || 0));
+      seen.push(w);
+    });
+    // Walking with you: not any more. It goes off on its own.
+    if (q.mode === 'follow' || q.mode === 'wait') { q.mode = null; q.street = true; q.walk = { t: 0, dx: 0, dy: 0 }; }
+    seen.forEach(function (w) { if (w.mode === 'follow' && L.refuses(w)) { w.mode = null; w.street = true; w.walk = { t: 0, dx: 0, dy: 0 }; } });
+    var dead = q.hp <= 0;
+    if (dead) { q.dead = true; q.deadT = S.turn; q.still = 1; L.emit(g, 'headshot', q.x, q.y); } // blood (the 'kill' effect is for zombies)
+    else L.emit(g, 'bodyhit', q.x, q.y);
+    // One fight is one story: blows to the same person within `again` seconds count once (killing still counts).
+    var fresh = dead || !(q.hitAt > g.time - S.again); q.hitAt = g.time;
+    var told = (seen.length > 0 || !dead) && fresh;
+    if (told && L.repChange && g.refuge) L.repChange(g, 'catedral', -(dead ? S.harm.kill : S.harm.hit), dead ? 'Mataste a ' + q.name + ' y alguien lo vio.' : 'Le pegaste a ' + q.name + '.');
+    else if (fresh) L.toast(g, dead ? 'Mataste a ' + q.name + '. Nadie lo vio.' : 'Le pegaste a ' + q.name + '.', '#c26a4a');
+    if (seen.length) L.toast(g, seen.map(function (w) { return w.name; }).join(', ') + (seen.length === 1 ? ' lo vio.' : ' lo vieron.'), '#c26a4a');
+  };
+  // Dead: after a while it gets up as one of them.
+  function rise(g, q) {
+    var z = L.spawnEnemy(g, 'rastrero', q.x, q.y);
+    z.floor = q.floor || 0;
+    if (q.fh !== null && q.fh !== undefined && z.floor) z.house = L.cityHouse(g.city, q.fh);
+    L.emit(g, 'barrier', q.x, q.y);
+    q.gone = true;
+  }
 
   // Walking with you: keeps close, catches up when far and out of sight, hits zombies next to it.
   function follow(g, q, dt) {
@@ -255,11 +323,24 @@
     var onStreet = g.people.filter(function (q) { return q.street; }).length;
     g.peopleT = (g.peopleT || 0) + dt;
     if (light && onStreet < St.max && g.peopleT >= St.every) { g.peopleT = 0; spawnStreet(g); }
-    // Every morning the people of the Catedral need something new.
+    // Every morning the people of the Catedral need something new, and the ones living together get closer.
     var day = L.clockOf(g).day;
-    if (g.peopleDay !== day) { g.peopleDay = day; g.people.forEach(function (q) { if (q.mode === 'refuge') refugeWant(g, q); }); }
+    if (g.peopleDay !== day) {
+      g.peopleDay = day;
+      var home = g.people.filter(function (q) { return q.mode === 'refuge' && !q.dead; });
+      home.forEach(function (q) {
+        refugeWant(g, q);
+        q.ties = q.ties || {};
+        home.forEach(function (o) { if (o !== q) q.ties[o.id] = Math.min(100, (q.ties[o.id] || 0) + D().trust.together); });
+      });
+    }
+    // The dead get up.
+    g.people.forEach(function (q) { if (q.dead && !q.gone) { q.deadT -= dt; if (q.deadT <= 0) rise(g, q); } });
+    g.people = g.people.filter(function (q) { return !q.gone; });
     // On the way to the Catedral, walking with you, living there; people on the street wander a little.
     g.people.forEach(function (q) {
+      if (q.dead) return;
+      if (q.flash > 0) q.flash -= dt;
       if (q.mode === 'travel') { q.travel -= gdt || dt; if (q.travel <= 0) arrive(g, q); return; }
       if (q === g.talking) { q.still = 1; return; }
       if (q.mode === 'follow') { follow(g, q, dt); return; }

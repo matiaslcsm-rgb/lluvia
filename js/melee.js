@@ -93,6 +93,13 @@
     if (L.makeNoise) L.makeNoise(g, p.x, p.y, def.noise, p.floor, p);
     L.emit(g, 'swing', p.x, p.y, { weapon: def.id });
     var e = target(g, def);
+    // Somebody (js/people.js) in front, closer than the zombie: the blow is for them.
+    var who = g.people && L.personInFront ? L.personInFront(g, def.reach, D().arc * Math.PI / 360) : null;
+    if (who && (!e || who.d < Math.hypot(e.x - p.x, e.y - p.y))) {
+      L.hurtPerson(g, who.q, def.dmg * (1 + 0.8 * t) * (1 + D().readyDmg * ready));
+      L.emit(g, 'blow', who.q.x, who.q.y);
+      return null;
+    }
     if (!e) return null;
     var dmg = L.meleeDamage(g, def, e) * (1 + D().readyDmg * ready), K = L.data.skills.list;
     L.applyHit(g, e, dmg, 0, 0);

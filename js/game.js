@@ -1019,6 +1019,9 @@
           if (pr.pierce <= 0) { pr.dead = true; break; }
           pr.pierce--;
         }
+        // Somebody in the way (js/people.js): the bullet is for them.
+        var who = !pr.dead && g.people && L.personAt ? L.personAt(g, pr.x, pr.y, pr.r, pr.floor) : null;
+        if (who) { L.hurtPerson(g, who, pr.damage); pr.dead = true; }
       }
       if (!pr.dead) g.projectiles[n++] = pr;
     }
