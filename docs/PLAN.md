@@ -114,7 +114,7 @@ comprobar.
 - **2026-11-27, el 3D:** el usuario preguntó si el juego puede pasar a 3D. Eligió la opción a: una **prueba de modo
   3D** que se prende con V, dibujando la misma partida con three.js (`lib/three.min.js`, guardado en el proyecto),
   sin tocar las reglas; el 2D sigue siendo el principal hasta que decida. Si le gusta, sigue con modelos hechos en
-  Blender por Claude (dio permiso para descargar Blender portátil de blender.org a `D:\MattBox\Herramientaslender`).
+  Blender por Claude (dio permiso para descargar Blender portátil de blender.org a `D:\MattBox\Herramientas\blender`).
 
 ## Decisiones abiertas
 - Las facciones y los finales (`docs/FACCIONES.md`): cuáles primero (van después de los NPC, de a una o dos).
