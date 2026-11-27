@@ -146,5 +146,7 @@ body.bigtext .card .name { font-size: 21px; }
 .talkbtns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 /* The 3D view (js/view/world3d.js): under the game canvas, which keeps the HUD on top. */
-#world3d { position: fixed; left: 0; top: 0; z-index: 0; display: none; }
-#game { position: relative; z-index: 1; }
+/* No z-index: the page order keeps the 3D under the game canvas and the menus over both (a z-index on #game hid
+   the title menu, 2026-11-27). */
+#world3d { position: fixed; left: 0; top: 0; display: none; }
+#game { position: relative; }

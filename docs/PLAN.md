@@ -1405,6 +1405,8 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
 - **2026-11-27:** el usuario dijo "no me carga" después de subir. En Chrome cargaba bien (con el 3D): era el
   navegador mezclando copias viejas guardadas con las nuevas. Ahora cada archivo de index.html lleva su versión
   (`?v=...`), y antes de cada subida se corre `node tools/version.js`.
+  Pero seguía en negro: la pantalla del 3D había quedado por encima del menú de inicio (un orden de capas mal
+  puesto en style.css). Arreglado y probado con clics de verdad, no por código.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
