@@ -540,14 +540,17 @@
   }
 
   L.render = function (g, ctx, W, H, m) {
-    ctx.fillStyle = '#14161c';
-    ctx.fillRect(0, 0, W, H);
+    // The 3D view (js/view/world3d.js) draws the world; this canvas then keeps only the HUD on top.
+    var only3d = g && g.city && L.view3d && L.view3d.on;
+    if (only3d) ctx.clearRect(0, 0, W, H);
+    else { ctx.fillStyle = '#14161c'; ctx.fillRect(0, 0, W, H); }
     if (!g) return;
     var dt = L.frameDt || 1 / 60, shake = L.fx.offset(dt);
     var p = g.player, camX = p.x - W / 2 + shake.x, camY = p.y - H / 2 + shake.y;
     var pad = 40, t = g.time;
     function visible(x, y, r) { return x + r > camX - pad && x - r < camX + W + pad && y + r > camY - pad && y - r < camY + H + pad; }
 
+    if (!only3d) {
     ctx.save();
     ctx.translate(-camX, -camY);
 
@@ -775,6 +778,8 @@
       }
       if (L.drawLook) L.drawLook(ctx, W, H, t);        // muted colors, grain and dark corners (data/look.js)
     }
+
+    } // the world, in 2D
 
     if (g.respawn > 0) {
       ctx.fillStyle = 'rgba(10, 11, 15, 0.55)';

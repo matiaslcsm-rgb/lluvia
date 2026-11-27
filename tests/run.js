@@ -15,7 +15,7 @@ const { performance } = require('perf_hooks');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const real = !!process.env.REAL;
-const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]).filter((s) => !s.startsWith('js/view/'))
+const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]).filter((s) => !s.startsWith('js/view/') && !s.startsWith('lib/')) // no screen, no 3D library
   .map((s) => (s === 'data/map-sanmiguel.js' && !real ? 'tests/fixtures/map-prueba.js' : s));
 
 const tests = [];

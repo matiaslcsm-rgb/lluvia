@@ -37,6 +37,7 @@
     check: function (m) {
       if (!m || m.over) return;
       var me = m.human, g = me.game, p = g.player;
+      if (g.night) return; // these tips are the old horde game's; the city game has its own help
       if (g.time > 0.5) L.tips.show('move');
       if (g.gems.length && g.time > 6) L.tips.show('gems');
       if (g.gold >= L.chestCost(g) && !me.inDuel) L.tips.show('chest');

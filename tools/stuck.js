@@ -9,7 +9,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const real = process.argv[4] === 'real';
 const ctx = vm.createContext({ console });
 for (const m of html.matchAll(/<script src="([^"]+)"/g)) {
-  if (m[1].startsWith('js/view/')) continue;
+  if (m[1].startsWith('js/view/') || m[1].startsWith('lib/')) continue;
   const f = m[1] === 'data/map-sanmiguel.js' && !real ? 'tests/fixtures/map-prueba.js' : m[1];
   vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
 }

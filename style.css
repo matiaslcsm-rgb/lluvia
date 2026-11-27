@@ -144,3 +144,7 @@ body.bigtext .card .name { font-size: 21px; }
 .debugmsg { color: #e6dcbc; min-height: 1.3em; }
 .talkline { font-size: 17px; max-width: 560px; margin: 10px auto 18px; color: #e8dcb8; font-style: italic; }
 .talkbtns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* The 3D view (js/view/world3d.js): under the game canvas, which keeps the HUD on top. */
+#world3d { position: fixed; left: 0; top: 0; z-index: 0; display: none; }
+#game { position: relative; z-index: 1; }

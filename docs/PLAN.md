@@ -111,6 +111,11 @@ comprobar.
   - **Conciencia colectiva:** zonas con la moral baja y más locura, más inestables y peligrosas. Esto crece después.
   - Las pruebas en el navegador las hace Claude.
 
+- **2026-11-27, el 3D:** el usuario preguntó si el juego puede pasar a 3D. Eligió la opción a: una **prueba de modo
+  3D** que se prende con V, dibujando la misma partida con three.js (`lib/three.min.js`, guardado en el proyecto),
+  sin tocar las reglas; el 2D sigue siendo el principal hasta que decida. Si le gusta, sigue con modelos hechos en
+  Blender por Claude (dio permiso para descargar Blender portátil de blender.org a `D:\MattBox\Herramientaslender`).
+
 ## Decisiones abiertas
 - Las facciones y los finales (`docs/FACCIONES.md`): cuáles primero (van después de los NPC, de a una o dos).
 - Qué es "profano" (lo que baja la reputación además de caer): por ahora solo caer la baja, y cada día sin caer
@@ -1388,6 +1393,15 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
     - Si la Catedral deja de confiar en vos, te avisan.
     - **J abre el diario:** qué hacer, los refugios y cómo te ven, y las pistas que encontraste.
   - Pruebas: 115.
+- **2026-11-27: prueba del modo 3D (V).** La misma partida dibujada en 3D: la ciudad alrededor con la altura real de
+  cada edificio (sus pisos), techos según el mapa, calles y plazas; la casa donde estás, por dentro, en tu piso
+  (paredes, muebles altos y bajos, puertas cerradas, tablas); vos, los zombis y los sobrevivientes como figuras
+  simples que miran hacia donde van; la luz del día y la noche, y la linterna como un cono de luz. La cámara va
+  atrás y arriba, mirando al norte (WASD mueve igual que en 2D); la rueda acerca y aleja; el mouse apunta al piso.
+  Solo se ven los zombis que tu personaje ve, como en 2D. El HUD (vida, inventario, minimapa, avisos) queda arriba.
+  Falta, si sigue el 3D: modelos de verdad (Blender), las luces de las salas y los faroles, la niebla de lo no visto,
+  el piso de arriba con escaleras, y las ventanas. Además: los consejos viejos del juego de horda ya no salen en
+  la partida de la ciudad.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es

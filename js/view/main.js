@@ -49,6 +49,9 @@
     if (g && g.player.gun) {
       v.aimX = g.player.x - canvas.width / 2 + mouse.x;
       v.aimY = g.player.y - canvas.height / 2 + mouse.y;
+      // In 3D (js/view/world3d.js) the mouse points at the floor through the camera.
+      var at3 = L.view3d && L.view3d.on && g.city ? L.view3d.pick(g, mouse.x, mouse.y, canvas.width, canvas.height) : null;
+      if (at3) { v.aimX = at3.x; v.aimY = at3.y; }
       v.fire = mouse.down;
       v.aiming = mouse.right; // right button: aim, standing still
       v.slot1 = L.input.key('Digit1'); // the gun
@@ -214,6 +217,7 @@
     else if (e.code === 'KeyK' && L.ui.current !== 'craft' && L.ui.current !== 'inventory') toggleStatus();
     else if (L.ui.current === 'craft' && n !== undefined) L.ui.craftPick(n);
     else if (e.code === 'F2') { e.preventDefault(); toggleDebug(); }
+    else if (e.code === 'KeyV' && match && game().city && !L.ui.current && L.view3d) L.view3d.toggle(); // the 3D trial
     else if (e.code === 'KeyJ' && (!L.ui.current || L.ui.current === 'journal')) toggleJournal();
     else if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
     else if ((e.code === 'KeyQ' || e.code === 'KeyE') && match && match.betting && !paused) bet(e.code === 'KeyQ' ? 0 : 1);
@@ -309,7 +313,10 @@
     }
     if (match && !paused && game().night) citySteps(game(), dt);
     if (match && match.duel && match.human.inDuel) L.renderDuel(match.duel, ctx, canvas.width, canvas.height, match.duel.players.indexOf(match.human));
-    else L.render(game(), ctx, canvas.width, canvas.height, match);
+    else {
+      if (L.view3d && L.view3d.on && match && game().city) L.view3d.render(game(), canvas.width, canvas.height); // the 3D trial (V)
+      L.render(game(), ctx, canvas.width, canvas.height, match);
+    }
     if (match && !match.over) L.tips.draw(ctx, canvas.width, paused ? 0 : dt);
     requestAnimationFrame(frame);
   }
