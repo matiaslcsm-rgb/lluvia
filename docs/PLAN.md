@@ -1402,6 +1402,9 @@ alturas) se piensan para que un auto pueda moverse más rápido que una persona 
   Falta, si sigue el 3D: modelos de verdad (Blender), las luces de las salas y los faroles, la niebla de lo no visto,
   el piso de arriba con escaleras, y las ventanas. Además: los consejos viejos del juego de horda ya no salen en
   la partida de la ciudad.
+- **2026-11-27:** el usuario dijo "no me carga" después de subir. En Chrome cargaba bien (con el 3D): era el
+  navegador mezclando copias viejas guardadas con las nuevas. Ahora cada archivo de index.html lleva su versión
+  (`?v=...`), y antes de cada subida se corre `node tools/version.js`.
 - **2026-11-24: pedidos del usuario para después** (anotados, no empezados):
   - *(lista armada y decidida: `docs/DARKWOOD.md`; las etapas, abajo)* **Darkwood como referencia, en la estética y en
     las mecánicas**: "la estética que vamos a buscar replicar es
